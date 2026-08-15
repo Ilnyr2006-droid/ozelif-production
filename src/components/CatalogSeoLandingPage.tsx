@@ -42,6 +42,8 @@ const COMMERCIAL_PURCHASE_TITLES: Record<string, string> = {
   '/odejnayakozha/perforirovannaya': 'Купить перфорированную натуральную кожу',
   '/dublyonka/kerli': 'Купить дублёночный материал Кёрли',
   '/dublyonka/toskana': 'Купить дублёночный материал Тоскана',
+  '/odejnayakozha/gladkaya': 'Купить гладкую натуральную кожу',
+  '/odejnayakozha/fakturnaya': 'Купить фактурную натуральную кожу',
   '/odejnayakozha/vintazhnaya': 'Купить винтажную натуральную кожу',
   '/odejnayakozha/nappa': 'Купить натуральную кожу Наппа',
   '/dublyonka/merinos': 'Купить дублёночный материал Меринос',
