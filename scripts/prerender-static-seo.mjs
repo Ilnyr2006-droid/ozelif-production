@@ -105,10 +105,32 @@ function renderPage(template, { path, title, description, ogTitle, schema, conte
     .map(item => `<script type="application/ld+json">${safeSeoJson(item)}</script>`)
     .join('\n  ')
   html = html.replace('</head>', `  ${schemas}\n</head>`)
-  const body = path === '/'
+  let body = path === '/'
     ? renderHomeSeoContent(content)
     : renderSeoContent(content)
-  return replaceRootWithSeoContent(html, body)
+
+  let homeHero = ''
+  if (path === '/') {
+    const heroMatch = body.match(
+      /<section\s+[^>]*data-home-prerender-hero="true"[^>]*>[\s\S]*?<\/section>/i,
+    )
+    if (!heroMatch) {
+      throw new Error('Homepage prerender hero was not generated')
+    }
+    homeHero = heroMatch[0]
+    body = body.replace(heroMatch[0], '')
+  }
+
+  let rendered = replaceRootWithSeoContent(html, body)
+
+  if (homeHero) {
+    rendered = rendered.replace(
+      /<div\s+id=(?:"root"|'root')\s*>/i,
+      `${homeHero}\n<div id="root">`,
+    )
+  }
+
+  return rendered
 }
 
 const template = await readFile(join('dist', 'index.html'), 'utf8')

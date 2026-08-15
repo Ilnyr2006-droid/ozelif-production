@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { App } from './App'
@@ -49,5 +49,22 @@ describe('homepage initial render', () => {
     expect(
       screen.queryByRole('link', { name: /Условия для опта/i }),
     ).not.toBeInTheDocument()
+  })
+
+  it('does not duplicate the hero when the production prerender hero is already present', async () => {
+    const prerenderHero = document.createElement('section')
+    prerenderHero.dataset.homePrerenderHero = 'true'
+    document.body.prepend(prerenderHero)
+
+    try {
+      const { container } = render(<App/>)
+      await vi.dynamicImportSettled()
+
+      expect(
+        within(container).queryByRole('heading', { level: 1 }),
+      ).not.toBeInTheDocument()
+    } finally {
+      prerenderHero.remove()
+    }
   })
 })

@@ -54,10 +54,15 @@ export function safeSeoJson(value) {
 }
 
 export function stripHomeHeroPreloads(value) {
-  return String(value).replace(
-    /<link\s+[^>]*data-home-hero-preload[^>]*>\s*/gi,
-    '',
-  )
+  return String(value)
+    .replace(
+      /<link\s+[^>]*data-home-hero-preload[^>]*>\s*/gi,
+      '',
+    )
+    .replace(
+      /<section\s+[^>]*data-home-prerender-hero=(?:"true"|'true')[^>]*>[\s\S]*?<\/section>\s*/gi,
+      '',
+    )
 }
 
 export function absoluteSeoUrl(value, origin = PUBLIC_SITE_ORIGIN) {

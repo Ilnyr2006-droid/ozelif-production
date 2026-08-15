@@ -298,5 +298,9 @@ if (isClothingCatalogPage) return <ClothingLeatherCatalogPage/>
       'https://yandex.ru/maps/org/ozelif_kozha/242632009920/',
     ],
   }
-  return <><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}/><Header/><main><Hero/><Catalog/><DeferredSaleProducts/><DeferredHomeMainTail/></main><Footer/></>
+  const hasPersistentHomeHero = document.querySelector(
+    '[data-home-prerender-hero="true"]',
+  ) !== null
+
+  return <><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}/><Header/><main>{!hasPersistentHomeHero && <Hero/>}<Catalog/><DeferredSaleProducts/><DeferredHomeMainTail/></main><Footer/></>
 }
