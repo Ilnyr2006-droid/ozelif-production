@@ -44,6 +44,51 @@ function replaceMeta(html, selector, replacement) {
   return html.replace(expression, replacement)
 }
 
+function renderHomeSeoContent(content) {
+  const paragraphs = Array.isArray(content?.paragraphs) ? content.paragraphs : []
+  const sections = Array.isArray(content?.sections) ? content.sections : []
+  const links = Array.isArray(content?.links) ? content.links : []
+
+  return [
+    '<section class="hero" id="top" data-home-prerender-hero="true">',
+    '  <picture class="hero-picture">',
+    '    <source media="(max-width: 720px)" srcset="/images/hero-leather-mobile.webp" type="image/webp" width="900" height="1200" />',
+    '    <source srcset="/images/hero-leather-wide.webp" type="image/webp" width="1600" height="900" />',
+    '    <img class="hero-image" src="/images/hero-leather-wide.jpg" alt="Натуральная кожа разных оттенков OZELIF" width="1600" height="900" loading="eager" fetchpriority="high" decoding="async" />',
+    '  </picture>',
+    '  <div class="hero-shade"></div>',
+    '  <div class="hero-content">',
+    `    <p class="eyebrow">${escapeSeoHtml(content?.eyebrow || 'Натуральные материалы • Москва')}</p>`,
+    '    <h1>Кожа, которая<br/><em>становится формой</em></h1>',
+    '    <p class="hero-copy">Натуральная кожа и дублёночный материал от производителя — для одежды, обуви, галантереи и швейного производства.</p>',
+    '    <div class="hero-cta">',
+    '      <a class="btn btn--accent" href="/odejnayakozha">Перейти в каталог</a>',
+    '      <a class="text-link text-link--light" href="/contacts">Подобрать материал</a>',
+    '    </div>',
+    '  </div>',
+    '  <div class="hero-facts" aria-label="Ключевые факты">',
+    '    <span><b>1000</b> вариантов в наличии</span>',
+    '    <span><b>с 2011</b> розница и опт</span>',
+    '    <span><b>Москва</b> шоурум и склад</span>',
+    '  </div>',
+    '</section>',
+    '<main class="seo-prerender seo-prerender--home" data-seo-prerender="true">',
+    '  <article class="seo-prerender__content">',
+    ...paragraphs.map(item => `    <p>${escapeSeoHtml(item)}</p>`),
+    ...sections.flatMap(section => [
+      `    <section><h2>${escapeSeoHtml(section?.title)}</h2>`,
+      `      <p>${escapeSeoHtml(section?.text)}</p></section>`,
+    ]),
+    ...(links.length ? [
+      '    <nav aria-label="Полезные ссылки">',
+      ...links.map(item => `      <a href="${escapeSeoHtml(item?.href)}">${escapeSeoHtml(item?.label)}</a>`),
+      '    </nav>',
+    ] : []),
+    '  </article>',
+    '</main>',
+  ].join('\n')
+}
+
 function renderPage(template, { path, title, description, ogTitle, schema, content }) {
   const url = `${origin}${path === '/' ? '/' : path}`
   let html = template
@@ -60,7 +105,10 @@ function renderPage(template, { path, title, description, ogTitle, schema, conte
     .map(item => `<script type="application/ld+json">${safeSeoJson(item)}</script>`)
     .join('\n  ')
   html = html.replace('</head>', `  ${schemas}\n</head>`)
-  return replaceRootWithSeoContent(html, renderSeoContent(content))
+  const body = path === '/'
+    ? renderHomeSeoContent(content)
+    : renderSeoContent(content)
+  return replaceRootWithSeoContent(html, body)
 }
 
 const template = await readFile(join('dist', 'index.html'), 'utf8')

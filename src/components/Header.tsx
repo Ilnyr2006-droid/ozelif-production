@@ -180,7 +180,12 @@ export function Header({ active }: { active?: 'about' | 'wholesale' | 'productio
                   <span
                     className="catalog-card-image"
                     aria-hidden="true"
-                    style={{ backgroundImage: `url(${item.image})`, backgroundPosition: item.imagePosition }}
+                    style={{
+                      backgroundImage: catalogOpen
+                        ? `url(${item.imageAvif ?? item.image})`
+                        : 'none',
+                      backgroundPosition: item.imagePosition,
+                    }}
                   />
                   <span className="catalog-card-number">
                     {String(index + 1).padStart(2, '0')}

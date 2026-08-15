@@ -30,12 +30,15 @@ function fallbackPresentation(category: PublicCatalogCategory): CatalogPresentat
 export function presentCatalogCategory(category: PublicCatalogCategory): CatalogPresentation {
   const known = knownPresentation.get(category.slug)
   if (!known) return fallbackPresentation(category)
+  const image = category.coverImage || known.image
+  const canUseKnownAvif = !category.coverImage || category.coverImage === known.image
+
   return {
     slug: category.slug,
     title: category.name,
     href: `/${category.slug}`,
-    image: category.coverImage || known.image,
-    imageAvif: category.coverImage ? undefined : known.imageAvif,
+    image,
+    imageAvif: canUseKnownAvif ? known.imageAvif : undefined,
     imagePosition: known.imagePosition,
     alt: known.alt,
     copy: category.description || known.copy,

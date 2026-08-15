@@ -20,4 +20,22 @@ describe('catalog category presentation', () => {
       title: 'Мебельная кожа',
     })
   })
+
+  it('keeps the known AVIF when the API cover is the canonical known WebP', () => {
+    expect(presentCatalogCategory({
+      databaseId: 'known-category-id',
+      slug: 'odejnayakozha',
+      name: 'Одежная кожа',
+      description: 'Одежная кожа.',
+      coverImage: '/images/categories/clothing-leather.webp',
+      filterConfig: null,
+      seoTitle: null,
+      seoDescription: null,
+      showOnHome: true,
+      showInMenu: true,
+    })).toMatchObject({
+      image: '/images/categories/clothing-leather.webp',
+      imageAvif: '/images/categories/clothing-leather.avif',
+    })
+  })
 })
