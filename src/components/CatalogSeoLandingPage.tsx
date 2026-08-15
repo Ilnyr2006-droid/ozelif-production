@@ -37,6 +37,24 @@ import {
 } from './Header'
 
 
+const COMMERCIAL_PURCHASE_TITLES: Record<string, string> = {
+  '/odejnayakozha/krs': 'Купить натуральную кожу КРС',
+  '/odejnayakozha/perforirovannaya': 'Купить перфорированную натуральную кожу',
+  '/dublyonka/kerli': 'Купить дублёночный материал Кёрли',
+  '/dublyonka/toskana': 'Купить дублёночный материал Тоскана',
+}
+
+function commercialPurchaseTitle(
+  path: string,
+  fallbackTitle: string,
+) {
+  return (
+    COMMERCIAL_PURCHASE_TITLES[path]
+    ?? `Купить ${fallbackTitle}`
+  )
+}
+
+
 function setMeta(
   selector: string,
   attribute: 'name' | 'property',
@@ -750,6 +768,15 @@ function CatalogSeoLandingContent({
         </section>
 
 
+
+        <section className="clothing-catalog-shell clothing-catalog-commercial">
+          <header className="clothing-catalog-commercial-head"><div><p className="kicker">Покупка в OZELIF</p><h2>{commercialPurchaseTitle(config.path, config.title)}<br/><em>в Москве</em></h2></div><p>Здесь собраны только товары, соответствующие этой подборке в актуальном каталоге. Цены и характеристики берутся из опубликованных карточек.</p></header>
+          <div className="clothing-catalog-commercial-grid">
+            <article><span>01</span><h3>Весь раздел</h3><p>Сравните остальные позиции родительской категории.</p><a href={config.parentPath}>Открыть весь каталог <ArrowUpRight size={15}/></a></article>
+            <article><span>02</span><h3>Оптовая закупка</h3><p>Для производства и регулярных закупок доступны отдельные условия.</p><a href="/kozhaoptom">Условия для оптовиков <ArrowUpRight size={15}/></a></article>
+            <article><span>03</span><h3>Шоурум и доставка</h3><p>Материал можно посмотреть в Москве и согласовать получение заказа.</p><a href="/contacts">Контакты и шоурум <ArrowUpRight size={15}/></a><br/><a href="/delivery">Доставка и оплата <ArrowUpRight size={15}/></a></article>
+          </div>
+        </section>
         <section className="clothing-catalog-cta">
 
           <div>

@@ -47,7 +47,7 @@ describe('application routes', () => {
     ['/odejnayakozha', /Одежная кожа/],
     ['/odejnayakozha/tproduct/814535079882-vegetale-visky', /Загружаем товар/],
     ['/dublyonka', /Дублёночный материал/],
-    ['/galantereynayakozha', /Галантерейная\s*кожа/],
+    ['/galantereynayakozha', /Натуральная галантерейная кожа/],
     [`/dublyonka/tproduct/${shearlingProducts[0].id}-${shearlingProducts[0].slug}`, new RegExp(shearlingProducts[0].title)],
     ['/sale', /Товары.*скидкой/],
     ['/delivery', /Доставка.*оплата/],

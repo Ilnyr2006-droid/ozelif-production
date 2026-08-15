@@ -135,6 +135,22 @@ function renderProductsSection(landing, products) {
   ].join('\n')
 }
 
+const COMMERCIAL_PURCHASE_TITLES = Object.freeze({
+  '/odejnayakozha/krs': 'Купить натуральную кожу КРС в Москве',
+  '/odejnayakozha/perforirovannaya': 'Купить перфорированную натуральную кожу в Москве',
+  '/dublyonka/kerli': 'Купить дублёночный материал Кёрли в Москве',
+  '/dublyonka/toskana': 'Купить дублёночный материал Тоскана в Москве',
+})
+
+function commercialPurchaseTitle(landing) {
+  return COMMERCIAL_PURCHASE_TITLES[asText(landing?.path)]
+    ?? `Купить ${asText(landing?.title)} в Москве`
+}
+
+function commercialSection(landing){
+  return ['<section class="seo-prerender__commercial">',`  <h2>${escapeHtml(commercialPurchaseTitle(landing))}</h2>`,'  <p>Цены и характеристики берутся из опубликованных карточек актуального каталога.</p>','  <ul>',`    <li><a href="${escapeHtml(landing.parentPath)}">Открыть весь каталог</a></li>`,'    <li><a href="/kozhaoptom">Условия для оптовых покупателей</a></li>','    <li><a href="/contacts">Контакты и шоурум</a></li>','    <li><a href="/delivery">Доставка и оплата</a></li>','  </ul>','  <p>Складской статус отдельной партии не публикуется в публичном API; нужный вариант и объём подтвердит менеджер.</p>','</section>'].join('\n')
+}
+
 function replaceCanonical(html, canonical) {
   const tag = `<link rel="canonical" href="${escapeHtml(canonical)}" />`
   if (/<link\s+rel="canonical"[^>]*>/i.test(html)) {
@@ -216,7 +232,7 @@ export function renderCatalogSeoLandingPage(template, landing, products, { origi
     itemListSchema,
   ])
 
-  const section = renderProductsSection(landing, productItems)
+  const section = [renderProductsSection(landing, productItems), commercialSection(landing)].join('\n')
   if (/<\/article>/i.test(html)) {
     return html.replace(/<\/article>/i, `${section}\n  </article>`)
   }
