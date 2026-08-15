@@ -1,0 +1,72 @@
+# OZELIF — GitHub safety
+
+# Dependencies
+node_modules/
+server/node_modules/
+
+# Generated builds
+dist/
+dist-tilda-widget/
+work/
+output/
+coverage/
+.cache/
+tmp/
+.playwright-cli/
+
+# Runtime/user data
+uploads/
+renders/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+!.env.admin.example
+!.env.metabase.example
+!.env.*.example
+!*.example.env
+
+*.pem
+*.key
+*.p12
+*.pfx
+*.secret
+id_rsa
+id_rsa.*
+
+# Database / backups
+*.dump
+*.backup
+*.sql.gz
+*.tar.gz
+*.tgz
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Generated metadata
+*.tsbuildinfo
+
+# Local/manual backups
+.backup-*/
+_ozelif-local-backups/
+*.before-*
+*.bak
+*.orig
+._*
+
+# Local QA screenshots
+p1-production-desktop.png
+p1-production-mobile.png
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+
+# Temporary audit artifacts
+ozelif-github-audit-*/

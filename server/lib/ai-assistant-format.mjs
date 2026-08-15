@@ -1,0 +1,174 @@
+
+const MONEY = new Intl.NumberFormat('ru-RU', {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 1,
+})
+
+export function cleanAssistantMessages(value, limit = 12) {
+  if (!Array.isArray(value)) return []
+
+  return value
+    .filter(item => (
+      item
+      && typeof item === 'object'
+      && ['user', 'assistant'].includes(String(item.role))
+      && typeof item.content === 'string'
+      && item.content.trim()
+    ))
+    .map(item => ({
+      role: item.role === 'assistant' ? 'assistant' : 'user',
+      content: item.content.trim().slice(0, 1800),
+    }))
+    .slice(-limit)
+}
+
+export function latestUserText(messages, fallback = '') {
+  return [...messages]
+    .reverse()
+    .find(item => item.role === 'user')
+    ?.content
+    ?? String(fallback ?? '').trim()
+}
+
+export function formatVariantPrice(variant) {
+  const price = Number(variant?.priceRub)
+
+  if (!Number.isFinite(price) || price <= 0) {
+    return 'цена уточняется'
+  }
+
+  const unit = String(variant?.unit ?? '').trim()
+  const number = MONEY
+    .format(price)
+    .replace(/[\u00a0\u202f]/g, ' ')
+
+  return `${number} ₽${unit ? ` за ${unit}` : ' за шт.'}`
+}
+
+function compactAttributes(attributes, limit = 6) {
+  if (
+    !attributes
+    || typeof attributes !== 'object'
+    || Array.isArray(attributes)
+  ) {
+    return []
+  }
+
+  return Object.entries(attributes)
+    .filter(([key, value]) => (
+      !key.startsWith('__')
+      && value !== null
+      && value !== undefined
+      && String(value).trim()
+    ))
+    .slice(0, limit)
+    .map(([key, value]) => (
+      `${key}: ${String(value).replace(/\s+/g, ' ').trim()}`
+    ))
+}
+
+export function compactProductContext(products) {
+  if (!Array.isArray(products) || !products.length) {
+    return 'Подходящих опубликованных товаров не найдено.'
+  }
+
+  return products
+    .slice(0, 6)
+    .map((product, index) => {
+      const prices = Array.isArray(product.variants)
+        ? product.variants
+            .filter(variant => Number(variant?.priceRub) > 0)
+            .slice(0, 3)
+            .map(formatVariantPrice)
+        : []
+
+      const attributes = compactAttributes(product.attributes)
+
+      return [
+        `${index + 1}. PRODUCT_ID=${product.id}`,
+        `Название: ${product.name}`,
+        product.category ? `Каталог: ${product.category}` : '',
+        product.description
+          ? `Описание: ${String(product.description)
+              .replace(/\s+/g, ' ')
+              .trim()
+              .slice(0, 240)}`
+          : '',
+        attributes.length
+          ? `Характеристики: ${attributes.join('; ')}`
+          : '',
+        prices.length ? `Актуальные цены: ${prices.join(' | ')}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n')
+    })
+    .join('\n\n')
+}
+
+export function productActions(products, limit = 3) {
+  return (products ?? [])
+    .filter(product => product?.productUrl && product?.name)
+    .slice(0, limit)
+    .map(product => ({
+      label: `Открыть ${String(product.name).slice(0, 52)}`,
+      href: product.productUrl,
+    }))
+}
+
+export function deterministicCatalogReply(products) {
+  if (!Array.isArray(products) || !products.length) {
+    return (
+      'По этому запросу я пока не нашёл точного совпадения '
+      + 'в опубликованном каталоге. Уточните, пожалуйста, '
+      + 'что вы хотите изготовить, нужный цвет, толщину '
+      + 'или примерный бюджет.'
+    )
+  }
+
+  const lines = products.slice(0, 3).map(product => {
+    const prices = Array.isArray(product.variants)
+      ? product.variants
+          .filter(variant => Number(variant?.priceRub) > 0)
+          .slice(0, 2)
+          .map(formatVariantPrice)
+      : []
+
+    return `• ${product.name} — ${
+      prices.length ? prices.join(', ') : 'цена уточняется'
+    }`
+  })
+
+  return [
+    'Нашёл подходящие позиции в актуальном каталоге:',
+    ...lines,
+    '',
+    'Уточните цвет, толщину, назначение или бюджет — '
+      + 'я сузжу подбор.',
+  ].join('\n')
+}
+
+export function extractResponseText(body) {
+  if (typeof body?.output_text === 'string' && body.output_text.trim()) {
+    return body.output_text.trim()
+  }
+
+  if (!Array.isArray(body?.output)) return ''
+
+  const parts = []
+
+  for (const item of body.output) {
+    if (!Array.isArray(item?.content)) continue
+
+    for (const content of item.content) {
+      if (
+        content?.type === 'output_text'
+        && typeof content.text === 'string'
+        && content.text.trim()
+      ) {
+        parts.push(content.text.trim())
+      }
+    }
+  }
+
+  return parts.join('\n').trim()
+}

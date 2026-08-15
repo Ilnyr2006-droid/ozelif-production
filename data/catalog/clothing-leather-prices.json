@@ -1,0 +1,3048 @@
+{
+  "generatedAt": "2026-07-19T18:29:02.889Z",
+  "source": "ozelifkoja.ru",
+  "currency": "RUB",
+  "conversionMethod": "tilda-rendered-price",
+  "conversionRate": null,
+  "renderer": {
+    "observedAt": "2026-07-19",
+    "evidence": "Public product pages use CBR_XML_Daily_Ru, add 10% in page JavaScript, and place the rendered amount in data-rub-price. Snapshot values are captured from that rendered attribute; no currency API is used by this importer or the production app."
+  },
+  "renderedSamples": [
+    {
+      "sourcePrice": 0.32,
+      "priceRub": 27.6
+    },
+    {
+      "sourcePrice": 0.43,
+      "priceRub": 37.1
+    },
+    {
+      "sourcePrice": 0.48,
+      "priceRub": 41.4
+    },
+    {
+      "sourcePrice": 0.53,
+      "priceRub": 45.7
+    },
+    {
+      "sourcePrice": 0.59,
+      "priceRub": 50.9
+    },
+    {
+      "sourcePrice": 3,
+      "priceRub": 258.7
+    },
+    {
+      "sourcePrice": 4,
+      "priceRub": 345
+    },
+    {
+      "sourcePrice": 4.5,
+      "priceRub": 388.1
+    },
+    {
+      "sourcePrice": 5,
+      "priceRub": 431.2
+    },
+    {
+      "sourcePrice": 5.5,
+      "priceRub": 474.3
+    }
+  ],
+  "products": {
+    "814535079882": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/814535079882-vegetale-visky",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "642728473452",
+          "externalId": "2KgS4LLu3Fa3mNxc5SoV",
+          "title": "Vegetale Visky - фут2 - Оттенок коричневого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "125090328652",
+          "externalId": "OAE9jy7nLB44hie42NG7",
+          "title": "Vegetale Visky - дм2 - Оттенок коричневого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "976103364862": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/976103364862-vegetale-bordo",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "966948227912",
+          "externalId": "AKs9GIeZJJmdlrdYPKZc",
+          "title": "Vegetale Bordo - Оттенок бордового",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "242905470522",
+          "externalId": "GcmuPJiBNaMiYmDG3YrI",
+          "title": "Vegetale Bordo - Оттенок бордового",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "279175116492": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/279175116492-vegetale-khaki",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "122457814302",
+          "externalId": "E7sScgPhhilrgBgMd6mR",
+          "title": "Vegetale Khaki - фут2 - Оттенок зеленого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "633444176522",
+          "externalId": "5OXXoZVnSmDC44iBT7bg",
+          "title": "Vegetale Khaki - дм2 - Оттенок зеленого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "661623308152": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/661623308152-marocco-black-vintage",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "255713859712",
+          "externalId": "HasCi4aUgVRetyERB79P",
+          "title": "Marocco Black Vintage - фут2 - Оттенок черного",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "367898055082",
+          "externalId": "OIocuKjkZrlCBeLUSs1U",
+          "title": "Marocco Black Vintage - дм2 - Оттенок черного",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "660239762202": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/660239762202-marocco-grey",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "959185349502",
+          "externalId": "K8gNEvytMUnuX9FpVYG1",
+          "title": "Marocco Grey - фут2 - Оттенок серого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "312662985802",
+          "externalId": "xtNrNmfKt6hfInOYkr5k",
+          "title": "Marocco Grey - дм2 - Оттенок серого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "397360850432": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/397360850432-marocco-visky",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "653062193822",
+          "externalId": "67n3tCa9jh9UMX4VkKGh",
+          "title": "Marocco Visky - фут2 - Оттенок коричневого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "377232038742",
+          "externalId": "kpSkjHrKJ6tyihdPxdAj",
+          "title": "Marocco Visky - дм2 - Оттенок коричневого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "823643096892": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/823643096892-marocco-olive",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "858305604382",
+          "externalId": "bYb39nshzrbEsEPrdSXm",
+          "title": "Marocco Olive - фут2 - Оттенок оливкового",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "422984755912",
+          "externalId": "3o14y30hyOkujTTRTKJ2",
+          "title": "Marocco Olive - дм2 - Оттенок оливкового",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "421986272162": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/421986272162-napato-black",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "437742948642",
+          "externalId": "TmuRM9hefX5rFr3x3XAJ",
+          "title": "Napato Black - фут2 - Оттенок черного",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "786438687632",
+          "externalId": "1jcXIeAi9OmAylaCvPb3",
+          "title": "Napato Black - дм2 - Оттенок черного",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "710729180752": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/710729180752-marocco-bordo",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "914995289082",
+          "externalId": "fvcA9m4djVlcBdJ5oEUO",
+          "title": "Marocco Bordo - Оттенок бордового",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "720923083352",
+          "externalId": "HT79A2yL7ZRAF54XMgbf",
+          "title": "Marocco Bordo - Оттенок бордового",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "266593405722": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/266593405722-andas-black",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "932142604412",
+          "externalId": "1AjTi0ZUviUH8I69ycc2",
+          "title": "Andas Black - фут2 - Оттенок черного",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "287009314862",
+          "externalId": "siu9OgcCjPoz6T7dUuv2",
+          "title": "Andas Black - дм2 - Оттенок черного",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "175006970682": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/175006970682-cosmos-bordo",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "141908377772",
+          "externalId": "HeZMfCtyaJjuby73Nrsc",
+          "title": "Cosmos Bordo - Оттенок бордового",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "261914928222",
+          "externalId": "zvhox6Tiu8hUaHAcUzCs",
+          "title": "Cosmos Bordo - Оттенок бордового",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "762509667352": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/762509667352-savanna-green",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "249118744992",
+          "externalId": "OpF2DSpanV8yDkpfjJeu",
+          "title": "Savanna Green - фут2 - Оттенок зеленого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5.5,
+          "sourceOldPrice": null,
+          "priceRub": 474.3,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "425385904932",
+          "externalId": "f8f1jMiSbK3zUucUVjIb",
+          "title": "Savanna Green - дм2 - Оттенок зеленого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.59,
+          "sourceOldPrice": null,
+          "priceRub": 50.9,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "321157390542": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/321157390542-cosmos-black",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "456276052172",
+          "externalId": "uXKjTOLzcJ2ObEeiYAdu",
+          "title": "Cosmos Black - фут2 - Оттенок черного",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "104617259812",
+          "externalId": "893yJJfF6SbJspSbaEGV",
+          "title": "Cosmos Black - дм2 - Оттенок черного",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "842871720692": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/842871720692-cosmos-visky",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "822762026852",
+          "externalId": "pxespp1g7THS3SZm2G6f",
+          "title": "Cosmos Visky - фут2 - Оттенок коричневого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "644807590372",
+          "externalId": "bvaPxK6MdMaS7baV2J3R",
+          "title": "Cosmos Visky - дм2 - Оттенок коричневого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "995642854752": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/995642854752-cosmos-khaki",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "921396462282",
+          "externalId": "zF6j1JgsxiCHZjC2nUTe",
+          "title": "Cosmos Khaki - фут2 - Оттенок зеленого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "162457903232",
+          "externalId": "7UZ9map2hrNOs8mcF8Nm",
+          "title": "Cosmos Khaki - дм2 - Оттенок зеленого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "540828553512": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/540828553512-eskiltme-bizon-grey",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "915061081912",
+          "externalId": "rL8IjxbS2RKZ7AEl3v8j",
+          "title": "Eskiltme Bizon Grey - Оттенок серого",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "246551825212",
+          "externalId": "Y47GsFOFu0F2mkCVdPKn",
+          "title": "Eskiltme Bizon Grey - Оттенок серого",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "273245058932": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/273245058932-jaws-brown",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "485285230452",
+          "externalId": "9IhD0PcBXmbavsSOudft",
+          "title": "Jaws Brown - фут2 - Оттенок коричневого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5.5,
+          "sourceOldPrice": null,
+          "priceRub": 474.3,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "124320363362",
+          "externalId": "zLPIpHuZyHFpDN9KZMbr",
+          "title": "Jaws Brown - дм2 - Оттенок коричневого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.59,
+          "sourceOldPrice": null,
+          "priceRub": 50.9,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "251904725252": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/251904725252-napato-brown",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "194625714602",
+          "externalId": "JvVcRcYr0BDA1bGRu2Sg",
+          "title": "Napato Brown - Оттенок коричневого",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "848139808472",
+          "externalId": "CMR5XsEBx7SGR254nOvS",
+          "title": "Napato Brown - Оттенок коричневого",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "507312357492": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/507312357492-napato-grey",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "147639661762",
+          "externalId": "ZLDXGIZiuKbYJaTEJ57V",
+          "title": "Napato Grey - Оттенок серого",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "945726940612",
+          "externalId": "K09EV99ZUYJ5e8GCTyNR",
+          "title": "Napato Grey - Оттенок серого",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "150636095022": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/150636095022-jaws-black",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "539285344252",
+          "externalId": "TYkDN6TrFJEhRsegot1u",
+          "title": "Jaws Black - фут2 - Оттенок черного",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5.5,
+          "sourceOldPrice": null,
+          "priceRub": 474.3,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "590220705792",
+          "externalId": "vAUm3so5B3Jrbs9IPekh",
+          "title": "Jaws Black - дм2 - Оттенок черного",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.59,
+          "sourceOldPrice": null,
+          "priceRub": 50.9,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "705250751442": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/705250751442-split-taba",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "143625221372",
+          "externalId": "CUbCxpKxLFFAlXfuAArM",
+          "title": "Split Taba - фут2 - Оттенок коричневого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "450628907572",
+          "externalId": "SeGMfZMp37HSdJPGmBR8",
+          "title": "Split Taba - дм2 - Оттенок коричневого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "970001480482": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/970001480482-split-black",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "546836023912",
+          "externalId": "1c1gTLUs6auO3FceKZHa",
+          "title": "Split Black - фут2 - Оттенок черного",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "840145068522",
+          "externalId": "PiLHAi8JCV9RmeagEHdU",
+          "title": "Split Black - дм2 - Оттенок черного",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "435776925842": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/435776925842-naturel-bordo",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "767738210572",
+          "externalId": "yjSbCeDB1kB47njB97Tz",
+          "title": "Naturel Bordo - фут2 - Оттенок бордового",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 4,
+          "sourceOldPrice": null,
+          "priceRub": 345,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "882953258502",
+          "externalId": "RUeA2Yo2t5reBR8Hctd8",
+          "title": "Naturel Bordo - дм2 - Оттенок бордового",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.43,
+          "sourceOldPrice": null,
+          "priceRub": 37.1,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "280430116192": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/280430116192-zberba-burgundy",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "871353895962",
+          "externalId": "cSag092k8CvAfo8NO3tl",
+          "title": "Zberba Burgundy - Оттенок бордового",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "382276140022",
+          "externalId": "3oDBG9A9LRScIfr4cRsD",
+          "title": "Zberba Burgundy - Оттенок бордового",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "141464265472": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/141464265472-zberba-black",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "109894667712",
+          "externalId": "SH0RZvIDMJVRSUTH9Oeh",
+          "title": "Zberba black - Оттенок черного",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "744088300332",
+          "externalId": "j7tCm8DfKsxicX5rh4RT",
+          "title": "Zberba black - Оттенок черного",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "411509786892": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/411509786892-cosmos-brown",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "299133248442",
+          "externalId": "tb4XBSHycUKrjSNOjCJo",
+          "title": "Cosmos Brown - фут2 - Оттенок коричневого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "768962926622",
+          "externalId": "I7JnlVJARSR21hyou46V",
+          "title": "Cosmos Brown - дм2 - Оттенок коричневого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "739057730962": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/739057730962-soft-white-black",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "363555231772",
+          "externalId": "FIEH0TAfrHGy1LS9jd0I",
+          "title": "Soft White-Black - фут2 - Оттенок черного",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "474155139752",
+          "externalId": "kjR0UV5l0EPu9ogiNoA6",
+          "title": "Soft White-Black - дм2 - Оттенок черного",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "629195419972": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/629195419972-amazon-black",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "388641947622",
+          "externalId": "U00aKTVfk0pAoZsUfnEg",
+          "title": "Amazon Black - фут2 - Оттенок черного",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "459824596462",
+          "externalId": "dxBJlJzLlx9UUANjzA5N",
+          "title": "Amazon Black - дм2 - Оттенок черного",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "385185030872": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/385185030872-torino-orange",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "987396591762",
+          "externalId": "8K14lhhxfh9gVoTJBlgE",
+          "title": "Torino Orange - фут2 - Оттенок оранжевого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 4,
+          "sourceOldPrice": null,
+          "priceRub": 345,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "468675874062",
+          "externalId": "7ZMlVLCiIXhuZZHt0oYg",
+          "title": "Torino Orange - дм2 - Оттенок оранжевого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.43,
+          "sourceOldPrice": null,
+          "priceRub": 37.1,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "761829628232": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/761829628232-savanna-orange",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "302332771172",
+          "externalId": "UCevlIkO4yEp3ECeIk1o",
+          "title": "Savanna Orange - фут2 - Оттенок оранжевого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5.5,
+          "sourceOldPrice": null,
+          "priceRub": 474.3,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "254471566232",
+          "externalId": "8k690FeRLc5efJ6X3i7M",
+          "title": "Savanna Orange - дм2 - Оттенок оранжевого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.59,
+          "sourceOldPrice": null,
+          "priceRub": 50.9,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "279181358812": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/279181358812-savanna-visky",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "937276960122",
+          "externalId": "OvAlCkUGStrs5lM6bSEk",
+          "title": "Savanna Visky - фут2 - Оттенок коричневого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5.5,
+          "sourceOldPrice": null,
+          "priceRub": 474.3,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "102877728622",
+          "externalId": "obMLezGu6uYbxY8eoopO",
+          "title": "Savanna Visky - дм2 - Оттенок коричневого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.59,
+          "sourceOldPrice": null,
+          "priceRub": 50.9,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "890825882212": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/890825882212-savanna-grey",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "711541828472",
+          "externalId": "lAbE5ggcbPtErpKXmybd",
+          "title": "Savanna Grey - фут2 - Оттенок серого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5.5,
+          "sourceOldPrice": null,
+          "priceRub": 474.3,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "979238011522",
+          "externalId": "kYjhKS1VNrAamjc0cZ6P",
+          "title": "Savanna Grey - дм2 - Оттенок серого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.59,
+          "sourceOldPrice": null,
+          "priceRub": 50.9,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "186640275372": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/186640275372-savanna-brown",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "120918108972",
+          "externalId": "TfcpiRiF9uFGHiNhFv1C",
+          "title": "Savanna Brown - фут2 - Оттенок коричневого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5.5,
+          "sourceOldPrice": null,
+          "priceRub": 474.3,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "148591373952",
+          "externalId": "C2HLlM88mSXrk1US7VLh",
+          "title": "Savanna Brown - дм2 - Оттенок коричневого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.59,
+          "sourceOldPrice": null,
+          "priceRub": 50.9,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "420900365752": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/420900365752-savanna-black",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "742813161792",
+          "externalId": "SI6OJvxKz9DvRKygZ7Kk",
+          "title": "Savanna Black - фут2 - Оттенок черного",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5.5,
+          "sourceOldPrice": null,
+          "priceRub": 474.3,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "385149133312",
+          "externalId": "bSO70gO7saJKfBVeHgEs",
+          "title": "Savanna Black - дм2 - Оттенок черного",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.59,
+          "sourceOldPrice": null,
+          "priceRub": 50.9,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "263388660152": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/263388660152-amazon-visky",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "688484274162",
+          "externalId": "e4ZGOfRzX2tchY9x7xu6",
+          "title": "Amazon Visky - фут2 - Оттенок коричневого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "972671250882",
+          "externalId": "0si2VliekCn9btZKD3Xz",
+          "title": "Amazon Visky - дм2 - Оттенок коричневого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "774277718262": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/774277718262-eskiltme-brown",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "138460853812",
+          "externalId": "4SPpbJDxKIZIgPOA6FR6",
+          "title": "Eskiltme Brown - фут2 - Оттенок коричневого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "240364730202",
+          "externalId": "Zmpz0fAMky5yJjrDXOSj",
+          "title": "Eskiltme Brown - дм2 - Оттенок коричневого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "282512036002": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/282512036002-split-grey",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "560157575692",
+          "externalId": "95zUUvIy6842FVmbLS1R",
+          "title": "Split Grey - фут2 - Оттенок серого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "823861884302",
+          "externalId": "Xs28jInrrfLDU25HdAUp",
+          "title": "Split Grey - дм2 - Оттенок серого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "418557228202": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/418557228202-split-brown",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "711096752712",
+          "externalId": "rtSkZJoDOOimOiTLbABU",
+          "title": "Split Brown - фут2 - Оттенок коричневого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "137416715862",
+          "externalId": "NgXKbfakDEh4oBtm4PIH",
+          "title": "Split Brown - дм2 - Оттенок коричневого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "635975391672": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/635975391672-split-olive",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "521618694622",
+          "externalId": "ndp3irfXhkjTRyaUo3jA",
+          "title": "Split Olive - фут2 - Оттенок зеленого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "267611977612",
+          "externalId": "15UoGM6sUbrSE8natm0S",
+          "title": "Split Olive - дм2 - Оттенок зеленого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "236194882032": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/236194882032-boss",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "796203294982",
+          "externalId": "NcBHsPvHb70UDCL68dIP",
+          "title": "Boss - фут2 - Оттенок черного",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 3,
+          "sourceOldPrice": null,
+          "priceRub": 258.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "500012821832",
+          "externalId": "BSyVhGb9xcEDjhKJrHDb",
+          "title": "Boss - дм2 - Оттенок черного",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.32,
+          "sourceOldPrice": null,
+          "priceRub": 27.6,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "811476918922": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/811476918922-naturel",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "469926968472",
+          "externalId": "gNOl2APvo84nM5Fz92rf",
+          "title": "Naturel - фут2 - Оттенок желтого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 3,
+          "sourceOldPrice": null,
+          "priceRub": 258.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "369864020712",
+          "externalId": "OOohbR5Iv78iKvM0JK0r",
+          "title": "Naturel - дм2 - Оттенок желтого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.32,
+          "sourceOldPrice": null,
+          "priceRub": 27.6,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "751456029962": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/751456029962-naturel",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "994163822962",
+          "externalId": "xpBs1Roh49oYuHOKp9td",
+          "title": "Naturel - фут2 - Оттенок синего",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 3,
+          "sourceOldPrice": null,
+          "priceRub": 258.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "843541009322",
+          "externalId": "Jdu2y5FdmzybmSUf8Alc",
+          "title": "Naturel - дм2 - Оттенок синего",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.32,
+          "sourceOldPrice": null,
+          "priceRub": 27.6,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "218310520192": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/218310520192-naturel",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "885066306112",
+          "externalId": "1pIoikCg37buVy3MflMV",
+          "title": "Naturel - фут2 - Оттенок красного",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 3,
+          "sourceOldPrice": null,
+          "priceRub": 258.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "114195545612",
+          "externalId": "5Uo7igem4YvdPbb3ODv6",
+          "title": "Naturel - дм2 - Оттенок красного",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.32,
+          "sourceOldPrice": null,
+          "priceRub": 27.6,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "642748976052": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/642748976052-naturel",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "801728958452",
+          "externalId": "zGp9hZtcdrK4kschotgj",
+          "title": "Naturel - фут2 - Оттенок пудрового",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 3,
+          "sourceOldPrice": null,
+          "priceRub": 258.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "658497324862",
+          "externalId": "k7t9ISUX0moI28aARxkf",
+          "title": "Naturel - дм2 - Оттенок пудрового",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.32,
+          "sourceOldPrice": null,
+          "priceRub": 27.6,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "628461631742": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/628461631742-naturel",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "900851611382",
+          "externalId": "OAeBXIcjv3TsLBaUgzKC",
+          "title": "Naturel - фут2 - Оттенок бежевого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 3,
+          "sourceOldPrice": null,
+          "priceRub": 258.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "260172800002",
+          "externalId": "mFHZsI19FTSGMy5tgPX7",
+          "title": "Naturel - дм2 - Оттенок бежевого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.32,
+          "sourceOldPrice": null,
+          "priceRub": 27.6,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "626831027862": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/626831027862-naturel",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "214616291122",
+          "externalId": "XibaAeN6THnNac44JMu2",
+          "title": "Naturel - фут2 - Оттенок зеленого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 3,
+          "sourceOldPrice": null,
+          "priceRub": 258.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "283697549842",
+          "externalId": "FpIE7ieF0YSLnunA73tm",
+          "title": "Naturel - дм2 - Оттенок зеленого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.32,
+          "sourceOldPrice": null,
+          "priceRub": 27.6,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "364483193342": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/364483193342-vip-black",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "572397836162",
+          "externalId": "gdRiG1J2plKJXJ6faGlx",
+          "title": "Vip Black - фут2 - Оттенок черного",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 4.5,
+          "sourceOldPrice": null,
+          "priceRub": 388.1,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "480890829822",
+          "externalId": "ZGNCuCdMiXIbdkuvauEJ",
+          "title": "Vip Black - дм2 - Оттенок черного",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.48,
+          "sourceOldPrice": null,
+          "priceRub": 41.4,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "356726322732": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/356726322732-giysilik-black",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "753422188852",
+          "externalId": "lpiYR81GEsEkJVM0rBU6",
+          "title": "Giysilik Black - фут2 - Оттенок черного",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "218246622712",
+          "externalId": "asbNtfkxcbrdLHN6FKLS",
+          "title": "Giysilik Black - дм2 - Оттенок черного",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "792982223882": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/792982223882-zig-black",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "278925819022",
+          "externalId": "BvUejx8y52xYyUJMPgmc",
+          "title": "Zig Black - фут2 - Оттенок черного",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 3,
+          "sourceOldPrice": null,
+          "priceRub": 258.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "776744987112",
+          "externalId": "SCo4eoh0SXiVKv7XhjUH",
+          "title": "Zig Black - дм2 - Оттенок черного",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.32,
+          "sourceOldPrice": null,
+          "priceRub": 27.6,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "850392475992": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/850392475992-nappa-visky",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "776548512822",
+          "externalId": "163VyraDPXOu0ecbjzMm",
+          "title": "Nappa Visky - фут2 - Оттенок коричневого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "965823495662",
+          "externalId": "HzuJpC0nOGHadbL1HN5T",
+          "title": "Nappa Visky - дм2 - Оттенок коричневого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "163095583612": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/163095583612-nappa-red",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "177522233512",
+          "externalId": "k2FzfC1D2nb81aii3Js6",
+          "title": "Nappa Red - фут2 - Оттенок красного",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "888004955702",
+          "externalId": "JiafI0r4kFXnOUg3oEhx",
+          "title": "Nappa Red - дм2 - Оттенок красного",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "787939533132": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/787939533132-perforated-black",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "773826628712",
+          "externalId": "D5J6mzg8haxJf5zDIaI9",
+          "title": "Perforated Black - фут2 - Оттенок черного",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "419726307702",
+          "externalId": "ocNIyPe2A5UfiG8hEGeB",
+          "title": "Perforated Black - дм2 - Оттенок черного",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "627490306522": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/627490306522-perforated-brown",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "595618043762",
+          "externalId": "lBSviLTnLNU6Tz2ghcZo",
+          "title": "Perforated Brown - фут2 - Оттенок коричневого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "909191129412",
+          "externalId": "gNbfeV4YkKzMj73AmlRU",
+          "title": "Perforated Brown - дм2 - Оттенок коричневого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "213460780122": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/213460780122-perforated-dark-brown",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "596663544982",
+          "externalId": "pamleTxGLGex6yYOt38K",
+          "title": "Perforated Dark Brown - фут2 - Оттенок коричневого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "931012403162",
+          "externalId": "7leaxHEItRPr6iLlT25e",
+          "title": "Perforated Dark Brown - дм2 - Оттенок коричневого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "498208614312": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/498208614312-marocco-black",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "170110344942",
+          "externalId": "oBpdb4VlrLcdptBbaDj1",
+          "title": "Marocco Black - фут2 - Оттенок черного",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "633418146652",
+          "externalId": "oUTv8HvrYVjMXJdlcv0G",
+          "title": "Marocco Black - дм2 - Оттенок черного",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "503976184682": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/503976184682-marocco-green",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "647981231542",
+          "externalId": "YMXp4PvggUVNS7FTAK3C",
+          "title": "Marocco Green - фут2 - Оттенок зеленого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "287729091282",
+          "externalId": "68hL2UAto5XoefynfjBa",
+          "title": "Marocco Green - дм2 - Оттенок зеленого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "230531567202": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/230531567202-zig-antik",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "214969491562",
+          "externalId": "n4AxIi6TRNZTn1V815M2",
+          "title": "Zig Antik - фут2 - Оттенок коричневого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 4,
+          "sourceOldPrice": null,
+          "priceRub": 345,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "991909547382",
+          "externalId": "X8CGb2bZA2dJu2YIfNs6",
+          "title": "Zig Antik - дм2 - Оттенок коричневого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.43,
+          "sourceOldPrice": null,
+          "priceRub": 37.1,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "381247238812": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/381247238812-full-vegetale-pressed",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "951564324952",
+          "externalId": "GpFMASkl162ytsRgmMrC",
+          "title": "Full Vegetale Pressed - Оттенок коричневого",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "148296485512",
+          "externalId": "Mj2cco0RvEn0LK4zOpNn",
+          "title": "Full Vegetale Pressed - Оттенок коричневого",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "564770761822": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/564770761822-jeans-effect",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "533811812232",
+          "externalId": "S7TxteLHzPY6SFCG4T92",
+          "title": "Jeans Effect - Оттенок синего",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "958718143442",
+          "externalId": "cIF5NY98L5k0GNLp4oUT",
+          "title": "Jeans Effect - Оттенок синего",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "378521427732": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/378521427732-jeans-effect",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "796796465212",
+          "externalId": "rZkA2F9JHEeaJZ5Axxc2",
+          "title": "Jeans Effect - Оттенок синего",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "923238949952",
+          "externalId": "hgAAz3bVXpYLFUXRCm1H",
+          "title": "Jeans Effect - Оттенок синего",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "709019811212": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/709019811212-jeans-effect",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "105163124152",
+          "externalId": "XKvYRkE0aiGOLrR8UHI9",
+          "title": "Jeans Effect - Оттенок синего",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "385410699892",
+          "externalId": "5T1tUtKfPgIMltptpXsD",
+          "title": "Jeans Effect - Оттенок синего",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "161612497932": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/161612497932-perforated-dblue",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "645022747882",
+          "externalId": "90iGFSHF1UstM3Mr2088",
+          "title": "Perforated D.Blue - фут2 - Оттенок синего",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "657088522022",
+          "externalId": "197erCccfVazjA0aIDb1",
+          "title": "Perforated D.Blue - дм2 - Оттенок синего",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "757723600412": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/757723600412-chelsea-pink",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "246600932242",
+          "externalId": "8HgxFHiSgoAo7u6lloRz",
+          "title": "Chelsea Pink - фут2 - Оттенок розового",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "509587330982",
+          "externalId": "3FxKVYUt2cgRS5Fym5cO",
+          "title": "Chelsea Pink - дм2 - Оттенок розового",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "532501036052": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/532501036052-chelsea-beige",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "864927952272",
+          "externalId": "XCcBIrOg12tt0X8Fpfru",
+          "title": "Chelsea Beige - фут2 - Оттенок бежевого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "965513635522",
+          "externalId": "S1XbLC3XYp1iL7L7sYYK",
+          "title": "Chelsea Beige - дм2 - Оттенок бежевого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "974242915272": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/974242915272-chelsea-grey",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "882540191102",
+          "externalId": "HkMcnj0r6880pVmu1DD5",
+          "title": "Chelsea Grey - фут2 - Оттенок серого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "169149960012",
+          "externalId": "YlHTFXdMhpOos2Jo9vIA",
+          "title": "Chelsea Grey - дм2 - Оттенок серого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "672368161842": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/672368161842-chelsea-black",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "253793507122",
+          "externalId": "AbGSJ15fbpeebPb7uL0S",
+          "title": "Chelsea Black - фут2 - Оттенок черного",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "762419737012",
+          "externalId": "rVbXC7AEFXdvxbNLUCOU",
+          "title": "Chelsea Black - дм2 - Оттенок черного",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "589864436962": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/589864436962-vegetale-brown",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "750528224392",
+          "externalId": "UfjTF0SrUxUcuhSL05pm",
+          "title": "Vegetale Brown - фут2 - Оттенок коричневого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "305931635772",
+          "externalId": "ZYUvKNrNKM8ehUXoMSrG",
+          "title": "Vegetale Brown - дм2 - Оттенок коричневого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "463601248272": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/463601248272-full-vegetale-gblack",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "569968768272",
+          "externalId": "um3HpBORu9JEsAvyGiir",
+          "title": "Full Vegetale G.Black - Оттенок черного",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "252950658132",
+          "externalId": "NCM6Ezm5fGmZ8RCIcyu8",
+          "title": "Full Vegetale G.Black - Оттенок черного",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "287830179972": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/287830179972-nappa-soft-brown",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "445457253782",
+          "externalId": "d3jP8Fkf1mDVmSKr4EM1",
+          "title": "Nappa Soft Brown - фут2 - Оттенок коричневого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 4.5,
+          "sourceOldPrice": null,
+          "priceRub": 388.1,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "820572482912",
+          "externalId": "cys6hP6nh6AalB3TDE8u",
+          "title": "Nappa Soft Brown - дм2 - Оттенок коричневого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.48,
+          "sourceOldPrice": null,
+          "priceRub": 41.4,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "788100064272": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/788100064272-lucas-taba",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "768636920022",
+          "externalId": "ilnl8HxuvC09jZ2zOUd9",
+          "title": "Lucas Taba - фут2 - Оттенок коричневого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "626819982602",
+          "externalId": "frs55TYE1t3iRpF0SFZB",
+          "title": "Lucas Taba - дм2 - Оттенок коричневого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "681664764022": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/681664764022-lucas-brown",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "329323160192",
+          "externalId": "PXolEEt3jKVIOCGukABj",
+          "title": "Lucas Brown - фут2 - Оттенок коричневого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "553741454612",
+          "externalId": "Lr1gsi1NKsp03dHgpzz3",
+          "title": "Lucas Brown - дм2 - Оттенок коричневого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "382943425552": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/382943425552-miu-vintage",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "594449358702",
+          "externalId": "bAyukVaybt3rpfB2EKj2",
+          "title": "Miu Vintage - фут2 - Оттенок черного",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "385480362932",
+          "externalId": "9YcAdy6ZcAGTMx99Zdzn",
+          "title": "Miu Vintage - дм2 - Оттенок черного",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "380315501712": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/380315501712-krs-cracklet",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "352024063762",
+          "externalId": "HLvRT7eBK1HfJ523EGfS",
+          "title": "КРС Cracklet - фут2 - Оттенок синего",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 4.5,
+          "sourceOldPrice": null,
+          "priceRub": 388.1,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "134599490442",
+          "externalId": "I0bIksINCrJeHyK9oTbu",
+          "title": "КРС Cracklet - дм2 - Оттенок синего",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.48,
+          "sourceOldPrice": null,
+          "priceRub": 41.4,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "436814462402": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/436814462402-krs-corea",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "914961600602",
+          "externalId": "y99DPeFhuidlG9tBAhUX",
+          "title": "КРС Corea - фут2 - Оттенок синего",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 4.5,
+          "sourceOldPrice": null,
+          "priceRub": 388.1,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "902287537772",
+          "externalId": "BKJiTIduhx9fJFT6Scdy",
+          "title": "КРС Corea - дм2 - Оттенок синего",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.48,
+          "sourceOldPrice": null,
+          "priceRub": 41.4,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "874580943572": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/874580943572-krs-vizon",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "103270031422",
+          "externalId": "C6GKKrSB3mFp01lB5UiF",
+          "title": "КРС Vizon - фут2 - Оттенок коричневого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 4.5,
+          "sourceOldPrice": null,
+          "priceRub": 388.1,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "817172321162",
+          "externalId": "ieBT2YxPFIL5S8Mek7uM",
+          "title": "КРС Vizon - дм2 - Оттенок коричневого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.48,
+          "sourceOldPrice": null,
+          "priceRub": 41.4,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "871322598792": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/871322598792-metallica-gold",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "859292549582",
+          "externalId": "dP7FoUeD1IIgShBBjIDY",
+          "title": "Metallica Gold - Оттенок золотого - фут2",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 4,
+          "sourceOldPrice": null,
+          "priceRub": 345,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "365080662942",
+          "externalId": "4xeu1TlZ7ummXgmlyAPd",
+          "title": "Metallica Gold - Оттенок золотого - дм2",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.43,
+          "sourceOldPrice": null,
+          "priceRub": 37.1,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "517203864232": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/gladkaya/tproduct/517203864232-metallica",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "388314488562",
+          "externalId": "BJaiBCjxrybSlaBARTSt",
+          "title": "Metallica - Оттенок серебристого - фут2",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 4,
+          "sourceOldPrice": null,
+          "priceRub": 345,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "861228137002",
+          "externalId": "ymE8aNhbnpUEXYpzUHtb",
+          "title": "Metallica - Оттенок серебристого - фут2",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 0.43,
+          "sourceOldPrice": null,
+          "priceRub": 37.1,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "753120121112": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/753120121112-soft-black",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "646981344362",
+          "externalId": "FyDp1jZHzCRkKxXnipdn",
+          "title": "Soft Black - фут2 - Оттенок черного",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "793687211922",
+          "externalId": "fnv9JRB2La1CRakBCza3",
+          "title": "Soft Black - дм2 - Оттенок черного",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "529952403462": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/529952403462-cosmos-blue",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "997834460952",
+          "externalId": "EBvByZlaIJyGIk8lIkkT",
+          "title": "Cosmos Blue - фут2 - Оттенок синего",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "574206398022",
+          "externalId": "Ix0OOEsO5YzGinrdsmPA",
+          "title": "Cosmos Blue - дм2 - Оттенок синего",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "826043821932": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/826043821932-full-vegetale-chestnut",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "427786899602",
+          "externalId": "cOK0D2eDxN5N9b4eSog8",
+          "title": "Full Vegetale Chestnut - Оттенок коричневого",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "603020378432",
+          "externalId": "FbbcJDe6olAjDk9XacEy",
+          "title": "Full Vegetale Chestnut - Оттенок коричневого",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "929713822342": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/929713822342-full-vegetale-dark-brown",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "912145903882",
+          "externalId": "55OTel5beNJspy9utMtE",
+          "title": "Full Vegetale Dark Brown - Оттенок коричневого",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "805566377792",
+          "externalId": "hi7aD5obx1P2s7uTUUJd",
+          "title": "Full Vegetale Dark Brown - Оттенок коричневого",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "834445446772": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/834445446772-full-vegetale-brown-vintage",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "948818624702",
+          "externalId": "VJMNtsr3aMMJckylyKlk",
+          "title": "Full Vegetale Brown Vintage - Оттенок коричневого",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "531714047072",
+          "externalId": "zrJT0n4SLxIvcXtcPzNe",
+          "title": "Full Vegetale Brown Vintage - Оттенок коричневого",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "559967388212": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/559967388212-vegetale-black",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "600309060222",
+          "externalId": "om53C7EXvAxgO6KHRTzP",
+          "title": "Vegetale Black - Оттенок черного",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "547483116392",
+          "externalId": "zRYjsthNR4yF1DtM9jiO",
+          "title": "Vegetale Black - Оттенок черного",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "388127392912": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/388127392912-vegetale-grey",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "111602371952",
+          "externalId": "j1KEIT3EvoY0idYgOiCE",
+          "title": "Vegetale Grey - Оттенок серого",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "581803226892",
+          "externalId": "p4fYMi54717a4XF9l9jN",
+          "title": "Vegetale Grey - Оттенок серого",
+          "unit": "FOT",
+          "sourceUnit": "FOT",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "676647326932": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/676647326932-chelsea-coffee-bizon",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "869999670952",
+          "externalId": "1Vzv6Cak0RLi9Ux3dDM3",
+          "title": "Chelsea Coffee Bizon - фут2 - Оттенок бежевого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "537634652992",
+          "externalId": "6yMUM76zn6dUHTZdt9Ib",
+          "title": "Chelsea Coffee Bizon - дм2 - Оттенок бежевого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "584960635822": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/584960635822-chelsea-brown",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "361168527682",
+          "externalId": "7NBxFhrcaDURIuPNNY33",
+          "title": "Chelsea Brown - фут2 - Оттенок коричневого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "778692648342",
+          "externalId": "V1yOldvhME4egd5zsay8",
+          "title": "Chelsea Brown - дм2 - Оттенок коричневого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "310967332292": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/310967332292-amazon-magic",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "322619826402",
+          "externalId": "ortgvhVbBEePbKynlYI5",
+          "title": "Amazon Magic - фут2 - Оттенок черного",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "179013569702",
+          "externalId": "E0DLI2k3ry01JhcEb9ox",
+          "title": "Amazon Magic - дм2 - Оттенок черного",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    },
+    "982315650722": {
+      "legacyUrl": "https://ozelifkoja.ru/odejnayakozha/tproduct/982315650722-marocco-funduk",
+      "verifiedLegacyPage": true,
+      "variants": [
+        {
+          "id": "268139327042",
+          "externalId": "BkcjIsXLV5r8dJHVc0xL",
+          "title": "Marocco Funduk - фут2 - Оттенок коричневого",
+          "unit": "фут²",
+          "sourceUnit": "фут2",
+          "sourcePrice": 5,
+          "sourceOldPrice": null,
+          "priceRub": 431.2,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        },
+        {
+          "id": "382959784462",
+          "externalId": "zmIKHOmnCUOZGEpAl6zh",
+          "title": "Marocco Funduk - дм2 - Оттенок коричневого",
+          "unit": "дм²",
+          "sourceUnit": "дм2",
+          "sourcePrice": 0.53,
+          "sourceOldPrice": null,
+          "priceRub": 45.7,
+          "oldPriceRub": null,
+          "currency": "RUB",
+          "priceSource": "rendered-old-site",
+          "verifiedAgainstRenderedPage": true
+        }
+      ]
+    }
+  },
+  "mismatches": []
+}

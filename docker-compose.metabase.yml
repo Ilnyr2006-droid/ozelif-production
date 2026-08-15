@@ -1,0 +1,26 @@
+services:
+  metabase:
+    image: metabase/metabase:latest
+    container_name: ozelif-metabase
+    restart: unless-stopped
+
+    environment:
+      MB_DB_TYPE: ${MB_DB_TYPE}
+      MB_DB_DBNAME: ${MB_DB_DBNAME}
+      MB_DB_PORT: ${MB_DB_PORT}
+      MB_DB_USER: ${MB_DB_USER}
+      MB_DB_PASS: ${MB_DB_PASS}
+      MB_DB_HOST: ${MB_DB_HOST}
+      JAVA_TIMEZONE: Europe/Moscow
+      MB_ANON_TRACKING_ENABLED: "false"
+
+    ports:
+      - "127.0.0.1:3000:3000"
+
+    networks:
+      - ozelif_network
+
+networks:
+  ozelif_network:
+    external: true
+    name: ${METABASE_DOCKER_NETWORK}

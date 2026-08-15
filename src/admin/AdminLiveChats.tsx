@@ -1,0 +1,407 @@
+import {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
+import { AiPromptSettings } from './AiPromptSettings'
+import './admin-live-chats.css'
+
+type Conversation = {
+  id: string
+  visitorId: string | null
+  visitorName: string | null
+  visitorPhone: string | null
+  pagePath: string | null
+  status: 'open' | 'human' | 'closed'
+  aiEnabled: boolean
+  lastMessageAt: string | null
+  lastMessage?: string
+  lastRole?: string
+  unreadCount?: number
+  createdAt: string
+}
+
+type Message = {
+  id: string
+  role: 'user' | 'assistant' | 'manager' | 'system'
+  content: string
+  createdAt: string
+}
+
+async function requestJson<T>(
+  url: string,
+  options?: RequestInit,
+): Promise<T> {
+  const response = await fetch(url, {
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options?.headers ?? {}),
+    },
+    ...options,
+  })
+
+  const body = await response.json().catch(() => null)
+
+  if (!response.ok) {
+    throw new Error(body?.error ?? `HTTP ${response.status}`)
+  }
+
+  return body as T
+}
+
+function time(value: string | null | undefined) {
+  if (!value) return '—'
+
+  return new Intl.DateTimeFormat('ru-RU', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(new Date(value))
+}
+
+export function AdminLiveChats({
+  onClose,
+  embedded = false,
+}: {
+  onClose?: () => void
+  embedded?: boolean
+}) {
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [selectedId, setSelectedId] = useState('')
+  const [selected, setSelected] = useState<Conversation | null>(null)
+  const [messages, setMessages] = useState<Message[]>([])
+  const [draft, setDraft] = useState('')
+  const [filter, setFilter] = useState<'active' | 'closed' | 'all'>('active')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const promptHost = useRef<HTMLDivElement>(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
+
+  const loadList = useCallback(async () => {
+    const result = await requestJson<{
+      conversations: Conversation[]
+    }>(`/api/admin/live-chats?status=${filter}`)
+
+    setConversations(result.conversations)
+
+    if (
+      selectedId
+      && !result.conversations.some(item => item.id === selectedId)
+    ) {
+      setSelectedId('')
+      setSelected(null)
+      setMessages([])
+    }
+  }, [filter, selectedId])
+
+  const loadConversation = useCallback(async (id: string) => {
+    if (!id) return
+
+    const result = await requestJson<{
+      conversation: Conversation
+      messages: Message[]
+    }>(`/api/admin/live-chats/${id}`)
+
+    setSelected(result.conversation)
+    setMessages(result.messages)
+  }, [])
+
+  useEffect(() => {
+    void loadList().catch(reason => {
+      setError(reason instanceof Error ? reason.message : 'Ошибка загрузки')
+    })
+
+    const timer = window.setInterval(() => {
+      void loadList().catch(() => undefined)
+    }, 5_000)
+
+    return () => window.clearInterval(timer)
+  }, [loadList])
+
+  useEffect(() => {
+    if (!selectedId) return
+
+    void loadConversation(selectedId).catch(() => undefined)
+
+    const timer = window.setInterval(() => {
+      void loadConversation(selectedId).catch(() => undefined)
+    }, 3_000)
+
+    return () => window.clearInterval(timer)
+  }, [loadConversation, selectedId])
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  async function action(
+    name: 'takeover' | 'enable-ai' | 'close' | 'reopen',
+  ) {
+    if (!selectedId || loading) return
+
+    setLoading(true)
+    setError('')
+
+    try {
+      await requestJson(`/api/admin/live-chats/${selectedId}/${name}`, {
+        method: 'POST',
+        body: '{}',
+      })
+      await Promise.all([
+        loadConversation(selectedId),
+        loadList(),
+      ])
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Ошибка действия')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function send(event: FormEvent) {
+    event.preventDefault()
+
+    const content = draft.trim()
+    if (!selectedId || !content || loading) return
+
+    setLoading(true)
+    setError('')
+    setDraft('')
+
+    try {
+      await requestJson(
+        `/api/admin/live-chats/${selectedId}/messages`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ content }),
+        },
+      )
+
+      await Promise.all([
+        loadConversation(selectedId),
+        loadList(),
+      ])
+    } catch (reason) {
+      setDraft(content)
+      setError(reason instanceof Error ? reason.message : 'Ошибка отправки')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function openPrompt() {
+    promptHost.current
+      ?.querySelector<HTMLButtonElement>('.ai-prompt-launcher')
+      ?.click()
+  }
+
+  return (
+    <div
+      className={
+        embedded
+          ? 'admin-live-chats is-embedded'
+          : 'admin-live-chats'
+      }
+    >
+      <div ref={promptHost} className="admin-live-chats-prompt-host">
+        <AiPromptSettings />
+      </div>
+
+      <header className="admin-live-chats-header">
+        <div>
+          <span>OZELIF ADMIN</span>
+          <h1>Чаты</h1>
+          <p>
+            AI ведёт первичный диалог. В любой момент можно забрать чат
+            менеджеру, написать клиенту и затем вернуть бота.
+          </p>
+        </div>
+
+        <div>
+          <button type="button" onClick={openPrompt}>
+            AI-промпт
+          </button>
+          {onClose ? (
+            <button type="button" onClick={onClose}>
+              Закрыть
+            </button>
+          ) : null}
+        </div>
+      </header>
+
+      {error ? <div className="admin-live-chats-error">{error}</div> : null}
+
+      <div className="admin-live-chats-layout">
+        <aside className="admin-live-chats-list">
+          <div className="admin-live-chats-filters">
+            {(['active', 'closed', 'all'] as const).map(item => (
+              <button
+                type="button"
+                className={filter === item ? 'is-active' : ''}
+                onClick={() => setFilter(item)}
+                key={item}
+              >
+                {item === 'active'
+                  ? 'Активные'
+                  : item === 'closed'
+                    ? 'Закрытые'
+                    : 'Все'}
+              </button>
+            ))}
+          </div>
+
+          <div className="admin-live-chats-items">
+            {conversations.map(conversation => (
+              <button
+                type="button"
+                className={
+                  selectedId === conversation.id
+                    ? 'admin-live-chat-item is-selected'
+                    : 'admin-live-chat-item'
+                }
+                onClick={() => setSelectedId(conversation.id)}
+                key={conversation.id}
+              >
+                <div>
+                  <strong>
+                    {conversation.visitorName
+                      || `Клиент ${conversation.id.slice(0, 6)}`}
+                  </strong>
+
+                  {Number(conversation.unreadCount ?? 0) > 0 ? (
+                    <span>{conversation.unreadCount}</span>
+                  ) : null}
+                </div>
+
+                <p>{conversation.lastMessage || 'Новый диалог'}</p>
+
+                <small>
+                  {conversation.aiEnabled ? 'AI' : 'Менеджер'}
+                  {' · '}
+                  {time(conversation.lastMessageAt ?? conversation.createdAt)}
+                </small>
+              </button>
+            ))}
+
+            {!conversations.length ? (
+              <div className="admin-live-chats-empty">
+                Пока нет диалогов в этом разделе.
+              </div>
+            ) : null}
+          </div>
+        </aside>
+
+        <main className="admin-live-chat-dialog">
+          {selected ? (
+            <>
+              <header>
+                <div>
+                  <strong>
+                    {selected.visitorName
+                      || `Клиент ${selected.id.slice(0, 8)}`}
+                  </strong>
+                  <span>
+                    {selected.visitorPhone || 'Телефон не указан'}
+                    {' · '}
+                    {selected.pagePath || '/'}
+                  </span>
+                </div>
+
+                <div className="admin-live-chat-controls">
+                  {selected.status === 'closed' ? (
+                    <button
+                      type="button"
+                      onClick={() => void action('reopen')}
+                      disabled={loading}
+                    >
+                      Открыть чат
+                    </button>
+                  ) : selected.aiEnabled ? (
+                    <button
+                      type="button"
+                      className="is-primary"
+                      onClick={() => void action('takeover')}
+                      disabled={loading}
+                    >
+                      Отключить AI и ответить
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => void action('enable-ai')}
+                      disabled={loading}
+                    >
+                      Вернуть AI
+                    </button>
+                  )}
+
+                  {selected.status !== 'closed' ? (
+                    <button
+                      type="button"
+                      className="is-danger"
+                      onClick={() => void action('close')}
+                      disabled={loading}
+                    >
+                      Закрыть
+                    </button>
+                  ) : null}
+                </div>
+              </header>
+
+              <div className="admin-live-chat-messages">
+                {messages.map(message => (
+                  <article
+                    className={`role-${message.role}`}
+                    key={message.id}
+                  >
+                    <span>
+                      {message.role === 'user'
+                        ? 'Клиент'
+                        : message.role === 'manager'
+                          ? 'Менеджер'
+                          : 'AI OZELIF'}
+                    </span>
+                    <p>{message.content}</p>
+                    <small>{time(message.createdAt)}</small>
+                  </article>
+                ))}
+                <div ref={bottomRef} />
+              </div>
+
+              <form onSubmit={send}>
+                <textarea
+                  value={draft}
+                  onChange={event => setDraft(event.target.value)}
+                  placeholder={
+                    selected.aiEnabled
+                      ? 'При отправке сообщения AI отключится автоматически…'
+                      : 'Ответить клиенту…'
+                  }
+                  rows={3}
+                  maxLength={4_000}
+                  disabled={selected.status === 'closed'}
+                />
+                <button
+                  type="submit"
+                  disabled={
+                    !draft.trim()
+                    || loading
+                    || selected.status === 'closed'
+                  }
+                >
+                  Отправить
+                </button>
+              </form>
+            </>
+          ) : (
+            <div className="admin-live-chat-placeholder">
+              Выберите диалог слева.
+            </div>
+          )}
+        </main>
+      </div>
+    </div>
+  )
+}

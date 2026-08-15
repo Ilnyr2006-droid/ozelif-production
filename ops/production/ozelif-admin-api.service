@@ -1,0 +1,23 @@
+[Unit]
+Description=OZELIF Admin API
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User=ozelif-admin
+Group=ozelif-admin
+WorkingDirectory=/opt/ozelif-admin
+EnvironmentFile=/opt/ozelif-admin/.env.admin
+ExecStart=/usr/bin/node /opt/ozelif-admin/server/index.mjs
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/opt/ozelif-admin/uploads
+
+[Install]
+WantedBy=multi-user.target

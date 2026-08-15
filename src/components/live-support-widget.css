@@ -1,0 +1,193 @@
+.live-support {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 2400;
+  font-family: Manrope, Arial, sans-serif;
+}
+
+.live-support-launcher {
+  width: 68px;
+  height: 68px;
+  border: 1px solid rgb(255 255 255 / 30%);
+  border-radius: 50%;
+  background: #b6532b;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  box-shadow: 0 18px 45px rgb(62 34 20 / 28%);
+  cursor: pointer;
+}
+
+.live-support-panel {
+  position: absolute;
+  right: 0;
+  bottom: 82px;
+  display: grid;
+  grid-template-rows: auto minmax(240px, 1fr) auto auto;
+  width: min(420px, calc(100vw - 28px));
+  height: min(650px, calc(100vh - 120px));
+  overflow: hidden;
+  border: 1px solid #ddd2c5;
+  border-radius: 24px;
+  background: #fffdf9;
+  color: #241d18;
+  box-shadow: 0 28px 85px rgb(27 20 16 / 30%);
+}
+
+.live-support-panel > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px;
+  background: #12271f;
+  color: #fff;
+}
+
+.live-support-panel > header div {
+  display: grid;
+  gap: 4px;
+}
+
+.live-support-panel > header span {
+  color: rgb(255 255 255 / 70%);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.live-support-panel > header button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.live-support-messages {
+  overflow: auto;
+  padding: 18px;
+  background: #f5f0e9;
+}
+
+.live-support-welcome {
+  border-radius: 16px;
+  padding: 14px;
+  background: #fff;
+  color: #62564c;
+  line-height: 1.5;
+}
+
+.live-support-message {
+  width: fit-content;
+  max-width: 88%;
+  margin: 0 0 12px;
+  border-radius: 16px;
+  padding: 11px 13px;
+  background: #fff;
+  box-shadow: 0 5px 15px rgb(35 26 19 / 6%);
+}
+
+.live-support-message.role-user {
+  margin-left: auto;
+  background: #1d342a;
+  color: #fff;
+}
+
+.live-support-message.role-manager {
+  border: 1px solid #d8b49e;
+  background: #fff6f0;
+}
+
+.live-support-message > span {
+  display: block;
+  margin-bottom: 4px;
+  color: #9a6c4d;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.live-support-message.role-user > span {
+  color: rgb(255 255 255 / 62%);
+}
+
+.live-support-message p {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.48;
+}
+
+.live-support-actions {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.live-support-actions a {
+  border-radius: 9px;
+  padding: 8px 10px;
+  background: #eee6dc;
+  color: #281f19;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.live-support-error {
+  border-top: 1px solid #ead5cd;
+  padding: 9px 16px;
+  background: #fff3ef;
+  color: #9d3f31;
+  font-size: 12px;
+}
+
+.live-support-panel form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 9px;
+  padding: 14px;
+  border-top: 1px solid #e2d9cf;
+  background: #fffdf9;
+}
+
+.live-support-panel textarea {
+  resize: none;
+  border: 1px solid #d8cec3;
+  border-radius: 12px;
+  padding: 11px 12px;
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+
+.live-support-panel form button {
+  border: 0;
+  border-radius: 12px;
+  padding: 0 15px;
+  background: #12271f;
+  color: #fff;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.live-support-panel form button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
+@media (max-width: 560px) {
+  .live-support {
+    right: 14px;
+    bottom: 14px;
+  }
+
+  .live-support-panel {
+    position: fixed;
+    inset: 10px;
+    width: auto;
+    height: auto;
+  }
+}
