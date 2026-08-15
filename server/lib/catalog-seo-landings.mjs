@@ -27,6 +27,53 @@ export const CATALOG_SEO_LANDINGS = Object.freeze([
     matcherTokens: Object.freeze(['perforat', 'перфор']),
   }),
   Object.freeze({
+    path: '/odejnayakozha/vintazhnaya',
+    categorySlug: 'odejnayakozha',
+    categoryName: 'Одежная кожа',
+    parentPath: '/odejnayakozha',
+    title: 'Винтажная натуральная кожа',
+    label: 'Винтажная кожа',
+    matcherTokens: Object.freeze(['винтаж', 'vintage']),
+  }),
+  Object.freeze({
+    path: '/odejnayakozha/nappa',
+    categorySlug: 'odejnayakozha',
+    categoryName: 'Одежная кожа',
+    parentPath: '/odejnayakozha',
+    title: 'Натуральная кожа Наппа',
+    label: 'Кожа Наппа',
+    matcherTokens: Object.freeze(['наппа', 'nappa']),
+    matcherAttributes: Object.freeze(['coating']),
+  }),
+  Object.freeze({
+    path: '/dublyonka/merinos',
+    categorySlug: 'dublyonka',
+    categoryName: 'Дублёночный материал',
+    parentPath: '/dublyonka',
+    title: 'Дублёночный материал Меринос',
+    label: 'Меринос',
+    matcherTokens: Object.freeze(['меринос', 'merinos', 'merino']),
+  }),
+  Object.freeze({
+    path: '/dublyonka/tigrado',
+    categorySlug: 'dublyonka',
+    categoryName: 'Дублёночный материал',
+    parentPath: '/dublyonka',
+    title: 'Дублёночный материал Тиградо',
+    label: 'Тиградо',
+    matcherTokens: Object.freeze(['тиградо', 'tigrado']),
+  }),
+  Object.freeze({
+    path: '/furnitura/ykk',
+    categorySlug: 'furnitura',
+    categoryName: 'Фурнитура',
+    parentPath: '/furnitura',
+    title: 'Молнии YKK',
+    label: 'YKK',
+    matcherTokens: Object.freeze(['ykk']),
+    matcherAttributes: Object.freeze(['brand']),
+  }),
+  Object.freeze({
     path: '/odejnayakozha/krs',
     categorySlug: 'odejnayakozha',
     categoryName: 'Одежная кожа',
@@ -63,6 +110,8 @@ export function matchesCatalogSeoLandingProduct(product, landing) {
     ? product.attributes
     : {}
   const subtype = stringList(attributes.subtype)
+  const matcherAttributes = (landing.matcherAttributes ?? [])
+    .flatMap(key => stringList(attributes[key]))
   const titleAndSlug = normalizeSeoMatchText([
     product.name,
     product.slug,
@@ -71,6 +120,7 @@ export function matchesCatalogSeoLandingProduct(product, landing) {
   return landing.matcherTokens.some(rawToken => {
     const token = normalizeSeoMatchText(rawToken)
     return subtype.some(value => value === token || value.includes(token))
+      || matcherAttributes.some(value => value === token || value.includes(token))
       || titleAndSlug.includes(token)
   })
 }

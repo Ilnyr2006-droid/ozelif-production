@@ -19,6 +19,7 @@ export type CatalogSeoLandingConfig = {
   heroAlt: string
 
   matcherTokens: string[]
+  matcherAttributes?: Array<'coating' | 'brand'>
 
   emptyTitle: string
   loadingTitle: string
@@ -255,6 +256,305 @@ export const catalogSeoLandings: CatalogSeoLandingConfig[] = [
     ctaText:
       'Менеджер поможет сверить цвет, покрытие, размер шкур и актуальное наличие. Для объёмной закупки доступны оптовые условия.',
   },
+
+  {
+    path:
+      '/odejnayakozha/vintazhnaya',
+
+    categorySlug:
+      'odejnayakozha',
+
+    categoryName:
+      'Одежная кожа',
+
+    parentPath:
+      '/odejnayakozha',
+
+    metaTitle:
+      'Винтажная кожа купить в Москве — натуральная одежная кожа | OZELIF',
+
+    metaDescription:
+      'Винтажная натуральная кожа в каталоге OZELIF: актуальные цвета, толщина, покрытия и цены. Розница и опт, шоурум в Москве, доставка по России.',
+
+    ogTitle:
+      'Винтажная натуральная кожа — OZELIF',
+
+    kicker:
+      'Одежная кожа · Винтаж',
+
+    title:
+      'Винтажная натуральная кожа',
+
+    intro:
+      'Подборка винтажной натуральной кожи из актуального каталога OZELIF. Сравните фактуру, цвет, толщину, покрытие и цену конкретных позиций.',
+
+    badge:
+      'Винтаж',
+
+    heroBase:
+      '/images/catalog/clothing-leather/catalog-hero',
+
+    heroAlt:
+      'Винтажная натуральная одежная кожа',
+
+    matcherTokens: [
+      'винтаж',
+      'vintage',
+    ],
+
+    emptyTitle:
+      'Сейчас нет опубликованной винтажной кожи',
+
+    loadingTitle:
+      'Загружаем винтажную кожу',
+
+    ctaTitle:
+      'Нужна винтажная кожа под конкретное изделие?',
+
+    ctaText:
+      'Менеджер поможет сравнить фактуру, цвет, толщину и актуальную партию. Для объёмной закупки доступны оптовые условия.',
+  },
+
+  {
+    path:
+      '/odejnayakozha/nappa',
+
+    categorySlug:
+      'odejnayakozha',
+
+    categoryName:
+      'Одежная кожа',
+
+    parentPath:
+      '/odejnayakozha',
+
+    metaTitle:
+      'Кожа Наппа купить в Москве — натуральная одежная кожа | OZELIF',
+
+    metaDescription:
+      'Натуральная кожа Наппа в каталоге OZELIF: актуальные цвета, толщина, характеристики и цены. Розница и опт, шоурум в Москве, доставка по России.',
+
+    ogTitle:
+      'Натуральная кожа Наппа — OZELIF',
+
+    kicker:
+      'Одежная кожа · Наппа',
+
+    title:
+      'Натуральная кожа Наппа',
+
+    intro:
+      'Актуальная подборка натуральной кожи Наппа. Сравните опубликованные цвета, толщину, фактуру, покрытие и цены.',
+
+    badge:
+      'Наппа',
+
+    heroBase:
+      '/images/catalog/clothing-leather/catalog-hero',
+
+    heroAlt:
+      'Натуральная кожа Наппа',
+
+    matcherTokens: [
+      'наппа',
+      'nappa',
+    ],
+
+    matcherAttributes: [
+      'coating',
+    ],
+
+    emptyTitle:
+      'Сейчас нет опубликованной кожи Наппа',
+
+    loadingTitle:
+      'Загружаем кожу Наппа',
+
+    ctaTitle:
+      'Нужна кожа Наппа под конкретное изделие?',
+
+    ctaText:
+      'Менеджер поможет проверить характеристики и подобрать подходящую партию. Для объёмной закупки доступны оптовые условия.',
+  },
+
+  {
+    path:
+      '/dublyonka/merinos',
+
+    categorySlug:
+      'dublyonka',
+
+    categoryName:
+      'Дублёночный материал',
+
+    parentPath:
+      '/dublyonka',
+
+    metaTitle:
+      'Дублёночный материал Меринос купить в Москве | OZELIF',
+
+    metaDescription:
+      'Дублёночный материал Меринос из натуральной овчины в каталоге OZELIF. Актуальные цвета, покрытия, размеры шкур и цены. Розница, опт и доставка.',
+
+    ogTitle:
+      'Дублёночный материал Меринос — OZELIF',
+
+    kicker:
+      'Дублёнка · Меринос',
+
+    title:
+      'Дублёночный материал Меринос',
+
+    intro:
+      'Подборка натурального дублёночного материала Меринос из текущего каталога OZELIF. Сравните цвета, покрытия, размеры шкур и цены.',
+
+    badge:
+      'Меринос',
+
+    heroBase:
+      '/images/catalog/shearling/catalog-hero',
+
+    heroAlt:
+      'Дублёночный материал Меринос',
+
+    matcherTokens: [
+      'меринос',
+      'merinos',
+      'merino',
+    ],
+
+    emptyTitle:
+      'Сейчас нет опубликованных товаров Меринос',
+
+    loadingTitle:
+      'Загружаем материал Меринос',
+
+    ctaTitle:
+      'Нужен Меринос под конкретное изделие?',
+
+    ctaText:
+      'Менеджер поможет сверить цвет, отделку, размер шкур и актуальную партию. Для объёмной закупки доступны оптовые условия.',
+  },
+
+  {
+    path:
+      '/dublyonka/tigrado',
+
+    categorySlug:
+      'dublyonka',
+
+    categoryName:
+      'Дублёночный материал',
+
+    parentPath:
+      '/dublyonka',
+
+    metaTitle:
+      'Дублёночный материал Тиградо купить в Москве | OZELIF',
+
+    metaDescription:
+      'Дублёночный материал Тиградо в каталоге OZELIF: актуальные цвета, покрытия, размеры шкур и цены. Шоурум в Москве, розница, опт и доставка.',
+
+    ogTitle:
+      'Дублёночный материал Тиградо — OZELIF',
+
+    kicker:
+      'Дублёнка · Тиградо',
+
+    title:
+      'Дублёночный материал Тиградо',
+
+    intro:
+      'Актуальная подборка дублёночного материала Тиградо. Сравните цвета, покрытия, размеры шкур, характеристики и цены.',
+
+    badge:
+      'Тиградо',
+
+    heroBase:
+      '/images/catalog/shearling/catalog-hero',
+
+    heroAlt:
+      'Дублёночный материал Тиградо',
+
+    matcherTokens: [
+      'тиградо',
+      'tigrado',
+    ],
+
+    emptyTitle:
+      'Сейчас нет опубликованных товаров Тиградо',
+
+    loadingTitle:
+      'Загружаем материал Тиградо',
+
+    ctaTitle:
+      'Нужен Тиградо под конкретное изделие?',
+
+    ctaText:
+      'Менеджер поможет сверить цвет, отделку, размер шкур и актуальную партию. Для объёмной закупки доступны оптовые условия.',
+  },
+
+  {
+    path:
+      '/furnitura/ykk',
+
+    categorySlug:
+      'furnitura',
+
+    categoryName:
+      'Фурнитура',
+
+    parentPath:
+      '/furnitura',
+
+    metaTitle:
+      'Молнии YKK купить в Москве — фурнитура | OZELIF',
+
+    metaDescription:
+      'Молнии YKK в каталоге OZELIF: актуальные длины, цвета металла и тесьмы, характеристики и цены. Розница и опт, шоурум в Москве, доставка по России.',
+
+    ogTitle:
+      'Молнии YKK — OZELIF',
+
+    kicker:
+      'Фурнитура · YKK',
+
+    title:
+      'Молнии YKK',
+
+    intro:
+      'Подборка молний YKK из актуального каталога OZELIF. Сравните длину, цвет металла, цвет тесьмы, варианты и цены.',
+
+    badge:
+      'YKK',
+
+    heroBase:
+      '/images/categories/hardware',
+
+    heroAlt:
+      'Молнии YKK и фурнитура',
+
+    matcherTokens: [
+      'ykk',
+    ],
+
+    matcherAttributes: [
+      'brand',
+    ],
+
+    emptyTitle:
+      'Сейчас нет опубликованных молний YKK',
+
+    loadingTitle:
+      'Загружаем молнии YKK',
+
+    ctaTitle:
+      'Нужны молнии YKK под конкретное изделие?',
+
+    ctaText:
+      'Менеджер поможет сверить длину, цвет металла, цвет тесьмы и доступные варианты. Для объёмной закупки доступны оптовые условия.',
+  },
+
 ]
 
 function normalizePathname(
@@ -320,6 +620,18 @@ export function matchesCatalogSeoLandingProduct(
   const subtype =
     product.subtype.map(normalize)
 
+  const matcherAttributes =
+    (config.matcherAttributes ?? [])
+      .flatMap(key => {
+        const value = product[key]
+        return (
+          typeof value === 'string'
+          && value.trim()
+        )
+          ? [normalize(value)]
+          : []
+      })
+
   const titleAndSlug =
     normalize(
       [
@@ -337,6 +649,11 @@ export function matchesCatalogSeoLandingProduct(
 
       return (
         subtype.some(
+          value =>
+            value === token
+            || value.includes(token),
+        )
+        || matcherAttributes.some(
           value =>
             value === token
             || value.includes(token),

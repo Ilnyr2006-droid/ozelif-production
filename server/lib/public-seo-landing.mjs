@@ -140,6 +140,11 @@ const COMMERCIAL_PURCHASE_TITLES = Object.freeze({
   '/odejnayakozha/perforirovannaya': 'Купить перфорированную натуральную кожу в Москве',
   '/dublyonka/kerli': 'Купить дублёночный материал Кёрли в Москве',
   '/dublyonka/toskana': 'Купить дублёночный материал Тоскана в Москве',
+  '/odejnayakozha/vintazhnaya': 'Купить винтажную натуральную кожу в Москве',
+  '/odejnayakozha/nappa': 'Купить натуральную кожу Наппа в Москве',
+  '/dublyonka/merinos': 'Купить дублёночный материал Меринос в Москве',
+  '/dublyonka/tigrado': 'Купить дублёночный материал Тиградо в Москве',
+  '/furnitura/ykk': 'Купить молнии YKK в Москве',
 })
 
 function commercialPurchaseTitle(landing) {
