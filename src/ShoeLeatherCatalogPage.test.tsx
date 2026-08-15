@@ -20,7 +20,7 @@ describe('shoe leather catalog', () => {
 
   it('renders and filters products by color', async () => {
     render(<CartProvider><ShoeLeatherCatalogPage /></CartProvider>)
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Натуральная обувная кожа')
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Натуральная кожа для пошива обуви')
     await waitFor(() => expect(document.querySelectorAll('.product-card > a')).toHaveLength(2))
     fireEvent.change(screen.getByLabelText('Цвет'), { target: { value: 'Красный' } })
     expect(document.querySelectorAll('.product-card > a')).toHaveLength(1)

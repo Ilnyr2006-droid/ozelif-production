@@ -36,8 +36,10 @@ describe('public clothing category commercial SEO', () => {
     const html = renderCategorySeoPage(template, category, { products })
 
     expect(html).toContain('<title>Одежная кожа купить в Москве — натуральная кожа для пошива | OZELIF</title>')
-    expect(html).toContain('<h1>Одежная кожа для пошива</h1>')
-    expect(html).toContain('Купить одежную кожу в Москве — в розницу и оптом')
+    expect(html).toContain('<h1>Натуральная кожа для пошива одежды</h1>')
+    expect(html).toContain('Купить натуральную кожу для пошива одежды в Москве')
+    expect(html).toContain('курток, жакетов, жилетов, юбок, брюк')
+    expect(html).toContain('Как выбрать кожу для одежды')
     expect(html).toContain('Каталог одежной кожи с ценами')
     expect(html).toContain('Vegetale Visky')
     expect(html).toContain('431')
