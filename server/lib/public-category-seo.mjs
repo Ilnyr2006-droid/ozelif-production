@@ -20,24 +20,40 @@ const formatDecimal = value => new Intl.NumberFormat('ru-RU', { maximumFractionD
 function clothingCatalogFacts(products) {
   const attributes = products.map(product => product?.attributes ?? {})
   const materials = [...new Set(attributes.map(item => asText(item?.material)).filter(Boolean))].sort((left, right) => left.localeCompare(right, 'ru'))
+  const colors = [...new Set(attributes.map(item => asText(item?.normalizedColor || item?.color)).filter(Boolean))]
+  const subtypeValues = attributes.flatMap(item => Array.isArray(item?.subtype) ? item.subtype : [item?.subtype])
+    .map(asText)
+    .filter(Boolean)
+  const subtypes = [...new Set(subtypeValues)]
   const thicknessNumbers = attributes.flatMap(item => asText(item?.thickness).match(/\d+(?:[.,]\d+)?/g) ?? [])
     .map(value => Number(value.replace(',', '.')))
     .filter(Number.isFinite)
   const range = thicknessNumbers.length ? { min: Math.min(...thicknessNumbers), max: Math.max(...thicknessNumbers) } : null
 
   return [
-    ['Для изделий', 'Для одежды, головных уборов и аксессуаров.'],
-    ['Сырьё в каталоге', materials.length ? materials.join(' и ') : 'Указано в карточках материалов.'],
-    ['Толщина', range ? `От ${formatDecimal(range.min)} до ${formatDecimal(range.max)} мм по данным карточек каталога.` : 'Указана в карточках материалов и доступна в фильтре.'],
-    ['Покупка и подбор', 'Розница и опт, просмотр образцов и помощь с подбором в московском шоуруме.'],
+    ['Ассортимент', `${products.length} опубликованных товаров в текущем каталоге.`],
+    ['Цвета и фактуры', colors.length || subtypes.length ? `${colors.length} цветовых групп и ${subtypes.length} типов материала представлены в каталоге.` : 'Параметры указаны в карточках товаров.'],
+    ['Сырьё', materials.length ? materials.join(' и ') : 'Указано в карточках материалов.'],
+    ['Толщина', range ? `От ${formatDecimal(range.min)} до ${formatDecimal(range.max)} мм по данным карточек каталога.` : 'Указана в карточках материалов.'],
   ]
+}
+
+function clothingProductFacts(product) {
+  const attributes = product?.attributes ?? {}
+  return [
+    asText(attributes?.material),
+    asText(attributes?.color || attributes?.normalizedColor),
+    asText(attributes?.thickness) ? `${asText(attributes.thickness)} мм` : '',
+    asText(attributes?.coating),
+    asText(attributes?.country),
+  ].filter(Boolean).slice(0, 5)
 }
 
 const CATEGORY_SEO_OVERRIDES = {
   odejnayakozha: {
-    title: 'Одежная кожа — купить натуральную кожу в Москве | OZELIF',
-    description: 'Натуральная одежная кожа для пошива одежды и аксессуаров. Подбор по фактуре, цвету и толщине, розница и опт, шоурум в Москве, доставка по России.',
-    bodyDescription: 'OZELIF — магазин и склад натуральной одежной кожи в Москве. Материалы доступны в розницу и оптом; посмотреть образцы и получить помощь с подбором можно в шоуруме на Краснобогатырской улице, 24.',
+    title: 'Одежная кожа купить в Москве — натуральная кожа для пошива | OZELIF',
+    description: 'Каталог натуральной одежной кожи OZELIF: цены и характеристики, подбор по сырью, цвету, фактуре и толщине. Розница и опт, шоурум в Москве, доставка по России.',
+    bodyDescription: 'Каталог натуральной одежной кожи с актуальными ценами и характеристиками. Подберите материал по сырью, цвету, фактуре и толщине; OZELIF работает в розницу и оптом, а образцы можно посмотреть в шоуруме на Краснобогатырской улице, 24.',
     bodyFacts: clothingCatalogFacts,
     heroPreload: {
       href: '/images/catalog/clothing-leather/catalog-hero.avif',
@@ -52,10 +68,14 @@ function absoluteUrl(origin, value) {
 
 function renderCategoryBody(category, products, { origin, description, facts = [] }) {
   const name = asText(category?.name) || 'Каталог'
-  const subcategories = getCatalogSeoLandingsForCategory(asText(category?.slug))
+  const slug = asText(category?.slug)
+  const isClothingLeather = slug === 'odejnayakozha'
+  const pageHeading = isClothingLeather ? 'Одежная кожа для пошива' : name
+  const subcategories = getCatalogSeoLandingsForCategory(slug)
   const productCards = products.map(product => {
     const productUrl = absoluteUrl(origin, product?.url)
     const offer = getPublishedProductOffer(product)
+    const facts = isClothingLeather ? clothingProductFacts(product) : []
     const priceText = offer
       ? `от ${new Intl.NumberFormat('ru-RU').format(offer.price)} ₽${offer.unit ? ` / ${offer.unit}` : ''}`
       : 'Цена по запросу'
@@ -64,6 +84,7 @@ function renderCategoryBody(category, products, { origin, description, facts = [
       `        <a href="${escapeHtml(productUrl)}">`,
       `          <h2>${escapeHtml(product?.name)}</h2>`,
       `          <p>${escapeHtml(priceText)}</p>`,
+      ...(facts.length ? [`          <p>${escapeHtml(facts.join(' · '))}</p>`] : []),
       '        </a>',
       '      </li>',
     ].join('\n')
@@ -74,12 +95,12 @@ function renderCategoryBody(category, products, { origin, description, facts = [
     '  <nav aria-label="Хлебные крошки"><a href="/">Главная</a></nav>',
     '  <header>',
     '    <p>Каталог OZELIF</p>',
-    `    <h1>${escapeHtml(name)}</h1>`,
+    `    <h1>${escapeHtml(pageHeading)}</h1>`,
     `    <p>${escapeHtml(description)}</p>`,
     '  </header>',
     ...(subcategories.length ? [
       '  <section aria-labelledby="catalog-subcategories-title">',
-      '    <h2 id="catalog-subcategories-title">Подкатегории</h2>',
+      `    <h2 id="catalog-subcategories-title">${escapeHtml(isClothingLeather ? 'Виды одежной кожи' : 'Подкатегории')}</h2>`,
       '    <nav aria-label="Подкатегории каталога">',
       ...subcategories.map(item => `      <a href="${escapeHtml(item.path)}">${escapeHtml(item.title)}</a>`),
       '    </nav>',
@@ -87,16 +108,36 @@ function renderCategoryBody(category, products, { origin, description, facts = [
     ] : []),
     ...(facts.length ? [
       '  <section aria-labelledby="category-facts-title">',
-      '    <h2 id="category-facts-title">Одежная кожа для пошива</h2>',
-      '    <p>OZELIF поставляет натуральную одежную кожу и помогает подобрать материал под конкретное изделие.</p>',
+      '    <h2 id="category-facts-title">Как выбрать одежную кожу</h2>',
+      '    <p>Сравнивайте реальные параметры каталога: тип сырья, цвет, фактуру и толщину. Для одежды, головных уборов и аксессуаров менеджер поможет сверить материал с конкретной задачей.</p>',
       '    <dl>',
       ...facts.map(([title, text]) => `      <div><dt>${escapeHtml(title)}</dt><dd>${escapeHtml(text)}</dd></div>`),
       '    </dl>',
       '  </section>',
     ] : []),
+    ...(isClothingLeather ? [
+      '  <section aria-labelledby="category-commercial-title">',
+      '    <h2 id="category-commercial-title">Купить одежную кожу в Москве — в розницу и оптом</h2>',
+      '    <p>Цены, единицы продажи и характеристики указаны в карточках товаров. Наличие конкретного оттенка или партии лучше подтвердить у менеджера перед заказом.</p>',
+      '    <ul>',
+      '      <li><a href="/contacts">Посмотреть образцы в шоуруме OZELIF в Москве</a></li>',
+      '      <li><a href="/kozhaoptom">Условия для оптовых покупателей</a></li>',
+      '      <li><a href="/delivery">Доставка и оплата</a></li>',
+      '    </ul>',
+      '  </section>',
+      '  <section aria-labelledby="category-faq-title">',
+      '    <h2 id="category-faq-title">Вопросы перед покупкой одежной кожи</h2>',
+      '    <h3>Можно ли купить одежную кожу в розницу?</h3>',
+      '    <p>Да. OZELIF работает с розничными и оптовыми клиентами. Цена и единица продажи конкретного материала указаны в его карточке.</p>',
+      '    <h3>Как подобрать кожу по толщине и фактуре?</h3>',
+      '    <p>Используйте фильтры по типу материала, цвету, сырью и толщине. Материал также можно посмотреть в московском шоуруме.</p>',
+      '    <h3>Как узнать наличие конкретной партии?</h3>',
+      '    <p>Опубликованный каталог показывает актуальные товары и цены, но складской статус отдельной партии не публикуется в API. Наличие нужного оттенка или объёма подтвердит менеджер.</p>',
+      '  </section>',
+    ] : []),
     ...(productCards.length ? [
       '  <section aria-labelledby="catalog-products-title">',
-      '    <h2 id="catalog-products-title">Товары категории</h2>',
+      `    <h2 id="catalog-products-title">${escapeHtml(isClothingLeather ? 'Каталог одежной кожи с ценами' : 'Товары категории')}</h2>`,
       '    <ul>',
       ...productCards,
       '    </ul>',

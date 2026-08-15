@@ -185,7 +185,6 @@ export function renderProductSeoPage(template, product, { origin = DEFAULT_ORIGI
         '@type': 'Offer',
         price: String(offer.price),
         priceCurrency: offer.currency,
-        availability: 'https://schema.org/InStock',
         url: productUrl,
         seller: { '@id': PUBLIC_STORE_ID },
         ...(offer.unit ? {

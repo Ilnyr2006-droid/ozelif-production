@@ -2256,3 +2256,33 @@ footer{border-radius:var(--radius-xl) var(--radius-xl) 0 0;padding-top:64px}
 }
 
 /* OZELIF SEO SUBCATEGORY LINKS END */
+
+/* Commercial SEO: clothing leather category */
+.clothing-catalog-commercial{padding-top:clamp(70px,8vw,120px);padding-bottom:clamp(70px,8vw,120px)}
+.clothing-catalog-commercial-head{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,.7fr);gap:clamp(35px,8vw,120px);align-items:end;margin-bottom:52px}
+.clothing-catalog-commercial-head h2,.clothing-catalog-faq-head h2{font-family:var(--serif);font-size:clamp(38px,5vw,72px);font-weight:400;line-height:1.02;letter-spacing:-.035em;margin:14px 0 0}
+.clothing-catalog-commercial-head h2 em,.clothing-catalog-faq-head h2 em{font-weight:400;color:var(--accent)}
+.clothing-catalog-commercial-head>p{font-size:14px;line-height:1.75;color:rgba(36,29,25,.67);margin:0;max-width:520px}
+.clothing-catalog-commercial-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.clothing-catalog-commercial-grid article{padding:34px clamp(22px,3vw,42px) 38px;border-right:1px solid var(--line)}
+.clothing-catalog-commercial-grid article:last-child{border-right:0}
+.clothing-catalog-commercial-grid article>span{font-family:var(--serif);font-size:14px;color:var(--accent)}
+.clothing-catalog-commercial-grid h3{font-family:var(--serif);font-size:clamp(24px,2.2vw,34px);font-weight:400;margin:28px 0 15px}
+.clothing-catalog-commercial-grid p{font-size:13px;line-height:1.75;color:rgba(36,29,25,.66);min-height:90px}
+.clothing-catalog-commercial-grid a{display:inline-flex;align-items:center;gap:8px;margin-top:12px;font-size:12px;font-weight:600;border-bottom:1px solid currentColor;padding-bottom:5px}
+.clothing-catalog-faq{padding-top:0;padding-bottom:clamp(80px,10vw,145px);display:grid;grid-template-columns:minmax(250px,.65fr) minmax(0,1.35fr);gap:clamp(45px,9vw,130px)}
+.clothing-catalog-faq-head{align-self:start}
+.clothing-catalog-faq-list{border-top:1px solid var(--line)}
+.clothing-catalog-faq-list details{border-bottom:1px solid var(--line);padding:23px 0}
+.clothing-catalog-faq-list summary{cursor:pointer;list-style:none;font-family:var(--serif);font-size:clamp(19px,2vw,26px);padding-right:38px;position:relative}
+.clothing-catalog-faq-list summary::-webkit-details-marker{display:none}
+.clothing-catalog-faq-list summary:after{content:'+';position:absolute;right:5px;top:-2px;font-family:var(--sans);font-size:24px;font-weight:400}
+.clothing-catalog-faq-list details[open] summary:after{content:'−'}
+.clothing-catalog-faq-list p{max-width:720px;font-size:13px;line-height:1.8;color:rgba(36,29,25,.67);margin:18px 0 2px}
+@media(max-width:820px){
+  .clothing-catalog-commercial-head,.clothing-catalog-faq{grid-template-columns:1fr;gap:28px}
+  .clothing-catalog-commercial-grid{grid-template-columns:1fr}
+  .clothing-catalog-commercial-grid article{border-right:0;border-bottom:1px solid var(--line);padding-left:0;padding-right:0}
+  .clothing-catalog-commercial-grid article:last-child{border-bottom:0}
+  .clothing-catalog-commercial-grid p{min-height:0}
+}

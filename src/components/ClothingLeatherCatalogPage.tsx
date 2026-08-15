@@ -40,7 +40,13 @@ const rubFormatter = new Intl.NumberFormat('ru-RU', { style: 'currency', currenc
 const rubDecimalFormatter = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 1, maximumFractionDigits: 1 })
 const primaryPrice = (product: PublicCatalogProduct) => getProductPriceDisplay(product).price
 const localProductUrl = (product: PublicCatalogProduct) => `/odejnayakozha/tproduct/${product.id}-${product.slug}`
-const productDescription = (product: PublicCatalogProduct) => [product.material, product.color, product.thickness ? `${product.thickness} мм` : null].filter(Boolean).join(' · ')
+const productDescription = (product: PublicCatalogProduct) => [
+  product.material,
+  product.color,
+  product.thickness ? `${product.thickness} мм` : null,
+  product.coating,
+  product.country,
+].filter(Boolean).slice(0, 5).join(' · ')
 const formatDecimal = (value: number) => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(value)
 const thicknessRange = (values: string[]) => {
   const numbers = values.flatMap(value => value.match(/\d+(?:[.,]\d+)?/g) ?? []).map(value => Number(value.replace(',', '.'))).filter(Number.isFinite)
@@ -109,10 +115,10 @@ export function ClothingLeatherCatalogPage() {
   const [filtersOpen, setFiltersOpen] = useState(false)
   const drawerRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    document.title = 'Одежная кожа — купить натуральную кожу в Москве | OZELIF'
-    setMeta('meta[name="description"]', 'name', 'description', 'Натуральная одежная кожа для пошива одежды и аксессуаров. Подбор по фактуре, цвету и толщине, розница и опт, шоурум в Москве, доставка по России.')
-    setMeta('meta[property="og:title"]', 'property', 'og:title', 'Одежная кожа — каталог OZELIF')
-    setMeta('meta[property="og:description"]', 'property', 'og:description', 'Каталог одежной кожи с фильтрами по фактуре, цвету, сырью и толщине.')
+    document.title = 'Одежная кожа купить в Москве — натуральная кожа для пошива | OZELIF'
+    setMeta('meta[name="description"]', 'name', 'description', 'Каталог натуральной одежной кожи OZELIF: цены и характеристики, подбор по сырью, цвету, фактуре и толщине. Розница и опт, шоурум в Москве, доставка по России.')
+    setMeta('meta[property="og:title"]', 'property', 'og:title', 'Одежная кожа для пошива — каталог OZELIF')
+    setMeta('meta[property="og:description"]', 'property', 'og:description', 'Натуральная одежная кожа с ценами и характеристиками. Розница и опт, подбор материала и шоурум в Москве.')
     setMeta('meta[property="og:url"]', 'property', 'og:url', 'https://ozelifkoja.ru/odejnayakozha')
     setMeta('meta[property="og:image"]', 'property', 'og:image', `https://ozelifkoja.ru${catalogHero.src}`)
     setCanonical('https://ozelifkoja.ru/odejnayakozha')
@@ -147,13 +153,14 @@ export function ClothingLeatherCatalogPage() {
   const shownProducts = products.slice(0, shown)
   const facts = useMemo(() => {
     const range = thicknessRange(options.thickness)
+    const total = catalog?.pagination.total ?? 0
     return [
-      ['Для изделий', 'Для одежды, головных уборов и аксессуаров.'],
-      ['Сырьё в каталоге', options.materials.length ? options.materials.join(' и ') : 'Указано в карточках материалов.'],
+      ['Ассортимент', total ? `${total} опубликованных товаров в текущем каталоге.` : 'Актуальные позиции загружаются из каталога OZELIF.'],
+      ['Цвета и фактуры', options.colors.length || options.subtypes.length ? `${options.colors.length} цветовых групп и ${options.subtypes.length} типов материала доступны в фильтрах.` : 'Параметры доступны в фильтрах и карточках товаров.'],
+      ['Сырьё', options.materials.length ? options.materials.join(' и ') : 'Указано в карточках материалов.'],
       ['Толщина', range ? `От ${formatDecimal(range.min)} до ${formatDecimal(range.max)} мм по данным карточек каталога.` : 'Указана в карточках материалов и доступна в фильтре.'],
-      ['Покупка и подбор', 'Розница и опт, просмотр образцов и помощь с подбором в московском шоуруме.'],
     ] as const
-  }, [options.materials, options.thickness])
+  }, [catalog?.pagination.total, options.colors.length, options.materials, options.subtypes.length, options.thickness])
   useReveal(shown, products.length)
   const patchFilters = (patch: Partial<Filters>) => setFilters(current => ({ ...current, ...patch }))
   const hasFilters = Object.entries(filters).some(([key, value]) => key !== 'sort' && value) || filters.sort !== 'default'
@@ -169,11 +176,36 @@ export function ClothingLeatherCatalogPage() {
     if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus() }
     if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus() }
   }
-  return <><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}/><Header active="catalog"/><main className="clothing-catalog-page"><section className="clothing-catalog-hero"><picture><source srcSet={catalogHero.avif} type="image/avif"/><source srcSet={catalogHero.src} type="image/webp"/><img src={catalogHero.src} alt={catalogHero.alt} width={catalogHero.width} height={catalogHero.height} loading="eager" fetchPriority="high" decoding="async"/></picture><div className="clothing-catalog-hero-scrim"/><div className="clothing-catalog-shell clothing-catalog-hero-content"><nav className="clothing-catalog-breadcrumbs" aria-label="Хлебные крошки"><a href="/">Главная</a><span>/</span><span>Одежная кожа</span></nav><p className="kicker">Каталог</p><h1>Одежная кожа</h1><p>OZELIF — магазин и склад натуральной одежной кожи в Москве. Материалы доступны в розницу и оптом; посмотреть образцы и получить помощь с подбором можно в шоуруме на Краснобогатырской улице, 24.</p><b>{isLoading ? 'Загружаем товары…' : `${products.length} из ${catalog?.pagination.total ?? 0} товаров`}</b></div></section>
-    <section className="clothing-catalog-shell clothing-catalog-facts" aria-labelledby="clothing-catalog-facts-title"><div className="clothing-catalog-facts-intro"><p className="kicker">Выбор материала</p><h2 id="clothing-catalog-facts-title">Одежная кожа<br/><em>для пошива</em></h2><p>OZELIF поставляет натуральную одежную кожу и помогает подобрать материал под конкретное изделие.</p></div><dl>{facts.map(([title, text]) => <div key={title}><dt>{title}</dt><dd>{text}</dd></div>)}</dl></section>
+  return <><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}/><Header active="catalog"/><main className="clothing-catalog-page"><section className="clothing-catalog-hero"><picture><source srcSet={catalogHero.avif} type="image/avif"/><source srcSet={catalogHero.src} type="image/webp"/><img src={catalogHero.src} alt={catalogHero.alt} width={catalogHero.width} height={catalogHero.height} loading="eager" fetchPriority="high" decoding="async"/></picture><div className="clothing-catalog-hero-scrim"/><div className="clothing-catalog-shell clothing-catalog-hero-content"><nav className="clothing-catalog-breadcrumbs" aria-label="Хлебные крошки"><a href="/">Главная</a><span>/</span><span>Одежная кожа</span></nav><p className="kicker">Натуральная кожа · Москва</p><h1>Одежная кожа для пошива</h1><p>Каталог натуральной одежной кожи с актуальными ценами и характеристиками. Подберите материал по сырью, цвету, фактуре и толщине; OZELIF работает в розницу и оптом, а образцы можно посмотреть в шоуруме на Краснобогатырской улице, 24.</p><b>{isLoading ? 'Загружаем товары…' : `${products.length} из ${catalog?.pagination.total ?? 0} товаров`}</b></div></section>
+    <section className="clothing-catalog-shell clothing-catalog-facts" aria-labelledby="clothing-catalog-facts-title"><div className="clothing-catalog-facts-intro"><p className="kicker">Выбор материала</p><h2 id="clothing-catalog-facts-title">Как выбрать<br/><em>одежную кожу</em></h2><p>Сравнивайте реальные параметры каталога: тип сырья, цвет, фактуру и толщину. Для одежды, головных уборов и аксессуаров менеджер поможет сверить материал с конкретной задачей.</p></div><dl>{facts.map(([title, text]) => <div key={title}><dt>{title}</dt><dd>{text}</dd></div>)}</dl></section>
     <CatalogSeoSubcategoryLinks categorySlug="odejnayakozha"/>
     <section className="clothing-catalog-shell clothing-catalog-layout" id="catalog-controls"><div className="clothing-catalog-mobile-controls"><p>Найдено <b>{products.length}</b></p><button type="button" className="clothing-catalog-filters-toggle" onClick={() => setFiltersOpen(true)} aria-expanded={filtersOpen} aria-controls="catalog-mobile-filters"><SlidersHorizontal size={17}/> Фильтры</button></div><div className="clothing-catalog-results" aria-live="polite"><div className="clothing-catalog-results-head"><p>Найдено <b>{products.length}</b></p>{hasFilters && <div className="clothing-catalog-applied">{filters.subtype && <span>{filters.subtype}</span>}{filters.color && <span>{filters.color}</span>}{filters.material && <span>{filters.material}</span>}{filters.thickness && <span>{filters.thickness} мм</span>}</div>}</div>{isLoading ? <div className="clothing-catalog-empty"><h2>Загружаем каталог</h2><p>Получаем актуальные товары и цены.</p></div> : error ? <div className="clothing-catalog-empty" role="alert"><h2>Не удалось загрузить каталог</h2><p>Проверьте подключение и попробуйте ещё раз.</p><button className="btn btn--dark" onClick={retry}>Повторить</button></div> : products.length ? <><div className="clothing-catalog-grid">{shownProducts.map((product, index) => <ProductCard product={product} index={index} key={product.id}/>)}</div>{shown < products.length && <button className="btn btn--dark clothing-catalog-more" onClick={() => setShown(current => current + pageSize)}>Показать ещё <span>({products.length - shown})</span></button>}</> : <div className="clothing-catalog-empty"><h2>Ничего не нашли</h2><p>Попробуйте изменить запрос или снять часть фильтров.</p><button className="btn btn--dark" onClick={() => setFilters(initialFilters)}>Сбросить фильтры</button></div>}</div><aside className="clothing-catalog-sidebar" aria-label="Фильтры каталога">{sidebar}</aside></section>
     {filtersOpen && <div className="clothing-catalog-drawer-layer"><button type="button" className="clothing-catalog-drawer-backdrop" aria-label="Закрыть фильтры" onClick={() => setFiltersOpen(false)}/><div className="clothing-catalog-drawer" id="catalog-mobile-filters" role="dialog" aria-modal="true" aria-label="Фильтры каталога" ref={drawerRef} onKeyDown={trapDrawerFocus}><div className="clothing-catalog-drawer-head"><h2>Фильтры</h2><button type="button" aria-label="Закрыть фильтры" onClick={() => setFiltersOpen(false)}><X size={19}/></button></div>{sidebar}</div></div>}
+
+    <section className="clothing-catalog-shell clothing-catalog-commercial" aria-labelledby="clothing-commercial-title">
+      <header className="clothing-catalog-commercial-head">
+        <div>
+          <p className="kicker">Покупка в OZELIF</p>
+          <h2 id="clothing-commercial-title">Купить одежную кожу<br/><em>в Москве</em></h2>
+        </div>
+        <p>Цены, единицы продажи и характеристики указаны в карточках товаров. Наличие конкретного оттенка или партии лучше подтвердить у менеджера перед заказом.</p>
+      </header>
+      <div className="clothing-catalog-commercial-grid">
+        <article><span>01</span><h3>Розница и подбор</h3><p>Выберите материал через фильтры каталога или приезжайте посмотреть образцы в шоуруме OZELIF на Краснобогатырской улице, 24.</p><a href="/contacts">Контакты и шоурум <ArrowUpRight size={15}/></a></article>
+        <article><span>02</span><h3>Оптовая закупка</h3><p>Для производства и регулярных закупок действуют отдельные оптовые условия. Менеджер поможет подобрать партию по характеристикам и задаче.</p><a href="/kozhaoptom">Условия для оптовиков <ArrowUpRight size={15}/></a></article>
+        <article><span>03</span><h3>Доставка по России</h3><p>После выбора материала можно согласовать способ получения заказа. Условия и доступные варианты доставки собраны на отдельной странице.</p><a href="/delivery">Доставка и оплата <ArrowUpRight size={15}/></a></article>
+      </div>
+    </section>
+    <section className="clothing-catalog-shell clothing-catalog-faq" aria-labelledby="clothing-faq-title">
+      <div className="clothing-catalog-faq-head"><p className="kicker">Вопросы перед покупкой</p><h2 id="clothing-faq-title">Одежная кожа:<br/><em>что уточнить</em></h2></div>
+      <div className="clothing-catalog-faq-list">
+        <details><summary>Можно ли купить одежную кожу в розницу?</summary><p>Да. OZELIF работает с розничными и оптовыми клиентами. Цена и единица продажи конкретного материала указаны в его карточке.</p></details>
+        <details><summary>Как подобрать кожу по толщине и фактуре?</summary><p>Используйте фильтры по типу материала, цвету, сырью и толщине. Если важны тактильные свойства и точное попадание в оттенок, материал можно посмотреть в московском шоуруме.</p></details>
+        <details><summary>Где посмотреть кожу перед заказом?</summary><p>Образцы можно посмотреть в шоуруме OZELIF: Москва, Краснобогатырская улица, 24. Перед визитом удобно связаться с менеджером и уточнить интересующие позиции.</p></details>
+        <details><summary>Как узнать наличие конкретной партии?</summary><p>Опубликованный каталог показывает актуальные товары и цены, но складской статус отдельной партии не публикуется в API. Наличие нужного оттенка или объёма подтвердит менеджер.</p></details>
+      </div>
+    </section>
+
     <section className="clothing-catalog-cta"><div><p className="kicker">Подбор материала</p><h2>Не нашли<br/><em>нужный материал?</em></h2><p>Напишите менеджеру — поможем сузить выбор по задаче, фактуре и оттенку.</p><div><a className="btn btn--light" href={whatsapp} target="_blank" rel="noreferrer">WhatsApp</a><a className="text-link text-link--light" href="#catalog-controls">Подобрать материал <ArrowUpRight size={17}/></a></div></div></section>
   </main><Footer/></>
 }

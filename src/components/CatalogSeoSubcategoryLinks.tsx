@@ -19,6 +19,13 @@ export function CatalogSeoSubcategoryLinks({
     return null
   }
 
+  const isClothingLeather = categorySlug === 'odejnayakozha'
+  const kicker = isClothingLeather ? 'Подборки одежной кожи' : 'Подборки'
+  const heading = isClothingLeather ? 'Виды одежной кожи' : 'Виды материала'
+  const description = isClothingLeather
+    ? 'Отдельные коммерческие подборки из актуального каталога: натуральная кожа КРС и перфорированная кожа с прямыми ссылками на товары.'
+    : 'Быстрый переход к отдельным подборкам из актуального каталога.'
+
   return (
     <section
       className="clothing-catalog-shell catalog-seo-subcategories"
@@ -28,19 +35,18 @@ export function CatalogSeoSubcategoryLinks({
 
         <div>
           <p className="kicker">
-            Подборки
+            {kicker}
           </p>
 
           <h2
             id={`catalog-subcategories-${categorySlug}`}
           >
-            Виды материала
+            {heading}
           </h2>
         </div>
 
         <p>
-          Быстрый переход к отдельным
-          подборкам из актуального каталога.
+          {description}
         </p>
 
       </header>

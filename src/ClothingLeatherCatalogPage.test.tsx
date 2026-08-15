@@ -96,13 +96,40 @@ describe('clothing leather catalog public API', () => {
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/api/public/catalog/v1/categories/odejnayakozha/products?limit=48&offset=0'), expect.any(Object))
   })
 
+  it('renders buyer-focused commercial content and descriptive internal links', async () => {
+    render(<ClothingLeatherCatalogPage/>)
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Одежная кожа для пошива' })).toBeInTheDocument()
+    expect(document.title).toBe('Одежная кожа купить в Москве — натуральная кожа для пошива | OZELIF')
+    expect(screen.getByRole('heading', { name: /Купить одежную кожу/i })).toBeInTheDocument()
+    expect(
+      screen.getAllByRole('link', { name: /Условия для оптовиков/i })
+        .some(link => link.getAttribute('href') === '/kozhaoptom'),
+    ).toBe(true)
+
+    expect(
+      screen.getAllByRole('link', { name: /Доставка и оплата/i })
+        .some(link => link.getAttribute('href') === '/delivery'),
+    ).toBe(true)
+
+    expect(
+      screen.getAllByRole('link', { name: /Контакты и шоурум/i })
+        .some(link => link.getAttribute('href') === '/contacts'),
+    ).toBe(true)
+    expect(document.body).toHaveTextContent('складской статус отдельной партии не публикуется в API')
+    expect(screen.getByRole('heading', { name: 'Виды одежной кожи' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Натуральная кожа КРС' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Перфорированная натуральная кожа' })).toBeInTheDocument()
+  })
+
   it('shows confirmed supplier facts without the obsolete manufacturing claim', async () => {
     render(<ClothingLeatherCatalogPage/>)
 
     expect(await screen.findByRole('heading', { name: /Одежная кожа для пошива/ })).toBeInTheDocument()
     expect(screen.getAllByText(/Овчина/).length).toBeGreaterThan(0)
     expect(screen.getByText(/От 0,5 до 1 мм по данным карточек каталога/)).toBeInTheDocument()
-    expect(document.body).toHaveTextContent('OZELIF поставляет натуральную одежную кожу')
+    expect(document.body).toHaveTextContent('Сравнивайте реальные параметры каталога')
+    expect(document.body).toHaveTextContent('88 опубликованных товаров в текущем каталоге')
     expect(document.body).not.toHaveTextContent('Мы производим кожу')
     expect(document.body).not.toHaveTextContent('шкур коз')
   })
