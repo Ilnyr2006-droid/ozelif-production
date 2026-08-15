@@ -53,6 +53,13 @@ export function safeSeoJson(value) {
   return JSON.stringify(value).replaceAll('<', '\\u003c')
 }
 
+export function stripHomeHeroPreloads(value) {
+  return String(value).replace(
+    /<link\s+[^>]*data-home-hero-preload[^>]*>\s*/gi,
+    '',
+  )
+}
+
 export function absoluteSeoUrl(value, origin = PUBLIC_SITE_ORIGIN) {
   const url = asSeoText(value)
   if (!url) return null

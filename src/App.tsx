@@ -4,9 +4,6 @@ import { trackPageView } from './analytics/track'
 import { Header } from './components/Header'
 import { Hero } from './components/Hero'
 import { Catalog } from './components/Catalog'
-import { Editorial } from './components/Editorial'
-import { Business } from './components/Business'
-import { Contact } from './components/Contact'
 import { Footer } from './components/Footer'
 import { CartProvider } from './cart/CartProvider'
 import { SITE } from './data'
@@ -36,6 +33,7 @@ const ContactsPage = lazy(async () => ({ default: (await import('./components/Co
 const PrivacyPage = lazy(async () => ({ default: (await import('./components/PrivacyPage')).PrivacyPage }))
 const AiAssistantWidget = lazy(async () => ({ default: (await import('./components/AiAssistantWidget')).AiAssistantWidget }))
 const CartDrawer = lazy(async () => ({ default: (await import('./components/cart/CartDrawer')).CartDrawer }))
+const HomeMainTail = lazy(async () => ({ default: (await import('./components/HomeMainTail')).HomeMainTail }))
 
 function RouteLoading() {
   return <main className="route-loading" aria-live="polite"><p>Загружаем страницу…</p></main>
@@ -156,6 +154,37 @@ function DeferredSaleProducts() {
   return <div ref={marker} className="sale-section-deferred">{shouldLoad && <Suspense fallback={null}><SaleProductsSection /></Suspense>}</div>
 }
 
+function DeferredHomeMainTail() {
+  const marker = useRef<HTMLDivElement>(null)
+  const [shouldLoad, setShouldLoad] = useState(false)
+
+  useEffect(() => {
+    if (typeof IntersectionObserver !== 'function') {
+      setShouldLoad(true)
+      return undefined
+    }
+
+    const observer = new IntersectionObserver(entries => {
+      if (!entries.some(entry => entry.isIntersecting)) return
+      setShouldLoad(true)
+      observer.disconnect()
+    }, { rootMargin: '400px 0px' })
+
+    if (marker.current) observer.observe(marker.current)
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <div ref={marker} className="home-main-tail-deferred">
+      {shouldLoad && (
+        <Suspense fallback={null}>
+          <HomeMainTail/>
+        </Suspense>
+      )}
+    </div>
+  )
+}
+
 export function App() {
   if (window.location.pathname.startsWith('/admin')) return <Suspense fallback={<RouteLoading/>}><AdminPageV2 /></Suspense>
   return (
@@ -175,7 +204,33 @@ export function App() {
 
 function AppRoutes() {
   const pathname = useAppPathname()
-  useEffect(() => { void trackPageView(pathname) }, [pathname])
+  useEffect(() => {
+    let sent = false
+
+    const send = () => {
+      if (sent) return
+      sent = true
+      void trackPageView(pathname)
+    }
+
+    const onLoad = () => {
+      window.setTimeout(send, 0)
+    }
+
+    const fallback = window.setTimeout(send, 5_000)
+
+    if (document.readyState === 'complete') {
+      onLoad()
+    } else {
+      window.addEventListener('load', onLoad, { once: true })
+    }
+
+    return () => {
+      sent = true
+      window.clearTimeout(fallback)
+      window.removeEventListener('load', onLoad)
+    }
+  }, [pathname])
   const isAboutPage = ['/about', '/about/', '/kozhaozelif', '/kozhaozelif/'].includes(pathname)
   const isWholesalePage = ['/kozhaoptom', '/kozhaoptom/'].includes(pathname)
   const isSewingProductionPage = ['/production', '/production/'].includes(pathname)
@@ -243,5 +298,5 @@ if (isClothingCatalogPage) return <ClothingLeatherCatalogPage/>
       'https://yandex.ru/maps/org/ozelif_kozha/242632009920/',
     ],
   }
-  return <><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}/><Header/><main><Hero/><Catalog/><DeferredSaleProducts/><Editorial/><Business/><Contact/><section className="seo section"><details><summary>О натуральной коже OZELIF</summary><div><p>OZELIF предлагает натуральную кожу, замшу и дублёночный материал в Москве для пошива одежды, обуви и галантереи. Ассортимент распределён по производственному назначению, чтобы быстрее подобрать подходящую выделку и фактуру.</p><p>Компания работает с 2011 года с розничными и оптовыми клиентами. Материалы можно выбрать со склада и посмотреть в московском шоуруме; условия объёмных закупок обсуждаются индивидуально.</p></div></details></section></main><Footer/></>
+  return <><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}/><Header/><main><Hero/><Catalog/><DeferredSaleProducts/><DeferredHomeMainTail/></main><Footer/></>
 }

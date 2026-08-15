@@ -29,8 +29,41 @@ export function usePublicCatalogProduct(categorySlug: string, identifier: string
   return useLoader<PublicCatalogProduct>(load, `${categorySlug}:${identifier}`)
 }
 
+function waitForInitialPageLoad(signal: AbortSignal) {
+  if (
+    import.meta.env.MODE === 'test'
+    || typeof document === 'undefined'
+    || document.readyState === 'complete'
+  ) {
+    return Promise.resolve()
+  }
+
+  return new Promise<void>((resolve, reject) => {
+    const cleanup = () => {
+      window.removeEventListener('load', onLoad)
+      signal.removeEventListener('abort', onAbort)
+    }
+
+    const onLoad = () => {
+      cleanup()
+      resolve()
+    }
+
+    const onAbort = () => {
+      cleanup()
+      reject(new DOMException('Aborted', 'AbortError'))
+    }
+
+    window.addEventListener('load', onLoad, { once: true })
+    signal.addEventListener('abort', onAbort, { once: true })
+  })
+}
+
 export function usePublicCatalogCategories() {
-  const load = useCallback((signal: AbortSignal) => fetchPublicCatalogCategories(signal), [])
+  const load = useCallback(async (signal: AbortSignal) => {
+    await waitForInitialPageLoad(signal)
+    return fetchPublicCatalogCategories(signal)
+  }, [])
   return useLoader<PublicCatalogCategory[]>(load, 'public-catalog-categories')
 }
 

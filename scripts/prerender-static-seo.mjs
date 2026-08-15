@@ -32,6 +32,11 @@ const pages = [
 
 ]
 
+const HOME_HERO_PRELOADS = [
+  '<link data-home-hero-preload rel="preload" as="image" href="/images/hero-leather-mobile.webp" type="image/webp" media="(max-width: 720px)" fetchpriority="high" />',
+  '<link data-home-hero-preload rel="preload" as="image" href="/images/hero-leather-wide.webp" type="image/webp" media="(min-width: 721px)" fetchpriority="high" />',
+].join('\n  ')
+
 function replaceMeta(html, selector, replacement) {
   const expression = selector === 'description'
     ? /<meta\s+name="description"[^>]*>/i
@@ -48,6 +53,9 @@ function renderPage(template, { path, title, description, ogTitle, schema, conte
   html = replaceMeta(html, 'og:title', `<meta property="og:title" content="${escapeSeoHtml(ogTitle)}" />`)
   html = replaceMeta(html, 'og:description', `<meta property="og:description" content="${escapeSeoHtml(description)}" />`)
   html = replaceMeta(html, 'og:url', `<meta property="og:url" content="${url}" />`)
+  if (path === '/') {
+    html = html.replace('</head>', `  ${HOME_HERO_PRELOADS}\n</head>`)
+  }
   const schemas = [PUBLIC_STORE_SCHEMA, schema]
     .map(item => `<script type="application/ld+json">${safeSeoJson(item)}</script>`)
     .join('\n  ')

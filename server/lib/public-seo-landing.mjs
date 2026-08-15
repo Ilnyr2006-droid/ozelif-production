@@ -6,6 +6,7 @@ import {
   asSeoText,
   escapeSeoHtml,
   safeSeoJson,
+  stripHomeHeroPreloads,
 } from './public-seo-html.mjs'
 import { getPublishedProductOffer } from './public-product-seo.mjs'
 
@@ -205,7 +206,7 @@ export function renderCatalogSeoLandingPage(template, landing, products, { origi
     })),
   }
 
-  let html = String(template)
+  let html = stripHomeHeroPreloads(template)
   html = replaceCanonical(html, canonical)
   html = setRobots(html, productItems.length === 0)
   html = replaceStructuredData(html, [

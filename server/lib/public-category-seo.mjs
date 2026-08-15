@@ -7,6 +7,7 @@ import {
   escapeSeoHtml,
   replaceRootWithSeoContent,
   safeSeoJson,
+  stripHomeHeroPreloads,
 } from './public-seo-html.mjs'
 import { getPublishedProductOffer } from './public-product-seo.mjs'
 import { getCatalogSeoLandingsForCategory } from './catalog-seo-landings.mjs'
@@ -163,7 +164,7 @@ export function renderCategorySeoPage(template, category, { origin = DEFAULT_ORI
     ] : []),
   ].join('\n    ')
 
-  const html = String(template)
+  const html = stripHomeHeroPreloads(template)
     .replace(/<meta\s+name="description"[^>]*>\s*/i, '')
     .replace(/<meta\s+name="robots"[^>]*>\s*/gi, '')
     .replace(/<link\s+rel="canonical"[^>]*>\s*/i, '')

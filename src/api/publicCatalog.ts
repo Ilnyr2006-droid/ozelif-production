@@ -183,9 +183,26 @@ export async function fetchPublicCatalogProducts(categorySlug: string, options: 
   return { ...body, items: body.items.map(normalizePublicCatalogProduct) }
 }
 
-export async function fetchPublicCatalogCategories(signal?: AbortSignal): Promise<PublicCatalogCategory[]> {
-  const body = await request<{ items: PublicCatalogCategory[] }>('/categories', signal)
-  return body.items
+let publicCatalogCategoriesCache: PublicCatalogCategory[] | null = null
+let publicCatalogCategoriesRequest: Promise<PublicCatalogCategory[]> | null = null
+
+export async function fetchPublicCatalogCategories(_signal?: AbortSignal): Promise<PublicCatalogCategory[]> {
+  if (publicCatalogCategoriesCache) {
+    return publicCatalogCategoriesCache
+  }
+
+  if (!publicCatalogCategoriesRequest) {
+    publicCatalogCategoriesRequest = request<{ items: PublicCatalogCategory[] }>('/categories')
+      .then(body => {
+        publicCatalogCategoriesCache = body.items
+        return body.items
+      })
+      .finally(() => {
+        publicCatalogCategoriesRequest = null
+      })
+  }
+
+  return publicCatalogCategoriesRequest
 }
 
 export async function fetchPublicCatalogSale(signal?: AbortSignal): Promise<PublicCatalogProduct[]> {

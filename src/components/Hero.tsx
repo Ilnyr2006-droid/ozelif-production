@@ -7,22 +7,29 @@ import { external } from '../data'
 export function Hero() {
   return (
     <section className="hero" id="top">
-      <picture>
+      <picture className="hero-picture">
         <source
           media="(max-width: 720px)"
           srcSet="/images/hero-leather-mobile.webp"
           type="image/webp"
+          width={900}
+          height={1200}
         />
 
         <source
           srcSet="/images/hero-leather-wide.webp"
           type="image/webp"
+          width={1600}
+          height={900}
         />
 
         <img
           className="hero-image"
           src="/images/hero-leather-wide.jpg"
           alt="Натуральная кожа разных оттенков OZELIF"
+          width={1600}
+          height={900}
+          loading="eager"
           fetchPriority="high"
           decoding="async"
         />

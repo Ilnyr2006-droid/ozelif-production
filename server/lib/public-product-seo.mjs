@@ -7,6 +7,7 @@ import {
   escapeSeoHtml,
   replaceRootWithSeoContent,
   safeSeoJson,
+  stripHomeHeroPreloads,
 } from './public-seo-html.mjs'
 
 const DEFAULT_ORIGIN = PUBLIC_SITE_ORIGIN
@@ -222,7 +223,7 @@ export function renderProductSeoPage(template, product, { origin = DEFAULT_ORIGI
     `<script type="application/ld+json">${safeJson(breadcrumbSchema)}</script>`,
   ].join('\n    ')
 
-  const html = String(template)
+  const html = stripHomeHeroPreloads(template)
     .replace(/<meta\s+name="description"[^>]*>\s*/i, '')
     .replace(/<link\s+rel="canonical"[^>]*>\s*/i, '')
     .replace(/<meta\s+property="og:(?:type|url|title|description|image)"[^>]*>\s*/gi, '')
