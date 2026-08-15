@@ -1,15 +1,11 @@
-const STATIC_PATHS = [
+export const BASE_STATIC_PATHS = Object.freeze([
   '/',
   '/kozhaozelif',
   '/kozhaoptom',
-  '/dublyonka/kerli',
-  '/dublyonka/toskana',
-  '/odejnayakozha/perforirovannaya',
-  '/odejnayakozha/krs',
   '/production',
   '/delivery',
   '/contacts',
-]
+])
 
 function escapeXml(value) {
   return String(value ?? '')
@@ -25,7 +21,7 @@ function dateValue(value) {
   return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10)
 }
 
-export function renderSitemapXml({ siteUrl, staticPaths = STATIC_PATHS, categories = [], products = [] }) {
+export function renderSitemapXml({ siteUrl, staticPaths = BASE_STATIC_PATHS, categories = [], products = [] }) {
   const origin = String(siteUrl).replace(/\/$/, '')
   const entries = [
     ...staticPaths.map(path => ({ path })),

@@ -9,6 +9,7 @@ import {
   safeSeoJson,
 } from './public-seo-html.mjs'
 import { getPublishedProductOffer } from './public-product-seo.mjs'
+import { getCatalogSeoLandingsForCategory } from './catalog-seo-landings.mjs'
 
 const DEFAULT_ORIGIN = PUBLIC_SITE_ORIGIN
 const asText = asSeoText
@@ -46,6 +47,7 @@ function absoluteUrl(origin, value) {
 
 function renderCategoryBody(category, products, { origin, description, facts = [] }) {
   const name = asText(category?.name) || 'Каталог'
+  const subcategories = getCatalogSeoLandingsForCategory(asText(category?.slug))
   const productCards = products.map(product => {
     const productUrl = absoluteUrl(origin, product?.url)
     const imageUrl = absoluteUrl(origin, product?.primaryImage?.url || product?.images?.[0]?.url)
@@ -72,6 +74,14 @@ function renderCategoryBody(category, products, { origin, description, facts = [
     `    <h1>${escapeHtml(name)}</h1>`,
     `    <p>${escapeHtml(description)}</p>`,
     '  </header>',
+    ...(subcategories.length ? [
+      '  <section aria-labelledby="catalog-subcategories-title">',
+      '    <h2 id="catalog-subcategories-title">Подкатегории</h2>',
+      '    <nav aria-label="Подкатегории каталога">',
+      ...subcategories.map(item => `      <a href="${escapeHtml(item.path)}">${escapeHtml(item.title)}</a>`),
+      '    </nav>',
+      '  </section>',
+    ] : []),
     ...(facts.length ? [
       '  <section aria-labelledby="category-facts-title">',
       '    <h2 id="category-facts-title">Одежная кожа для пошива</h2>',
@@ -105,6 +115,7 @@ export function renderCategorySeoPage(template, category, { origin = DEFAULT_ORI
     || `${name} в каталоге натуральных материалов OZELIF.`
   const image = absoluteUrl(origin, category?.coverImage)
   const productItems = Array.isArray(products) ? products : []
+  const emptyCategory = !notFound && productItems.length === 0
   const categorySchema = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
@@ -124,10 +135,19 @@ export function renderCategorySeoPage(template, category, { origin = DEFAULT_ORI
       })),
     },
   }
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Главная', item: absoluteUrl(origin, '/') },
+      { '@type': 'ListItem', position: 2, name, item: canonical },
+    ],
+  }
   const head = [
     `<title>${escapeHtml(notFound ? 'Страница не найдена | OZELIF' : title)}</title>`,
     `<meta name="description" content="${escapeHtml(notFound ? 'Запрошенная страница не найдена.' : description)}" />`,
-    ...(notFound ? ['<meta name="robots" content="noindex,follow" />'] : [`<link rel="canonical" href="${escapeHtml(canonical)}" />`]),
+    ...((notFound || emptyCategory) ? ['<meta name="robots" content="noindex,follow" />'] : []),
+    ...(!notFound ? [`<link rel="canonical" href="${escapeHtml(canonical)}" />`] : []),
     `<meta property="og:type" content="website" />`,
     `<meta property="og:url" content="${escapeHtml(canonical)}" />`,
     `<meta property="og:title" content="${escapeHtml(notFound ? 'Страница не найдена | OZELIF' : title)}" />`,
@@ -139,12 +159,13 @@ export function renderCategorySeoPage(template, category, { origin = DEFAULT_ORI
     ...(!notFound ? [
       `<script type="application/ld+json">${safeSeoJson(PUBLIC_STORE_SCHEMA)}</script>`,
       `<script type="application/ld+json">${safeSeoJson(categorySchema)}</script>`,
+      `<script type="application/ld+json">${safeSeoJson(breadcrumbSchema)}</script>`,
     ] : []),
   ].join('\n    ')
 
   const html = String(template)
     .replace(/<meta\s+name="description"[^>]*>\s*/i, '')
-    .replace(/<meta\s+name="robots"[^>]*>\s*/i, '')
+    .replace(/<meta\s+name="robots"[^>]*>\s*/gi, '')
     .replace(/<link\s+rel="canonical"[^>]*>\s*/i, '')
     .replace(/<meta\s+property="og:(?:type|url|title|description|image)"[^>]*>\s*/gi, '')
     .replace(/<title>[\s\S]*?<\/title>/i, head)
