@@ -39,6 +39,10 @@ const CATEGORY_SEO_OVERRIDES = {
     description: 'Натуральная одежная кожа для пошива одежды и аксессуаров. Подбор по фактуре, цвету и толщине, розница и опт, шоурум в Москве, доставка по России.',
     bodyDescription: 'OZELIF — магазин и склад натуральной одежной кожи в Москве. Материалы доступны в розницу и оптом; посмотреть образцы и получить помощь с подбором можно в шоуруме на Краснобогатырской улице, 24.',
     bodyFacts: clothingCatalogFacts,
+    heroPreload: {
+      href: '/images/catalog/clothing-leather/catalog-hero.avif',
+      type: 'image/avif',
+    },
   },
 }
 
@@ -51,7 +55,6 @@ function renderCategoryBody(category, products, { origin, description, facts = [
   const subcategories = getCatalogSeoLandingsForCategory(asText(category?.slug))
   const productCards = products.map(product => {
     const productUrl = absoluteUrl(origin, product?.url)
-    const imageUrl = absoluteUrl(origin, product?.primaryImage?.url || product?.images?.[0]?.url)
     const offer = getPublishedProductOffer(product)
     const priceText = offer
       ? `от ${new Intl.NumberFormat('ru-RU').format(offer.price)} ₽${offer.unit ? ` / ${offer.unit}` : ''}`
@@ -59,7 +62,6 @@ function renderCategoryBody(category, products, { origin, description, facts = [
     return [
       '      <li>',
       `        <a href="${escapeHtml(productUrl)}">`,
-      ...(imageUrl ? [`          <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(product?.primaryImage?.alt || product?.images?.[0]?.alt || product?.name)}" loading="lazy" decoding="async" />`] : []),
       `          <h2>${escapeHtml(product?.name)}</h2>`,
       `          <p>${escapeHtml(priceText)}</p>`,
       '        </a>',
@@ -155,7 +157,9 @@ export function renderCategorySeoPage(template, category, { origin = DEFAULT_ORI
     `<meta property="og:description" content="${escapeHtml(notFound ? 'Запрошенная страница не найдена.' : description)}" />`,
     ...(image && !notFound ? [
       `<meta property="og:image" content="${escapeHtml(image)}" />`,
-      `<link rel="preload" as="image" href="${escapeHtml(image)}" fetchpriority="high" />`,
+    ] : []),
+    ...(override?.heroPreload && !notFound ? [
+      `<link rel="preload" as="image" href="${escapeHtml(override.heroPreload.href)}" type="${escapeHtml(override.heroPreload.type)}" fetchpriority="high" />`,
     ] : []),
     ...(!notFound ? [
       `<script type="application/ld+json">${safeSeoJson(PUBLIC_STORE_SCHEMA)}</script>`,
