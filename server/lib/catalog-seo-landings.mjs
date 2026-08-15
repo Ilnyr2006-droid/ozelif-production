@@ -1,5 +1,14 @@
 export const CATALOG_SEO_LANDINGS = Object.freeze([
   Object.freeze({
+    path: '/zamsha/gladkaya',
+    categorySlug: 'zamsha',
+    categoryName: 'Замша',
+    parentPath: '/zamsha',
+    title: 'Гладкая натуральная замша',
+    label: 'Гладкая замша',
+    matcherTokens: Object.freeze(['гладкая']),
+  }),
+  Object.freeze({
     path: '/dublyonka/kerli',
     categorySlug: 'dublyonka',
     categoryName: 'Дублёночный материал',

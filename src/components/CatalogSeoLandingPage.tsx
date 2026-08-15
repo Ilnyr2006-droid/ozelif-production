@@ -38,6 +38,7 @@ import {
 
 
 const COMMERCIAL_PURCHASE_TITLES: Record<string, string> = {
+  '/zamsha/gladkaya': 'Купить гладкую натуральную замшу',
   '/odejnayakozha/krs': 'Купить натуральную кожу КРС',
   '/odejnayakozha/perforirovannaya': 'Купить перфорированную натуральную кожу',
   '/dublyonka/kerli': 'Купить дублёночный материал Кёрли',

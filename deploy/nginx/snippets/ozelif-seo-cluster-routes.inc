@@ -133,3 +133,19 @@ location = /furnitura/ykk {
     proxy_set_header X-Forwarded-Proto $scheme;
     add_header X-Ozelif-SEO-Cluster "express-live" always;
 }
+
+location = /zamsha/gladkaya {
+    proxy_pass http://127.0.0.1:8093;
+    proxy_cache off;
+    proxy_no_cache 1;
+    proxy_cache_bypass 1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    add_header X-Ozelif-SEO-Cluster "express-live" always;
+}
+
+location = /zamsha/gladkaya/ {
+    return 301 /zamsha/gladkaya;
+}

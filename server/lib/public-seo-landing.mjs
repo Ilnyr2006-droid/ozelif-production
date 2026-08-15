@@ -136,6 +136,7 @@ function renderProductsSection(landing, products) {
 }
 
 const COMMERCIAL_PURCHASE_TITLES = Object.freeze({
+  '/zamsha/gladkaya': 'Купить гладкую натуральную замшу в Москве',
   '/odejnayakozha/krs': 'Купить натуральную кожу КРС в Москве',
   '/odejnayakozha/perforirovannaya': 'Купить перфорированную натуральную кожу в Москве',
   '/dublyonka/kerli': 'Купить дублёночный материал Кёрли в Москве',

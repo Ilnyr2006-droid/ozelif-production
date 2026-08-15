@@ -30,6 +30,63 @@ export type CatalogSeoLandingConfig = {
 
 export const catalogSeoLandings: CatalogSeoLandingConfig[] = [
   {
+    path:
+      '/zamsha/gladkaya',
+
+    categorySlug:
+      'zamsha',
+
+    categoryName:
+      'Замша',
+
+    parentPath:
+      '/zamsha',
+
+    metaTitle:
+      'Гладкая замша купить в Москве — натуральная замшевая кожа | OZELIF',
+
+    metaDescription:
+      'Гладкая натуральная замша в каталоге OZELIF: актуальные цвета, толщина, характеристики и цены. Розница и опт, шоурум в Москве, доставка по России.',
+
+    ogTitle:
+      'Гладкая натуральная замша — OZELIF',
+
+    kicker:
+      'Замша · Гладкая',
+
+    title:
+      'Гладкая натуральная замша',
+
+    intro:
+      'Подборка гладкой натуральной замши из актуального каталога OZELIF. Сравните цвет, толщину, характеристики и цену конкретных позиций.',
+
+    badge:
+      'Гладкая замша',
+
+    heroBase:
+      '/images/catalog/suede/catalog-hero',
+
+    heroAlt:
+      'Гладкая натуральная замшевая кожа',
+
+    matcherTokens: [
+      'гладкая',
+    ],
+
+    emptyTitle:
+      'Сейчас нет опубликованной гладкой замши',
+
+    loadingTitle:
+      'Загружаем гладкую замшу',
+
+    ctaTitle:
+      'Нужна гладкая замша под конкретное изделие?',
+
+    ctaText:
+      'Менеджер поможет сравнить цвет, толщину, характеристики и актуальную партию. Для объёмной закупки доступны оптовые условия.',
+  },
+
+  {
     path: '/dublyonka/kerli',
 
     categorySlug: 'dublyonka',
