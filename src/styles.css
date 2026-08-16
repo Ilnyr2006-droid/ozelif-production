@@ -2307,3 +2307,7 @@ footer{border-radius:var(--radius-xl) var(--radius-xl) 0 0;padding-top:64px}
   height:100%;
   object-fit:cover;
 }
+
+/* Money-query SEO block: visible commercial context + crawlable category links. */
+.seo .seo-links{display:flex;flex-wrap:wrap;gap:10px 18px;margin-top:20px}
+.seo .seo-links a{display:inline-flex;align-items:center;min-height:36px;border-bottom:1px solid var(--line);font-size:12px;font-weight:600}

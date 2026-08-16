@@ -27,7 +27,7 @@ describe('homepage initial render', () => {
 
     expect(
       screen.getByRole('heading', { level: 1 }),
-    ).toHaveTextContent('Кожа, которая')
+    ).toHaveTextContent('Натуральная кожа')
 
     expect(
       screen.getAllByRole('link', { name: 'О компании' })[0],
@@ -42,7 +42,7 @@ describe('homepage initial render', () => {
     ).toHaveAttribute('href', '/kozhaoptom')
 
     expect(
-      screen.getAllByRole('link', { name: /Перейти в каталог/i }).length,
+      screen.getAllByRole('link', { name: /Смотреть каталог и цены/i }).length,
     ).toBeGreaterThan(0)
 
     // Business/reviews/contact are intentionally deferred below the fold.

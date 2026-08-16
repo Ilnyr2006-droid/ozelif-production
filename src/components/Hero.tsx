@@ -39,19 +39,19 @@ export function Hero() {
 
       <div className="hero-content">
         <p className="eyebrow hero-in hero-in--1">
-          Натуральные материалы • Москва
+          Магазин натуральной кожи • Москва
         </p>
 
         <h1 className="hero-in hero-in--2">
-          Кожа, которая
+          Натуральная кожа
           <br />
-          <em>становится формой</em>
+          <em>в Москве</em>
         </h1>
 
         <p className="hero-copy hero-in hero-in--3">
-          Натуральная кожа и дублёночный материал
-          от производителя — для одежды, обуви,
-          галантереи и швейного производства.
+          Купить натуральную кожу оптом и в розницу
+          со склада OZELIF: одежная и обувная кожа,
+          замша и дублёночный материал.
         </p>
 
         <div className="hero-cta hero-in hero-in--4">
@@ -59,15 +59,15 @@ export function Hero() {
             className="btn btn--accent"
             href={external('/odejnayakozha')}
           >
-            Перейти в каталог
+            Смотреть каталог и цены
             <ArrowUpRight size={17} />
           </a>
 
           <a
             className="text-link text-link--light"
-            href="#contacts"
+            href="/contacts"
           >
-            Подобрать материал
+            Шоурум в Москве
           </a>
         </div>
       </div>

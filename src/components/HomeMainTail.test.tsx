@@ -12,6 +12,18 @@ describe('HomeMainTail', () => {
       screen.getByRole('link', { name: /Условия для опта/i }),
     ).toHaveAttribute('href', '/kozhaoptom')
 
+    expect(
+      screen.getByText('Купить натуральную кожу в Москве'),
+    ).toBeInTheDocument()
+
+    expect(
+      screen.getByRole('link', { name: 'Кожа КРС' }),
+    ).toHaveAttribute('href', '/odejnayakozha/krs')
+
+    expect(
+      screen.getByRole('link', { name: 'Шоурум в Москве' }),
+    ).toHaveAttribute('href', '/contacts')
+
     const excerpt = await screen.findByText(
       '«Очень хороший магазин, отзывчивые и профессиональные сотрудники.»',
     )
