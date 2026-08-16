@@ -214,6 +214,7 @@ export function renderProductSeoPage(template, product, { origin = DEFAULT_ORIGI
   const { name, description, title } = getProductSeoMetadata(product, { categoryName })
   const primaryImage = product?.primaryImage?.url || product?.images?.[0]?.url || null
   const imageUrl = absoluteUrl(origin, primaryImage)
+  const responsiveImage = responsiveProductImage(imageUrl)
   const offer = getPublishedProductOffer(product)
   const productSchema = {
     '@context': 'https://schema.org',
@@ -265,6 +266,9 @@ export function renderProductSeoPage(template, product, { origin = DEFAULT_ORIGI
     `<meta property="og:description" content="${escapeHtml(description)}" />`,
     ...(imageUrl ? [`<meta property="og:image" content="${escapeHtml(imageUrl)}" />`] : []),
     '<meta name="twitter:card" content="summary_large_image" />',
+    ...(responsiveImage?.mobileSrc ? [
+      `<link rel="preload" as="image" type="image/webp" href="${escapeHtml(responsiveImage.mobileSrc)}" media="(max-width: 639px)" fetchpriority="high" />`,
+    ] : []),
     ...(modulePreloadHref ? [`<link rel="modulepreload" href="${escapeHtml(modulePreloadHref)}" />`] : []),
     `<script id="ozelif-product-bootstrap" type="application/json">${bootstrap}</script>`,
     `<script type="application/ld+json">${safeJson(PUBLIC_STORE_SCHEMA)}</script>`,

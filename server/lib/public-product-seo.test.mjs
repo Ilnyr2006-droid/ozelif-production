@@ -41,6 +41,7 @@ describe('public product structured data', () => {
     })
 
     expect(html).toContain('id="ozelif-product-bootstrap"')
+    expect(html).toContain('rel="preload" as="image" type="image/webp" href="https://ozelifkoja.ru/images/catalog/clothing-leather/629195419972/w480-v2.webp" media="(max-width: 639px)" fetchpriority="high"')
     expect(html).toContain('rel="modulepreload" href="/assets/ClothingLeatherCatalogPage-test.js"')
     expect(html).toContain('src="https://ozelifkoja.ru/images/catalog/clothing-leather/629195419972/w720-v2.webp"')
     expect(html).toContain('media="(max-width: 639px)"')
