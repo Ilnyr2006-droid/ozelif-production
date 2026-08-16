@@ -7,6 +7,7 @@ import {
   escapeSeoHtml,
   safeSeoJson,
   stripHomeHeroPreloads,
+  replaceRootWithSeoContent,
 } from './public-seo-html.mjs'
 import { getPublishedProductOffer } from './public-product-seo.mjs'
 
@@ -159,6 +160,53 @@ function commercialSection(landing){
   return ['<section class="seo-prerender__commercial">',`  <h2>${escapeHtml(commercialPurchaseTitle(landing))}</h2>`,'  <p>Цены и характеристики берутся из опубликованных карточек актуального каталога.</p>','  <ul>',`    <li><a href="${escapeHtml(landing.parentPath)}">Открыть весь каталог</a></li>`,'    <li><a href="/kozhaoptom">Условия для оптовых покупателей</a></li>','    <li><a href="/contacts">Контакты и шоурум</a></li>','    <li><a href="/delivery">Доставка и оплата</a></li>','  </ul>','  <p>Складской статус отдельной партии не публикуется в публичном API; нужный вариант и объём подтвердит менеджер.</p>','</section>'].join('\n')
 }
 
+
+function landingMetaDescription(landing) {
+  return `${asText(landing?.title)} в каталоге OZELIF: актуальные товары, цены и характеристики. Розница и опт, шоурум в Москве, доставка по России.`
+}
+
+function replaceFallbackLandingMetadata(html, landing, canonical) {
+  const title = `${commercialPurchaseTitle(landing)} | OZELIF`
+  const description = landingMetaDescription(landing)
+
+  let next = String(html)
+    .replace(
+      /<title>[\s\S]*?<\/title>/i,
+      `<title>${escapeHtml(title)}</title>`,
+    )
+    .replace(/<meta\s+name="description"[^>]*>\s*/gi, '')
+    .replace(
+      /<meta\s+property="og:(?:url|title|description)"[^>]*>\s*/gi,
+      '',
+    )
+
+  const tags = [
+    `<meta name="description" content="${escapeHtml(description)}" />`,
+    `<meta property="og:url" content="${escapeHtml(canonical)}" />`,
+    `<meta property="og:title" content="${escapeHtml(title)}" />`,
+    `<meta property="og:description" content="${escapeHtml(description)}" />`,
+  ].join('\n  ')
+
+  return next.replace('</head>', `  ${tags}\n</head>`)
+}
+
+function renderFallbackLandingBody(landing, section) {
+  return [
+    '<main class="seo-prerender seo-prerender--landing" data-seo-prerender="true">',
+    '  <nav aria-label="Хлебные крошки">',
+    '    <a href="/">Главная</a>',
+    `    <a href="${escapeHtml(landing.parentPath)}">${escapeHtml(landing.categoryName)}</a>`,
+    '  </nav>',
+    '  <article>',
+    `    <p>${escapeHtml(landing.categoryName)}</p>`,
+    `    <h1>${escapeHtml(landing.title)}</h1>`,
+    `    <p>${escapeHtml(landingMetaDescription(landing))}</p>`,
+    section,
+    '  </article>',
+    '</main>',
+  ].join('\n')
+}
+
 function replaceCanonical(html, canonical) {
   const tag = `<link rel="canonical" href="${escapeHtml(canonical)}" />`
   if (/<link\s+rel="canonical"[^>]*>/i.test(html)) {
@@ -241,6 +289,15 @@ export function renderCatalogSeoLandingPage(template, landing, products, { origi
   ])
 
   const section = [renderProductsSection(landing, productItems), commercialSection(landing)].join('\n')
+
+  if (!/<h1\b[^>]*>/i.test(html)) {
+    html = replaceFallbackLandingMetadata(html, landing, canonical)
+    return replaceRootWithSeoContent(
+      html,
+      renderFallbackLandingBody(landing, section),
+    )
+  }
+
   if (/<\/article>/i.test(html)) {
     return html.replace(/<\/article>/i, `${section}\n  </article>`)
   }

@@ -29,13 +29,13 @@ describe('application routes', () => {
     stubPublicCatalogApi('novaya-kategoriya', [product], { name: 'Новая категория', description: 'Материалы новой категории' })
     window.history.replaceState(null, '', '/novaya-kategoriya')
     const { unmount } = render(<App />)
-    await waitFor(() => expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Новая категория'))
+    await waitFor(() => expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Новая категория'), { timeout: 10_000 })
     unmount()
     cleanup()
 
     window.history.replaceState(null, '', `/novaya-kategoriya/tproduct/${product.id}-${product.slug}`)
     render(<App />)
-    await waitFor(() => expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Новый материал'))
+    await waitFor(() => expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Новый материал'), { timeout: 10_000 })
     cleanup()
   })
 

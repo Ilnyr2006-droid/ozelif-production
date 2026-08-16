@@ -27,4 +27,23 @@ describe('dynamic SEO landing renderer', () => {
     const html = renderCatalogSeoLandingPage(template, landing, [])
     expect(html).toContain('<meta name="robots" content="noindex,follow" />')
   })
+  it('gives a fallback dynamic landing one H1 and unique SEO metadata', () => {
+    const fallbackTemplate = `<!doctype html><html><head><title>Homepage fallback</title><meta name="description" content="Homepage"><meta property="og:title" content="Homepage"><meta property="og:description" content="Homepage"><meta property="og:url" content="https://ozelifkoja.ru/"><link rel="canonical" href="https://ozelifkoja.ru/"></head><body><div id="root"></div></body></html>`
+    const landing = getCatalogSeoLandingByPath('/odejnayakozha/vintazhnaya')
+    const html = renderCatalogSeoLandingPage(fallbackTemplate, landing, [{
+      name: 'Vintage Test',
+      slug: 'vintage-test',
+      url: '/odejnayakozha/tproduct/999-vintage-test',
+      attributes: { subtype: ['Винтажная'], color: 'Brown' },
+      variants: [{ isActive: true, price: 150, currency: 'RUB', unit: 'дм²' }],
+    }])
+
+    expect(html.match(/<h1\b/gi)).toHaveLength(1)
+    expect(html).toContain('<h1>Винтажная натуральная кожа</h1>')
+    expect(html).toContain('<title>Купить винтажную натуральную кожу в Москве | OZELIF</title>')
+    expect(html.match(/<meta name="description"/gi)).toHaveLength(1)
+    expect(html).toContain('<meta property="og:url" content="https://ozelifkoja.ru/odejnayakozha/vintazhnaya" />')
+    expect(html).toContain('<a href="/odejnayakozha/tproduct/999-vintage-test">Vintage Test</a>')
+  })
+
 })
