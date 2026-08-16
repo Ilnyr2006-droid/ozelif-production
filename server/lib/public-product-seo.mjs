@@ -19,6 +19,45 @@ function absoluteUrl(origin, value) {
   return absoluteSeoUrl(value, origin)
 }
 
+
+function responsiveProductImage(imageUrl) {
+  const value = asText(imageUrl)
+  const match = value.match(/^(https?:\/\/[^/]+)(\/images\/catalog\/[^/]+\/[^/]+\/)w\d+(-v2)?\.webp$/i)
+  if (!match) return { src: value, srcSet: null, sizes: null }
+
+  const origin = match[1]
+  const directory = match[2]
+  const suffix = match[3] ?? ''
+  const widths = suffix
+    ? [480, 720, 960, 1280, 1440, 1680]
+    : [480, 720, 1280]
+
+  return {
+    src: `${origin}${directory}w${suffix ? 720 : 480}${suffix}.webp`,
+    srcSet: widths
+      .map(width => `${origin}${directory}w${width}${suffix}.webp ${width}w`)
+      .join(', '),
+    sizes: '(min-width: 900px) 50vw, 100vw',
+  }
+}
+
+function renderProductImage(imageUrl, alt) {
+  const image = responsiveProductImage(imageUrl)
+  if (!image.src) return ''
+
+  return [
+    '<img',
+    `src="${escapeHtml(image.src)}"`,
+    ...(image.srcSet ? [`srcset="${escapeHtml(image.srcSet)}"`] : []),
+    ...(image.sizes ? [`sizes="${escapeHtml(image.sizes)}"`] : []),
+    `alt="${escapeHtml(alt)}"`,
+    'loading="eager"',
+    'decoding="async"',
+    'fetchpriority="high"',
+    '/>',
+  ].join(' ')
+}
+
 function positiveNumber(value) {
   const number = Number(value)
   return Number.isFinite(number) && number > 0 ? number : null
@@ -106,7 +145,7 @@ function renderProductBody(product, { categoryName, productUrl, imageUrl, descri
     `    <p>${escapeHtml(category)}</p>`,
     `    <h1>${escapeHtml(name)}</h1>`,
     `    <p>${escapeHtml(description)}</p>`,
-    ...(imageUrl ? [`    <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(product?.primaryImage?.alt || product?.images?.[0]?.alt || name)}" loading="eager" decoding="async" fetchpriority="high" />`] : []),
+    ...(imageUrl ? [`    ${renderProductImage(imageUrl, product?.primaryImage?.alt || product?.images?.[0]?.alt || name)}`] : []),
     `    <p><strong>${escapeHtml(priceText)}</strong></p>`,
     ...(facts.length ? [
       '    <section>',
@@ -163,7 +202,7 @@ export function getProductSeoMetadata(product, { categoryName = null } = {}) {
   }
 }
 
-export function renderProductSeoPage(template, product, { origin = DEFAULT_ORIGIN, categoryName = null } = {}) {
+export function renderProductSeoPage(template, product, { origin = DEFAULT_ORIGIN, categoryName = null, modulePreloadHref = null } = {}) {
   const productUrl = absoluteUrl(origin, product?.url)
   if (!productUrl) throw new Error('Published product must have a public URL')
 
@@ -207,6 +246,10 @@ export function renderProductSeoPage(template, product, { origin = DEFAULT_ORIGI
       { '@type': 'ListItem', position: 3, name, item: productUrl },
     ],
   }
+  const bootstrap = safeJson({
+    categorySlug: asText(product?.category?.slug) || asText(product?.url).split('/')[1],
+    item: product,
+  })
   const head = [
     `<title>${escapeHtml(title)}</title>`,
     `<meta name="description" content="${escapeHtml(description)}" />`,
@@ -217,6 +260,8 @@ export function renderProductSeoPage(template, product, { origin = DEFAULT_ORIGI
     `<meta property="og:description" content="${escapeHtml(description)}" />`,
     ...(imageUrl ? [`<meta property="og:image" content="${escapeHtml(imageUrl)}" />`] : []),
     '<meta name="twitter:card" content="summary_large_image" />',
+    ...(modulePreloadHref ? [`<link rel="modulepreload" href="${escapeHtml(modulePreloadHref)}" />`] : []),
+    `<script id="ozelif-product-bootstrap" type="application/json">${bootstrap}</script>`,
     `<script type="application/ld+json">${safeJson(PUBLIC_STORE_SCHEMA)}</script>`,
     `<script type="application/ld+json">${safeJson(productSchema)}</script>`,
     `<script type="application/ld+json">${safeJson(breadcrumbSchema)}</script>`,

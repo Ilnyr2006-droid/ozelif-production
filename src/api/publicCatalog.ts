@@ -30,7 +30,7 @@ type PublicCatalogApiVariant = {
   isActive: boolean
 }
 
-type PublicCatalogApiProduct = {
+export type PublicCatalogApiProduct = {
   id: string
   slug: string
   category?: { slug?: string; name?: string } | null

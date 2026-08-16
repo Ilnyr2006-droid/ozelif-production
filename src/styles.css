@@ -2286,3 +2286,12 @@ footer{border-radius:var(--radius-xl) var(--radius-xl) 0 0;padding-top:64px}
   .clothing-catalog-commercial-grid article:last-child{border-bottom:0}
   .clothing-catalog-commercial-grid p{min-height:0}
 }
+
+/* CWV: keep the mobile LCP headline paintable immediately. */
+@media (max-width:720px){
+  .hero-content .hero-in--2{
+    animation:none;
+    opacity:1;
+    transform:none;
+  }
+}

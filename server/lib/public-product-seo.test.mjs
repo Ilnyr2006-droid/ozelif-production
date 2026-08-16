@@ -20,4 +20,34 @@ describe('public product structured data', () => {
     expect(html).not.toContain('https://schema.org/InStock')
     expect(html).toContain('Уточнить наличие у менеджера')
   })
+  it('renders a responsive initial product image and client bootstrap payload', () => {
+    const html = renderProductSeoPage(template, {
+      id: '629195419972',
+      name: 'Amazon Black',
+      slug: 'amazon-black',
+      url: '/odejnayakozha/tproduct/629195419972-amazon-black',
+      category: { slug: 'odejnayakozha', name: 'Одежная кожа' },
+      attributes: { subtype: ['Гладкая'], color: 'Black' },
+      primaryImage: {
+        url: '/images/catalog/clothing-leather/629195419972/w1680-v2.webp',
+        alt: 'Amazon Black',
+        sortOrder: 0,
+      },
+      images: [],
+      variants: [],
+    }, {
+      categoryName: 'Одежная кожа',
+      modulePreloadHref: '/assets/ClothingLeatherCatalogPage-test.js',
+    })
+
+    expect(html).toContain('id="ozelif-product-bootstrap"')
+    expect(html).toContain('rel="modulepreload" href="/assets/ClothingLeatherCatalogPage-test.js"')
+    expect(html).toContain('src="https://ozelifkoja.ru/images/catalog/clothing-leather/629195419972/w720-v2.webp"')
+    expect(html).toContain('w480-v2.webp 480w')
+    expect(html).toContain('w720-v2.webp 720w')
+    expect(html).toContain('w1680-v2.webp 1680w')
+    expect(html).toContain('sizes="(min-width: 900px) 50vw, 100vw"')
+    expect(html).toContain('fetchpriority="high"')
+  })
+
 })

@@ -3,6 +3,28 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { renderProductSeoPage } from '../lib/public-product-seo.mjs'
 
+
+async function productModulePreload(frontendRoot, categorySlug) {
+  const prefixes = {
+    odejnayakozha: 'ClothingLeatherCatalogPage-',
+  }
+
+  const prefix = prefixes[categorySlug]
+  if (!prefix) return null
+
+  try {
+    const files = await fs.readdir(path.join(frontendRoot, 'assets'))
+    const filename = files
+      .filter(file => file.startsWith(prefix) && file.endsWith('.js'))
+      .sort()
+      .at(-1)
+
+    return filename ? `/assets/${filename}` : null
+  } catch {
+    return null
+  }
+}
+
 function asyncRoute(handler) {
   return (request, response, next) => {
     Promise.resolve(handler(request, response, next)).catch(next)
@@ -24,12 +46,16 @@ export function createPublicProductSeoRouter({ repository, frontendRoot }) {
       return
     }
 
-    const template = await fs.readFile(indexPath, 'utf8')
+    const [template, modulePreloadHref] = await Promise.all([
+      fs.readFile(indexPath, 'utf8'),
+      productModulePreload(frontendRoot, request.params.categorySlug),
+    ])
     response
       .setHeader('Cache-Control', 'public, max-age=300')
       .type('html')
       .send(renderProductSeoPage(template, product, {
         categoryName: product.category?.name || 'Каталог',
+        modulePreloadHref,
       }))
   }))
 

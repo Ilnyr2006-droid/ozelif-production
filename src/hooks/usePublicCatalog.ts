@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { fetchAllPublicCatalogProducts, fetchPublicCatalogCategories, fetchPublicCatalogProduct, fetchPublicCatalogSale, type PublicCatalogCategory, type PublicCatalogListResponse, type PublicCatalogProduct } from '../api/publicCatalog'
+import { fetchAllPublicCatalogProducts, fetchPublicCatalogCategories, fetchPublicCatalogProduct, fetchPublicCatalogSale, normalizePublicCatalogProduct, type PublicCatalogApiProduct, type PublicCatalogCategory, type PublicCatalogListResponse, type PublicCatalogProduct } from '../api/publicCatalog'
 
 type LoadState<T> = { data: T | null; isLoading: boolean; error: Error | null }
 
@@ -19,14 +19,55 @@ function useLoader<T>(load: (signal: AbortSignal) => Promise<T>, key: string): L
   return { ...state, retry: () => setRevision(current => current + 1) }
 }
 
+
+function readProductBootstrap(categorySlug: string, identifier: string) {
+  if (typeof document === 'undefined') return null
+
+  const node = document.getElementById('ozelif-product-bootstrap')
+  if (!node?.textContent) return null
+
+  try {
+    const payload = JSON.parse(node.textContent) as {
+      categorySlug?: string
+      item?: PublicCatalogApiProduct
+    }
+
+    if (payload.categorySlug !== categorySlug || !payload.item) return null
+
+    const product = normalizePublicCatalogProduct(payload.item)
+    return product.id === identifier || product.slug === identifier
+      ? product
+      : null
+  } catch {
+    return null
+  }
+}
+
 export function usePublicCatalog(categorySlug: string) {
   const load = useCallback((signal: AbortSignal) => fetchAllPublicCatalogProducts(categorySlug, signal), [categorySlug])
   return useLoader<PublicCatalogListResponse>(load, categorySlug)
 }
 
 export function usePublicCatalogProduct(categorySlug: string, identifier: string) {
-  const load = useCallback((signal: AbortSignal) => fetchPublicCatalogProduct(categorySlug, identifier, signal), [categorySlug, identifier])
-  return useLoader<PublicCatalogProduct>(load, `${categorySlug}:${identifier}`)
+  const [bootstrap] = useState<PublicCatalogProduct | null>(
+    () => readProductBootstrap(categorySlug, identifier),
+  )
+  const load = useCallback(
+    (signal: AbortSignal) => fetchPublicCatalogProduct(categorySlug, identifier, signal),
+    [categorySlug, identifier],
+  )
+  const remote = useLoader<PublicCatalogProduct>(load, `${categorySlug}:${identifier}`)
+
+  if (bootstrap && !remote.data) {
+    return {
+      data: bootstrap,
+      isLoading: false,
+      error: null,
+      retry: remote.retry,
+    }
+  }
+
+  return remote
 }
 
 function waitForInitialPageLoad(signal: AbortSignal) {
