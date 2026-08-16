@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && node scripts/prerender-static-seo.mjs",
+    "build": "tsc -b && vite build && node scripts/prerender-static-seo.mjs && node scripts/build-home-cwv.mjs",
     "lint": "eslint .",
     "typecheck": "tsc -b --pretty false",
     "test": "vitest run --exclude '**/.backup-*/**' --exclude '_ozelif-local-backups/**'",

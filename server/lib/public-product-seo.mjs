@@ -34,6 +34,7 @@ function responsiveProductImage(imageUrl) {
 
   return {
     src: `${origin}${directory}w${suffix ? 720 : 480}${suffix}.webp`,
+    mobileSrc: `${origin}${directory}w480${suffix}.webp`,
     srcSet: widths
       .map(width => `${origin}${directory}w${width}${suffix}.webp ${width}w`)
       .join(', '),
@@ -45,7 +46,7 @@ function renderProductImage(imageUrl, alt) {
   const image = responsiveProductImage(imageUrl)
   if (!image.src) return ''
 
-  return [
+  const img = [
     '<img',
     `src="${escapeHtml(image.src)}"`,
     ...(image.srcSet ? [`srcset="${escapeHtml(image.srcSet)}"`] : []),
@@ -56,6 +57,10 @@ function renderProductImage(imageUrl, alt) {
     'fetchpriority="high"',
     '/>',
   ].join(' ')
+
+  return image.mobileSrc
+    ? `<picture><source media="(max-width: 639px)" srcset="${escapeHtml(image.mobileSrc)}" />${img}</picture>`
+    : img
 }
 
 function positiveNumber(value) {

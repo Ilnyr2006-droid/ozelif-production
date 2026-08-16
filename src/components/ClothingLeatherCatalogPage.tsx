@@ -94,8 +94,14 @@ function ProductImage({ product, priority = false, size = 'card' }: { product: P
   const [failed, setFailed] = useState(false)
   const image = product.image
   if (!image || failed) return <div className="product-card-fallback" role="img" aria-label={`Фото товара ${product.title} недоступно`}>OZELIF</div>
+
   const responsive = responsiveProductImage(image.url, size)
-  return <img src={responsive.src} srcSet={responsive.srcSet} sizes={responsive.sizes} alt={image.alt ?? `${product.title} — натуральная одежная кожа`} loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'low'} decoding="async" onError={() => setFailed(true)}/>
+  const imageElement = <img src={responsive.src} srcSet={responsive.srcSet} sizes={responsive.sizes} alt={image.alt ?? `${product.title} — натуральная одежная кожа`} loading={priority ? 'eager' : 'lazy'} fetchPriority={priority ? 'high' : 'low'} decoding="async" onError={() => setFailed(true)}/>
+
+  if (size !== 'detail') return imageElement
+
+  const mobile = responsiveProductImage(image.url, 'card')
+  return <picture className="product-page-picture"><source media="(max-width: 639px)" srcSet={mobile.src}/>{imageElement}</picture>
 }
 function Price({ variant }: { variant: PublicCatalogVariant | null }) {
   return <span className="product-card-price">{priceLabel(variant)}</span>
