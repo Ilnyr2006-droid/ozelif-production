@@ -24,6 +24,24 @@ describe('HomeMainTail', () => {
       screen.getByRole('link', { name: 'Шоурум в Москве' }),
     ).toHaveAttribute('href', '/contacts')
 
+    expect(
+      screen.getByText('OZELIF: коротко о магазине'),
+    ).toBeInTheDocument()
+
+    expect(
+      screen.getByText('Магазин и склад натуральной кожи в Москве.'),
+    ).toBeInTheDocument()
+
+    expect(
+      screen.getByText('Где находится магазин и склад OZELIF?'),
+    ).toBeInTheDocument()
+
+    expect(
+      screen.getByText(
+        'Актуальные цены и характеристики опубликованы в карточках товаров каталога OZELIF.',
+      ),
+    ).toBeInTheDocument()
+
     const excerpt = await screen.findByText(
       '«Очень хороший магазин, отзывчивые и профессиональные сотрудники.»',
     )

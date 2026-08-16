@@ -2311,3 +2311,64 @@ footer{border-radius:var(--radius-xl) var(--radius-xl) 0 0;padding-top:64px}
 /* Money-query SEO block: visible commercial context + crawlable category links. */
 .seo .seo-links{display:flex;flex-wrap:wrap;gap:10px 18px;margin-top:20px}
 .seo .seo-links a{display:inline-flex;align-items:center;min-height:36px;border-bottom:1px solid var(--line);font-size:12px;font-weight:600}
+
+/* GEO/Search extractability: factual summary and useful FAQ below the fold. */
+.geo-facts,
+.geo-faq{
+  margin-top:34px;
+  padding-top:28px;
+  border-top:1px solid var(--line);
+}
+.geo-facts h3,
+.geo-faq h3{
+  font-family:var(--serif);
+  font-size:clamp(24px,3vw,38px);
+  font-weight:400;
+  line-height:1.15;
+  margin:0 0 22px;
+}
+.geo-facts dl{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:0 34px;
+  margin:0;
+}
+.geo-facts dl>div{
+  padding:15px 0;
+  border-bottom:1px solid var(--line);
+}
+.geo-facts dt{
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.geo-facts dd{
+  margin:7px 0 0;
+  font-size:13px;
+  line-height:1.65;
+  color:rgba(36,29,25,.68);
+}
+.geo-faq>details{
+  border-top:1px solid var(--line);
+  padding:15px 0;
+}
+.geo-faq>details:last-child{
+  border-bottom:1px solid var(--line);
+}
+.geo-faq>details summary{
+  font-family:var(--sans);
+  font-size:13px;
+  font-weight:700;
+}
+.geo-faq>details p{
+  max-width:760px;
+  font-size:13px;
+  line-height:1.7;
+  color:rgba(36,29,25,.68);
+}
+@media(max-width:720px){
+  .geo-facts dl{
+    grid-template-columns:1fr;
+  }
+}

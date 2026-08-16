@@ -37,6 +37,52 @@ const HOME_HERO_PRELOADS = [
   '<link data-home-hero-preload rel="preload" as="image" href="/images/hero-leather-wide.webp" type="image/webp" media="(min-width: 721px)" fetchpriority="high" />',
 ].join('\n  ')
 
+const HOME_ENTITY_FACTS = [
+  ['Что такое OZELIF', 'Магазин и склад натуральной кожи в Москве.'],
+  ['Что продаёт OZELIF', 'Одежную и обувную кожу, натуральную замшу, дублёночный материал и фурнитуру.'],
+  ['Формат продаж', 'Розница и опт.'],
+  ['Адрес', 'Москва, Краснобогатырская улица, 24.'],
+  ['Телефон', '+7 903 370-78-54.'],
+  ['Доставка', 'Заказы отправляются из Москвы по России.'],
+]
+
+const HOME_FAQ_ITEMS = [
+  {
+    question: 'Где находится магазин и склад OZELIF?',
+    answer: 'Шоурум и склад находятся по адресу: Москва, Краснобогатырская улица, 24.',
+  },
+  {
+    question: 'Можно ли купить натуральную кожу в розницу?',
+    answer: 'Да. OZELIF работает с розничными и оптовыми покупателями.',
+  },
+  {
+    question: 'Где посмотреть цены и характеристики кожи?',
+    answer: 'Актуальные цены и характеристики опубликованы в карточках товаров каталога OZELIF.',
+  },
+  {
+    question: 'Как узнать наличие конкретной партии?',
+    answer: 'Наличие нужного варианта и объём партии подтверждает менеджер OZELIF перед заказом.',
+  },
+  {
+    question: 'Есть ли доставка по России?',
+    answer: 'Да. Заказы отправляются из Москвы по России; способ, стоимость и сроки доставки подтверждаются для конкретного заказа.',
+  },
+]
+
+const HOME_FAQ_SCHEMA = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  '@id': `${origin}/#faq`,
+  mainEntity: HOME_FAQ_ITEMS.map(item => ({
+    '@type': 'Question',
+    name: item.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: item.answer,
+    },
+  })),
+}
+
 function replaceMeta(html, selector, replacement) {
   const expression = selector === 'description'
     ? /<meta\s+name="description"[^>]*>/i
@@ -84,6 +130,26 @@ function renderHomeSeoContent(content) {
       ...links.map(item => `      <a href="${escapeSeoHtml(item?.href)}">${escapeSeoHtml(item?.label)}</a>`),
       '    </nav>',
     ] : []),
+    '    <section aria-labelledby="ozelif-facts-title">',
+    '      <h2 id="ozelif-facts-title">OZELIF: коротко о магазине</h2>',
+    '      <dl>',
+    ...HOME_ENTITY_FACTS.map(([label, value]) => [
+      '        <div>',
+      `          <dt>${escapeSeoHtml(label)}</dt>`,
+      `          <dd>${escapeSeoHtml(value)}</dd>`,
+      '        </div>',
+    ].join('\n')),
+    '      </dl>',
+    '    </section>',
+    '    <section aria-labelledby="ozelif-faq-title">',
+    '      <h2 id="ozelif-faq-title">Частые вопросы о покупке кожи в OZELIF</h2>',
+    ...HOME_FAQ_ITEMS.map(item => [
+      '      <section>',
+      `        <h3>${escapeSeoHtml(item.question)}</h3>`,
+      `        <p>${escapeSeoHtml(item.answer)}</p>`,
+      '      </section>',
+    ].join('\n')),
+    '    </section>',
     '  </article>',
     '</main>',
   ].join('\n')
@@ -101,7 +167,11 @@ function renderPage(template, { path, title, description, ogTitle, schema, conte
   if (path === '/') {
     html = html.replace('</head>', `  ${HOME_HERO_PRELOADS}\n</head>`)
   }
-  const schemas = [PUBLIC_STORE_SCHEMA, schema]
+  const schemas = [
+    PUBLIC_STORE_SCHEMA,
+    schema,
+    ...(path === '/' ? [HOME_FAQ_SCHEMA] : []),
+  ]
     .map(item => `<script type="application/ld+json">${safeSeoJson(item)}</script>`)
     .join('\n  ')
   html = html.replace('</head>', `  ${schemas}\n</head>`)
