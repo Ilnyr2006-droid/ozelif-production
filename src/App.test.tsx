@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { App } from './App'
@@ -67,4 +67,29 @@ describe('homepage initial render', () => {
       prerenderHero.remove()
     }
   })
+  it('removes the persistent homepage hero when SPA navigation leaves the homepage', async () => {
+    window.history.replaceState(null, '', '/')
+
+    const prerenderHero = document.createElement('section')
+    prerenderHero.dataset.homePrerenderHero = 'true'
+    document.body.prepend(prerenderHero)
+
+    try {
+      render(<App/>)
+      await vi.dynamicImportSettled()
+
+      expect(prerenderHero).toBeInTheDocument()
+
+      fireEvent.click(
+        screen.getAllByRole('link', { name: 'Оптовикам' })[0],
+      )
+
+      expect(window.location.pathname).toBe('/kozhaoptom')
+      expect(prerenderHero).not.toBeInTheDocument()
+    } finally {
+      prerenderHero.remove()
+      window.history.replaceState(null, '', '/')
+    }
+  })
+
 })

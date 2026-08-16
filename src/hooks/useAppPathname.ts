@@ -1,5 +1,13 @@
 import { useEffect, useState } from 'react'
 
+function removeStaleHomePrerenderHero(pathname: string) {
+  if (pathname === '/') return
+
+  document
+    .querySelectorAll('[data-home-prerender-hero="true"]')
+    .forEach(node => node.remove())
+}
+
 function isInternalNavigation(event: MouseEvent, link: HTMLAnchorElement) {
   if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return false
   if (link.target && link.target !== '_self' || link.hasAttribute('download')) return false
@@ -16,10 +24,18 @@ function isInternalNavigation(event: MouseEvent, link: HTMLAnchorElement) {
  * links retain native browser behaviour.
  */
 export function useAppPathname() {
-  const [pathname, setPathname] = useState(() => window.location.pathname)
+  const [pathname, setPathname] = useState(() => {
+    const initialPathname = window.location.pathname
+    removeStaleHomePrerenderHero(initialPathname)
+    return initialPathname
+  })
 
   useEffect(() => {
-    const updatePathname = () => setPathname(window.location.pathname)
+    const updatePathname = () => {
+      const nextPathname = window.location.pathname
+      removeStaleHomePrerenderHero(nextPathname)
+      setPathname(nextPathname)
+    }
     const onDocumentClick = (event: MouseEvent) => {
       const target = event.target
       if (!(target instanceof Element)) return
