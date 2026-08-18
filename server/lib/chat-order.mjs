@@ -126,6 +126,11 @@ function mapDraft(row) {
     items: Array.isArray(row.items)
       ? row.items
       : [],
+    deliveryMethod:
+      row.delivery_method === 'pickup'
+      || row.delivery_method === 'courier'
+        ? row.delivery_method
+        : null,
     revision: Number(row.revision ?? 0),
     confirmedRevision:
       row.confirmed_revision === null
@@ -347,6 +352,22 @@ export async function applyChatOrderDraftUpdate(
 
     let changed = Boolean(update?.startNewOrder)
 
+    let deliveryMethod = (
+      update?.startNewOrder
+        ? null
+        : current.deliveryMethod
+    )
+
+    if (
+      update?.deliveryMethod === 'pickup'
+      || update?.deliveryMethod === 'courier'
+    ) {
+      if (deliveryMethod !== update.deliveryMethod) {
+        deliveryMethod = update.deliveryMethod
+        changed = true
+      }
+    }
+
     if (update?.cancel) {
       const saved = await client.query(
         `UPDATE live_chat_order_drafts
@@ -469,12 +490,22 @@ export async function applyChatOrderDraftUpdate(
         : current.revision
     )
 
-    const complete = (
+    const itemsComplete = (
       items.length > 0
       && items.every(item => (
         item.variantId
         && number(item.quantity) > 0
       ))
+    )
+
+    const fulfillmentComplete = (
+      deliveryMethod === 'pickup'
+      || deliveryMethod === 'courier'
+    )
+
+    const complete = (
+      itemsComplete
+      && fulfillmentComplete
     )
 
     let status = complete
@@ -507,11 +538,12 @@ export async function applyChatOrderDraftUpdate(
        SET
          status = $2,
          items = $3::jsonb,
-         revision = $4,
-         confirmed_revision = $5,
-         confirmed_at = $6,
+         delivery_method = $4,
+         revision = $5,
+         confirmed_revision = $6,
+         confirmed_at = $7,
          order_id = CASE
-           WHEN $7::boolean THEN NULL
+           WHEN $8::boolean THEN NULL
            ELSE order_id
          END,
          updated_at = now()
@@ -521,6 +553,7 @@ export async function applyChatOrderDraftUpdate(
         conversationId,
         status,
         JSON.stringify(items),
+        deliveryMethod,
         nextRevision,
         confirmedRevision,
         confirmedAt,
@@ -531,6 +564,8 @@ export async function applyChatOrderDraftUpdate(
     return {
       draft: mapDraft(saved.rows[0]),
       changed,
+      itemsComplete,
+      fulfillmentComplete,
       complete,
       confirmed: (
         confirmedRevision === nextRevision
@@ -558,6 +593,35 @@ export async function applyImplicitChatOrderSignals(
 ) {
   if (!draft || draft.status === 'created') {
     return null
+  }
+
+  const fulfillmentText = String(content ?? '')
+    .trim()
+    .toLocaleLowerCase('ru')
+    .replace(/ё/g, 'е')
+
+  const implicitDeliveryMethod = (
+    /самовывоз/iu.test(fulfillmentText)
+      ? 'pickup'
+      : /доставк/iu.test(fulfillmentText)
+        ? 'courier'
+        : null
+  )
+
+  if (
+    implicitDeliveryMethod
+    && implicitDeliveryMethod !== draft.deliveryMethod
+  ) {
+    return applyChatOrderDraftUpdate(
+      conversationId,
+      {
+        startNewOrder: false,
+        cancel: false,
+        confirm: false,
+        deliveryMethod: implicitDeliveryMethod,
+        operations: [],
+      },
+    )
   }
 
   if (
@@ -750,10 +814,28 @@ export function formatChatOrderDraftReply(
     ].join('\n')
   }
 
+  if (!draft.deliveryMethod) {
+    return [
+      'Состав заказа:',
+      ...lines,
+      '',
+      `Предварительная сумма: ${money(total)}.`,
+      '',
+      'Как вы хотите получить заказ: доставка или самовывоз?',
+    ].join('\n')
+  }
+
+  const fulfillmentLabel = (
+    draft.deliveryMethod === 'pickup'
+      ? 'Самовывоз'
+      : 'Доставка'
+  )
+
   const summary = [
     'Состав заказа:',
     ...lines,
     '',
+    `Получение: ${fulfillmentLabel}.`,
     `Предварительная сумма: ${money(total)}.`,
   ]
 
@@ -763,6 +845,7 @@ export function formatChatOrderDraftReply(
       '',
       ...lines,
       '',
+      `Получение: ${fulfillmentLabel}.`,
       `Предварительная сумма: ${money(total)}.`,
       'Менеджер подтвердит наличие и финальную стоимость.',
     ].join('\n')
@@ -794,6 +877,10 @@ export async function createChatOrderIfReady({
     || draft.status !== 'awaiting_contact'
     || draft.orderId
     || draft.confirmedRevision !== draft.revision
+    || !(
+      draft.deliveryMethod === 'pickup'
+      || draft.deliveryMethod === 'courier'
+    )
     || !name
     || !phone
   ) {
@@ -817,6 +904,7 @@ export async function createChatOrderIfReady({
     name,
     phone,
     privacyConsent: true,
+    deliveryMethod: draft.deliveryMethod,
     idempotencyKey:
       `ai-chat:${conversationId}:${draft.revision}`,
     comment: 'Заказ создан покупателем через AI-чат.',

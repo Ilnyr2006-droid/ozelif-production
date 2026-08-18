@@ -10,6 +10,7 @@ const readyDraft = {
   status: 'awaiting_confirmation',
   revision: 2,
   confirmedRevision: null,
+  deliveryMethod: 'pickup',
   items: [
     {
       productId: 'p1',
@@ -78,4 +79,25 @@ test('missing quantity is reported per product', () => {
     missing[0].productName,
     'Amazon Black',
   )
+})
+
+test('ready items without fulfillment ask delivery or pickup', () => {
+  const reply = formatChatOrderDraftReply({
+    ...readyDraft,
+    deliveryMethod: null,
+    status: 'collecting',
+  })
+
+  assert.match(
+    reply,
+    /Как вы хотите получить заказ: доставка или самовывоз\?/u,
+  )
+  assert.doesNotMatch(reply, /Оформить этот заказ\?/u)
+})
+
+test('ready order summary shows selected pickup method', () => {
+  const reply = formatChatOrderDraftReply(readyDraft)
+
+  assert.match(reply, /Получение: Самовывоз\./u)
+  assert.match(reply, /Оформить этот заказ\?/u)
 })

@@ -32,6 +32,17 @@ export const ORDER_DRAFT_TOOL = {
         description:
           'true только если покупатель явно подтверждает/просит оформить текущий состав.',
       },
+      deliveryMethod: {
+        anyOf: [
+          {
+            type: 'string',
+            enum: ['pickup', 'courier'],
+          },
+          { type: 'null' },
+        ],
+        description:
+          'Способ получения: pickup = самовывоз, courier = доставка. До выбора способа заказ нельзя оформлять.',
+      },
       operations: {
         type: 'array',
         maxItems: 10,
@@ -92,6 +103,7 @@ export const ORDER_DRAFT_TOOL = {
       'startNewOrder',
       'cancel',
       'confirm',
+      'deliveryMethod',
       'operations',
     ],
   },
@@ -169,6 +181,11 @@ export function normalizeOrderDraftUpdate(value) {
     startNewOrder: value.startNewOrder === true,
     cancel: value.cancel === true,
     confirm: value.confirm === true,
+    deliveryMethod:
+      value.deliveryMethod === 'pickup'
+      || value.deliveryMethod === 'courier'
+        ? value.deliveryMethod
+        : null,
     operations,
   }
 
@@ -176,6 +193,7 @@ export function normalizeOrderDraftUpdate(value) {
     !normalized.startNewOrder
     && !normalized.cancel
     && !normalized.confirm
+    && !normalized.deliveryMethod
     && !normalized.operations.length
   ) {
     return null
@@ -294,6 +312,13 @@ export function formatOrderDraftContext(draft) {
   return [
     `Статус=${draft.status ?? 'collecting'}`,
     `Ревизия=${draft.revision ?? 0}`,
+    `Получение=${
+      draft.deliveryMethod === 'pickup'
+        ? 'САМОВЫВОЗ'
+        : draft.deliveryMethod === 'courier'
+          ? 'ДОСТАВКА'
+          : 'НЕ ВЫБРАНО'
+    }`,
     ...lines,
     'Служебные PRODUCT_ID/VARIANT_ID нельзя показывать покупателю.',
   ].join('\n')

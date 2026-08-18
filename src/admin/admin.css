@@ -193,7 +193,15 @@ img{max-width:100%}
 
 /* CRM tables: dedicated columns keep operational data readable and prevent native button borders. */
 .admin-crm-orders-table .admin-table-row{
-  grid-template-columns:.7fr 1.2fr 1.05fr 1.1fr minmax(180px,1.65fr) .75fr minmax(220px,1.8fr);
+  grid-template-columns:
+    1.05fr
+    1.05fr
+    1fr
+    minmax(160px,1.35fr)
+    minmax(210px,1.65fr)
+    .8fr
+    minmax(190px,1.45fr)
+    minmax(170px,1.15fr);
 }
 .admin-crm-customers-table .admin-table-row{
   grid-template-columns:1.4fr 1.15fr .55fr .55fr 1.1fr .8fr;
@@ -224,7 +232,7 @@ img{max-width:100%}
 }
 .admin-crm-comment{color:#4b443d;line-height:1.45}
 @media(max-width:760px){
-  .admin-crm-orders-table .admin-table-row{min-width:1300px}
+  .admin-crm-orders-table .admin-table-row{min-width:1180px}
   .admin-crm-customers-table .admin-table-row{min-width:820px}
 }
 

@@ -795,7 +795,6 @@ export function AdminPageV2() {
 
               <div className="admin-table admin-crm-orders-table">
                 <div className="admin-table-row admin-table-header">
-                  <span>Номер заказа</span>
                   <span>Дата и время</span>
                   <span>Клиент</span>
                   <span>Телефон</span>
@@ -810,13 +809,6 @@ export function AdminPageV2() {
                     className="admin-table-row"
                     key={order.id}
                   >
-                    <span>
-                      <b>№{order.public_number}</b>
-                      <small>
-                        {orderStatusLabel[order.status] ?? order.status}
-                      </small>
-                    </span>
-
                     <span>
                       {formatCrmDate(order.created_at)}
                       <small>

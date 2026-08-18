@@ -11,6 +11,7 @@ test('normalizes several products in one draft update', () => {
     startNewOrder: false,
     cancel: false,
     confirm: false,
+    deliveryMethod: null,
     operations: [
       {
         operation: 'upsert',
@@ -40,6 +41,7 @@ test('draft context preserves separate quantities', () => {
   const text = formatOrderDraftContext({
     status: 'awaiting_confirmation',
     revision: 3,
+    deliveryMethod: 'pickup',
     items: [
       {
         productId: 'p1',
@@ -62,4 +64,42 @@ test('draft context preserves separate quantities', () => {
   assert.match(text, /количество=8/)
   assert.match(text, /Amazon Black/)
   assert.match(text, /количество=5/)
+})
+
+test('normalizes delivery and pickup method', () => {
+  const pickup = normalizeOrderDraftUpdate({
+    startNewOrder: false,
+    cancel: false,
+    confirm: false,
+    deliveryMethod: 'pickup',
+    operations: [],
+  })
+
+  const courier = normalizeOrderDraftUpdate({
+    startNewOrder: false,
+    cancel: false,
+    confirm: false,
+    deliveryMethod: 'courier',
+    operations: [],
+  })
+
+  assert.equal(pickup.deliveryMethod, 'pickup')
+  assert.equal(courier.deliveryMethod, 'courier')
+})
+
+test('draft context exposes fulfillment choice to model', () => {
+  const text = formatOrderDraftContext({
+    status: 'awaiting_confirmation',
+    revision: 1,
+    deliveryMethod: 'courier',
+    items: [{
+      productId: 'p1',
+      productName: 'Chelsea Grey',
+      variantId: 'v1',
+      quantity: 2,
+      unit: 'фут²',
+    }],
+  })
+
+  assert.match(text, /Получение=ДОСТАВКА/u)
 })
