@@ -47,6 +47,17 @@ type Conversion = {
   message?: string
 }
 
+type OrderFlow = {
+  type: 'order'
+  status:
+    | 'collecting'
+    | 'awaiting_confirmation'
+    | 'awaiting_contact'
+    | 'created'
+    | 'cancelled'
+  created: boolean
+}
+
 const STORAGE_ID = 'ozelif_live_chat_id'
 const STORAGE_TOKEN = 'ozelif_live_chat_token'
 const STORAGE_VISITOR = 'ozelif_live_chat_visitor'
@@ -90,6 +101,7 @@ export function LiveSupportWidget() {
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const [conversion, setConversion] = useState<Conversion | null>(null)
+  const [orderFlow, setOrderFlow] = useState<OrderFlow | null>(null)
   const [contactName, setContactName] = useState('')
   const [contactPhone, setContactPhone] = useState('')
   const [contactSending, setContactSending] = useState(false)
@@ -203,6 +215,7 @@ export function LiveSupportWidget() {
         }
         assistantError?: string | null
         conversion?: Conversion | null
+        orderFlow?: OrderFlow | null
       }>(
         `/api/live-chat/conversations/${session.conversation.id}/messages`,
         {
@@ -217,6 +230,7 @@ export function LiveSupportWidget() {
 
       setConversation(result.conversation)
       setConversion(result.conversion ?? null)
+      setOrderFlow(result.orderFlow ?? null)
       mergeMessages([
         result.userMessage,
         ...(result.assistant?.message ? [result.assistant.message] : []),
@@ -262,6 +276,10 @@ export function LiveSupportWidget() {
       const result = await jsonRequest<{
         profile: Partial<Conversation> | null
         managerRequested?: boolean
+        assistant?: null | {
+          message: LiveMessage
+        }
+        orderFlow?: OrderFlow | null
       }>(
         `/api/live-chat/conversations/${session.conversation.id}/profile`
         + `?token=${encodeURIComponent(session.token)}`,
@@ -280,6 +298,14 @@ export function LiveSupportWidget() {
             ? { ...current, ...result.profile }
             : session.conversation
         ))
+      }
+
+      setOrderFlow(result.orderFlow ?? null)
+
+      if (result.assistant?.message) {
+        mergeMessages([
+          result.assistant.message,
+        ])
       }
 
       setContactSaved(true)
@@ -410,18 +436,40 @@ export function LiveSupportWidget() {
             <div ref={bottomRef} />
           </div>
 
-          {conversion?.type === 'contact'
+          {(conversion?.type === 'contact'
+              || orderFlow?.status === 'awaiting_contact')
             && !conversation?.visitorPhone ? (
             <section className="live-support-contact-card">
-              <strong>{conversion.title}</strong>
-              <p>{conversion.text}</p>
+              <strong>
+                {conversion?.title
+                  ?? (
+                    orderFlow?.status === 'awaiting_contact'
+                      ? 'Контакт для заказа'
+                      : 'Контакт'
+                  )}
+              </strong>
+              <p>
+                {conversion?.text
+                  ?? (
+                    orderFlow?.status === 'awaiting_contact'
+                      ? 'Укажите имя и телефон, чтобы создать заказ.'
+                      : 'Оставьте контакт, и менеджер увидит ваш запрос.'
+                  )}
+              </p>
 
               <form onSubmit={submitContact}>
                 <input
                   value={contactName}
                   onChange={event => setContactName(event.target.value)}
-                  placeholder="Имя (необязательно)"
+                  placeholder={
+                    orderFlow?.status === 'awaiting_contact'
+                      ? 'Имя'
+                      : 'Имя (необязательно)'
+                  }
                   maxLength={160}
+                  required={
+                    orderFlow?.status === 'awaiting_contact'
+                  }
                 />
                 <input
                   value={contactPhone}
@@ -434,7 +482,14 @@ export function LiveSupportWidget() {
                 />
                 <button
                   type="submit"
-                  disabled={!contactPhone.trim() || contactSending}
+                  disabled={
+                    !contactPhone.trim()
+                    || contactSending
+                    || (
+                      orderFlow?.status === 'awaiting_contact'
+                      && !contactName.trim()
+                    )
+                  }
                 >
                   {contactSending ? 'Сохраняем…' : 'Передать менеджеру'}
                 </button>

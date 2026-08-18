@@ -392,6 +392,28 @@ export function createLiveChatRouter() {
 
       const profile = normalizeCustomerProfileUpdate(request.body)
       if (profile?.phone) {
+        const pendingDraft = await loadChatOrderDraft(
+          conversation.id,
+        )
+
+        const effectiveName = (
+          profile.name
+          ?? conversation.visitorName
+          ?? null
+        )
+
+        if (
+          pendingDraft?.status === 'awaiting_contact'
+          && !effectiveName
+        ) {
+          response.status(400).json({
+            error: 'name_required_for_order',
+            message:
+              'Для создания заказа укажите имя.',
+          })
+          return
+        }
+
         await syncCustomerFromLiveChatContact({
           conversationId: conversation.id,
           name: profile.name,
@@ -400,13 +422,91 @@ export function createLiveChatRouter() {
 
         await markContactCaptured(conversation.id)
 
+        const refreshed = await findConversation(
+          conversation.id,
+          readPublicToken(request),
+        )
+
+        const creation = await createChatOrderIfReady({
+          conversationId: conversation.id,
+          draft: pendingDraft,
+          name:
+            refreshed?.visitorName
+            ?? effectiveName,
+          phone:
+            refreshed?.visitorPhone
+            ?? String(
+              request.body?.phone
+              ?? profile.phone,
+            ),
+        })
+
+        let assistant = null
+        let orderFlow = null
+
+        if (creation.created) {
+          const reply = formatChatOrderDraftReply(
+            creation.draft,
+            {
+              created: true,
+            },
+          )
+
+          orderFlow = {
+            type: 'order',
+            status: 'created',
+            created: true,
+          }
+
+          const saved = await query(
+            `INSERT INTO live_chat_messages (
+               conversation_id,
+               role,
+               content,
+               metadata
+             )
+             VALUES (
+               $1,
+               'assistant',
+               $2,
+               $3::jsonb
+             )
+             RETURNING
+               id::text,
+               role,
+               content,
+               metadata,
+               created_at AS "createdAt"`,
+            [
+              conversation.id,
+              reply,
+              JSON.stringify({
+                orderFlow,
+                source:
+                  'contact_form_order_completion',
+              }),
+            ],
+          )
+
+          assistant = {
+            message: saved.rows[0],
+          }
+        } else if (
+          pendingDraft?.status === 'awaiting_contact'
+        ) {
+          orderFlow = {
+            type: 'order',
+            status: 'awaiting_contact',
+            created: false,
+          }
+        }
+
         response.json({
           ok: true,
-          profile: await findConversation(
-            conversation.id,
-            readPublicToken(request),
-          ),
+          profile: refreshed,
           managerRequested: true,
+          assistant,
+          orderFlow,
         })
         return
       }

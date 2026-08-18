@@ -395,4 +395,178 @@ describe('LiveSupportWidget', () => {
     })
   })
 
+
+  it('renders a real order confirmation returned by the contact form', async () => {
+    const fetchMock = vi.fn(async (
+      input: RequestInfo | URL,
+      init?: RequestInit,
+    ) => {
+      const url = String(input)
+      const method = init?.method ?? 'GET'
+
+      if (
+        url === '/api/live-chat/session'
+        && method === 'POST'
+      ) {
+        return mockResponse({
+          conversation: {
+            id: 'conversation-order-profile',
+            status: 'open',
+            aiEnabled: true,
+          },
+          conversationId: 'conversation-order-profile',
+          token: 'public-token',
+        })
+      }
+
+      if (
+        url.startsWith(
+          '/api/live-chat/conversations/conversation-order-profile/messages?',
+        )
+        && method === 'GET'
+      ) {
+        return mockResponse({
+          conversation: {
+            id: 'conversation-order-profile',
+            status: 'open',
+            aiEnabled: true,
+          },
+          messages: [],
+        })
+      }
+
+      if (
+        url
+          === '/api/live-chat/conversations/conversation-order-profile/messages'
+        && method === 'POST'
+      ) {
+        return mockResponse({
+          conversation: {
+            id: 'conversation-order-profile',
+            status: 'open',
+            aiEnabled: true,
+          },
+          userMessage: {
+            id: '20',
+            role: 'user',
+            content: 'Оформляй',
+            createdAt: '2026-08-18T15:00:00.000Z',
+          },
+          assistant: {
+            message: {
+              id: '21',
+              role: 'assistant',
+              content:
+                'Чтобы создать заказ, напишите ваше имя и контактный телефон.',
+              createdAt: '2026-08-18T15:00:01.000Z',
+            },
+          },
+          conversion: null,
+          orderFlow: {
+            type: 'order',
+            status: 'awaiting_contact',
+            created: false,
+          },
+        })
+      }
+
+      if (
+        url.startsWith(
+          '/api/live-chat/conversations/conversation-order-profile/profile?',
+        )
+        && method === 'POST'
+      ) {
+        return mockResponse({
+          profile: {
+            visitorName: 'Ильнур',
+            visitorPhone: '89990000000',
+          },
+          managerRequested: true,
+          orderFlow: {
+            type: 'order',
+            status: 'created',
+            created: true,
+          },
+          assistant: {
+            message: {
+              id: '22',
+              role: 'assistant',
+              content:
+                'Заказ создан.\n\n• Chelsea Grey — 8 фут² — 3 496,8 ₽',
+              createdAt: '2026-08-18T15:00:02.000Z',
+            },
+          },
+        })
+      }
+
+      throw new Error(
+        `Unexpected request: ${method} ${url}`,
+      )
+    })
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(<LiveSupportWidget />)
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Открыть чат',
+      }),
+    )
+
+    const textbox = screen.getByPlaceholderText(
+      'Напишите сообщение…',
+    )
+
+    fireEvent.change(textbox, {
+      target: { value: 'Оформляй' },
+    })
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Отправить',
+      }),
+    )
+
+    const nameInput = await screen.findByPlaceholderText(
+      'Имя',
+    )
+
+    const phoneInput = screen.getByPlaceholderText(
+      '+7 999 000-00-00',
+    )
+
+    fireEvent.change(nameInput, {
+      target: { value: 'Ильнур' },
+    })
+
+    fireEvent.change(phoneInput, {
+      target: { value: '89990000000' },
+    })
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Передать менеджеру',
+      }),
+    )
+
+    expect(
+      await screen.findByText(
+        /Заказ создан\./u,
+      ),
+    ).toBeInTheDocument()
+
+    const profileCall = fetchMock.mock.calls.find(
+      ([input, init]) => (
+        String(input).includes(
+          '/conversation-order-profile/profile?',
+        )
+        && (init as RequestInit | undefined)?.method
+          === 'POST'
+      ),
+    )
+
+    expect(profileCall).toBeTruthy()
+  })
+
 })
