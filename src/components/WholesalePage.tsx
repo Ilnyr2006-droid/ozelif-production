@@ -41,10 +41,10 @@ function setMeta(selector: string, attribute: 'name' | 'property', key: string, 
 
 export function WholesalePage() {
   useEffect(() => {
-    document.title = 'Натуральная кожа оптом в Москве — от 1 пачки | OZELIF'
-    setMeta('meta[name="description"]', 'name', 'description', 'Натуральная кожа оптом в Москве для брендов, ателье и производств. Одежная кожа, замша и дублёночный материал от одной пачки, подбор партии и доставка по России.')
-    setMeta('meta[property="og:title"]', 'property', 'og:title', 'Натуральная кожа оптом в Москве — OZELIF')
-    setMeta('meta[property="og:description"]', 'property', 'og:description', 'Натуральная кожа, замша и дублёночный материал оптом. От одной пачки, подбор партии, склад и шоурум OZELIF в Москве.')
+    document.title = 'Кожа оптом в Москве — натуральная кожа, цены | OZELIF'
+    setMeta('meta[name="description"]', 'name', 'description', 'Кожа оптом в Москве от OZELIF: натуральная одежная и обувная кожа, замша и дублёночный материал для брендов, ателье и производств. От одной пачки, цены и условия опта, подбор партии и доставка по России.')
+    setMeta('meta[property="og:title"]', 'property', 'og:title', 'Кожа оптом в Москве — OZELIF')
+    setMeta('meta[property="og:description"]', 'property', 'og:description', 'Натуральная кожа оптом со склада OZELIF в Москве: цены и условия опта, закупка от одной пачки, подбор партии и доставка по России.')
     setMeta('meta[property="og:url"]', 'property', 'og:url', 'https://ozelifkoja.ru/kozhaoptom')
     setMeta('meta[property="og:image"]', 'property', 'og:image', 'https://ozelifkoja.ru/images/about-supply.webp')
     const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]') ?? document.head.appendChild(document.createElement('link'))
@@ -59,13 +59,38 @@ export function WholesalePage() {
     return () => observer.disconnect()
   }, [])
 
-  const schema = { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map(([name, text]) => ({ '@type': 'Question', name, acceptedAnswer: { '@type': 'Answer', text } })) }
+  const schema = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Service',
+        '@id': 'https://ozelifkoja.ru/kozhaoptom#service',
+        name: 'Кожа оптом в Москве — OZELIF',
+        serviceType: 'Оптовые поставки натуральной кожи, замши и дублёночного материала',
+        url: 'https://ozelifkoja.ru/kozhaoptom',
+        provider: { '@id': 'https://ozelifkoja.ru/#store' },
+        areaServed: [
+          { '@type': 'City', name: 'Москва' },
+          { '@type': 'Country', name: 'Россия' },
+        ],
+      },
+      {
+        '@type': 'FAQPage',
+        '@id': 'https://ozelifkoja.ru/kozhaoptom#faq',
+        mainEntity: faq.map(([name, text]) => ({
+          '@type': 'Question',
+          name,
+          acceptedAnswer: { '@type': 'Answer', text },
+        })),
+      },
+    ],
+  }
 
   return <><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}/><Header active="wholesale"/><main className="wholesale-page">
     <section className="about-hero wholesale-hero" id="top">
       <picture className="wholesale-hero-media"><source srcSet="/images/about-supply.avif" type="image/avif"/><img className="about-hero-image" src="/images/about-supply.webp" alt="Натуральная кожа и дублёночный материал для оптовых поставок" width="1672" height="941" fetchPriority="high"/></picture>
       <div className="about-hero-shade wholesale-hero-shade"/>
-      <div className="about-hero-content wholesale-hero-content"><p className="eyebrow hero-in hero-in--1">Оптовым клиентам</p><h1 className="hero-in hero-in--2">Натуральная кожа оптом<br/><em>для брендов и производств</em></h1><p className="hero-in hero-in--3">Одежная кожа, замша, дублёночный материал, обувная кожа и фурнитура со склада в Москве. Оптовая закупка начинается от одной пачки; условия зависят от материала и объёма партии.</p><div className="about-hero-actions hero-in hero-in--4"><a className="btn btn--accent" href="#wholesale-form">Получить оптовые условия</a><a className="text-link text-link--light" href={external('/odejnayakozha')}>Посмотреть каталог <ArrowUpRight size={17}/></a></div></div>
+      <div className="about-hero-content wholesale-hero-content"><p className="eyebrow hero-in hero-in--1">Оптовые поставки • Москва</p><h1 className="hero-in hero-in--2">Натуральная кожа оптом{' '}<br/><em>в Москве</em></h1><p className="hero-in hero-in--3">Кожа оптом для брендов, ателье и производств: одежная и обувная кожа, замша, дублёночный материал и фурнитура со склада OZELIF. Оптовая закупка начинается от одной пачки; актуальные цены опубликованы в каталоге, условия зависят от материала и объёма партии.</p><div className="about-hero-actions hero-in hero-in--4"><a className="btn btn--accent" href="#wholesale-form">Получить оптовые условия</a><a className="text-link text-link--light" href={external('/odejnayakozha')}>Посмотреть каталог <ArrowUpRight size={17}/></a></div></div>
       <div className="about-hero-facts"><span><b>От 1 пачки</b> минимальный оптовый формат</span><span><b>Подбор партии</b> под задачу и объём</span><span><b>Москва</b> шоурум и склад</span><span><b>По России</b> отправка заказов</span></div>
       <a className="about-scroll" href="#wholesale-terms" aria-label="Перейти к оптовым условиям"><ArrowDown size={17}/></a>
     </section>

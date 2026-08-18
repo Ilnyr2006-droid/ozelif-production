@@ -42,7 +42,7 @@ describe('application routes', () => {
   it.each([
     ['/', /Натуральная кожа.*Москве/],
     ['/kozhaozelif', /Натуральная кожа.*2011 года/],
-    ['/kozhaoptom', /Натуральная кожа.*брендов и производств/],
+    ['/kozhaoptom', /Натуральная кожа оптом.*Москве/],
     ['/production', /Швейное производство.*Москве/],
     ['/odejnayakozha', /Одежная кожа/],
     ['/odejnayakozha/tproduct/814535079882-vegetale-visky', /Загружаем товар/],

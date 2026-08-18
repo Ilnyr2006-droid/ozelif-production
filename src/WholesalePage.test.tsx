@@ -9,7 +9,7 @@ beforeAll(() => vi.stubGlobal('IntersectionObserver', class { observe() {} unobs
 describe('wholesale page', () => {
   it('renders verified conditions, active navigation and accessible form validation', () => {
     render(<WholesalePage/>)
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('для брендов и производств')
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Натуральная кожа оптом в Москве')
     expect(screen.getAllByText('1000 дм²').length).toBeGreaterThan(0)
     expect(screen.getByText(/одной пачки \/ 1000 дм²/i)).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: 'Оптовикам' })[0]).toHaveAttribute('aria-current', 'page')

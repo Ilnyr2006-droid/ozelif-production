@@ -13,6 +13,10 @@ describe('HomeMainTail', () => {
     ).toHaveAttribute('href', '/kozhaoptom')
 
     expect(
+      screen.getAllByRole('link', { name: 'Кожа оптом в Москве' }).length,
+    ).toBeGreaterThan(0)
+
+    expect(
       screen.getByText('Купить натуральную кожу в Москве'),
     ).toBeInTheDocument()
 
