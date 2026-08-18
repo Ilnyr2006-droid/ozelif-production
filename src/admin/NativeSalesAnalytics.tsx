@@ -48,6 +48,12 @@ type AnalyticsPayload = {
     orders: number
   }>
 
+  chatFunnel: Array<{
+    key: string
+    label: string
+    count: number
+  }>
+
   topProducts: Array<{
     name: string
     quantity: number
@@ -431,6 +437,49 @@ export function NativeSalesAnalytics() {
           </div>
 
           <div className="native-analytics-grid">
+            <article className="native-analytics-card native-analytics-card--wide">
+              <header>
+                <div>
+                  <p>AI-консультант</p>
+                  <h4>Этапы конверсии чата</h4>
+                </div>
+
+                <span>
+                  Последние {period} дней
+                </span>
+              </header>
+
+              <div className="native-chat-funnel">
+                {prepared.payload.chatFunnel.map(
+                  stage => {
+                    const started = Math.max(
+                      1,
+                      prepared.payload.chatFunnel[0]?.count ?? 0,
+                    )
+
+                    return (
+                      <div
+                        className="native-chat-funnel__stage"
+                        key={stage.key}
+                      >
+                        <span>{stage.label}</span>
+                        <strong>
+                          {numberFormatter.format(stage.count)}
+                        </strong>
+                        <small>
+                          {stage.key === 'chat_started'
+                            ? '100% базы'
+                            : `${numberFormatter.format(
+                                stage.count / started * 100,
+                              )}% от начавших чат`}
+                        </small>
+                      </div>
+                    )
+                  },
+                )}
+              </div>
+            </article>
+
             <article className="native-analytics-card native-analytics-card--wide">
               <header>
                 <div>

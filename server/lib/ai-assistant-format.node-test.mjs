@@ -7,6 +7,7 @@ import {
   deterministicCatalogReply,
   enforceCriticalIntentFacts,
   productActions,
+  sanitizeUnverifiedStockClaims,
 } from './ai-assistant-format.mjs'
 
 const product = {
@@ -101,4 +102,48 @@ test('non-production reply is not altered', () => {
     enforceCriticalIntentFacts(source, 'wholesale'),
     source,
   )
+})
+
+test('normalizes Grade to Russian Сорт in verified context', () => {
+  const context = compactProductContext([{
+    ...product,
+    stockQuantity: null,
+    attributes: {
+      Grade: '1',
+      Color: 'Black',
+    },
+  }])
+
+  assert.match(context, /Сорт: 1/)
+  assert.doesNotMatch(context, /Grade:/)
+  assert.match(context, /Остаток: не опубликован/)
+})
+
+test('removes affirmative stock claim when any candidate stock is unpublished', () => {
+  const reply = sanitizeUnverifiedStockClaims(
+    'Товар доступен. Цена указана в каталоге.',
+    [{
+      ...product,
+      stockQuantity: null,
+      variants: product.variants.map(item => ({
+        ...item,
+        stockQuantity: null,
+      })),
+    }],
+  )
+
+  assert.match(reply, /товар опубликован в каталоге/i)
+  assert.doesNotMatch(reply, /товар доступен/i)
+})
+
+test('keeps confirmed stock wording when every candidate has stock data', () => {
+  const reply = sanitizeUnverifiedStockClaims(
+    'Товар доступен.',
+    [{
+      ...product,
+      stockQuantity: 12,
+    }],
+  )
+
+  assert.equal(reply, 'Товар доступен.')
 })

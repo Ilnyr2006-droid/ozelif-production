@@ -636,3 +636,51 @@ img{max-width:100%}
   }
 }
 /* OZELIF_PRODUCT_EDITOR_V5_END */
+
+/* OZELIF_AI_CHAT_FUNNEL */
+.native-chat-funnel {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.native-chat-funnel__stage {
+  display: grid;
+  align-content: start;
+  min-height: 118px;
+  border: 1px solid #e3dbd1;
+  border-radius: 14px;
+  padding: 13px;
+  background: #fffdf9;
+}
+
+.native-chat-funnel__stage > span {
+  color: #75685e;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.native-chat-funnel__stage > strong {
+  margin: 8px 0 5px;
+  color: #1d352b;
+  font-size: 26px;
+}
+
+.native-chat-funnel__stage > small {
+  color: #9a8d82;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+@media (max-width: 1100px) {
+  .native-chat-funnel {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .native-chat-funnel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

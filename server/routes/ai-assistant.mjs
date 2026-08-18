@@ -10,6 +10,7 @@ import {
   extractResponseText,
   latestUserText,
   productActions,
+  sanitizeUnverifiedStockClaims,
 } from '../lib/ai-assistant-format.mjs'
 import {
   CUSTOMER_PROFILE_TOOL,
@@ -330,9 +331,12 @@ export function createAiAssistantRouter() {
         currentProfile,
       })
 
-      const reply = enforceCriticalIntentFacts(
-        generated.text,
-        intent.type,
+      const reply = sanitizeUnverifiedStockClaims(
+        enforceCriticalIntentFacts(
+          generated.text,
+          intent.type,
+        ),
+        products,
       )
 
       response.setHeader('Cache-Control', 'no-store')
@@ -351,6 +355,7 @@ export function createAiAssistantRouter() {
           intent: intent.type,
           semanticMatches: retrieval.semantic.matches.length,
           lexicalMatches: retrieval.lexical.count,
+          constraints: retrieval.constraints ?? null,
         },
       })
     } catch (error) {
@@ -359,11 +364,14 @@ export function createAiAssistantRouter() {
         error instanceof Error ? error.message : error,
       )
 
-      const fallbackReply = enforceCriticalIntentFacts(
-        intent.needsProducts
-          ? deterministicCatalogReply(products)
-          : buildInformationFallback(intent),
-        intent.type,
+      const fallbackReply = sanitizeUnverifiedStockClaims(
+        enforceCriticalIntentFacts(
+          intent.needsProducts
+            ? deterministicCatalogReply(products)
+            : buildInformationFallback(intent),
+          intent.type,
+        ),
+        products,
       )
 
       response.setHeader('Cache-Control', 'no-store')
@@ -379,6 +387,7 @@ export function createAiAssistantRouter() {
           intent: intent.type,
           semanticMatches: retrieval.semantic.matches.length,
           lexicalMatches: retrieval.lexical.count,
+          constraints: retrieval.constraints ?? null,
         },
       })
     }

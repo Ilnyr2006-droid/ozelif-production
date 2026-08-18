@@ -86,6 +86,7 @@ async function recordLeadSignal(
     intentType,
     score,
     contactOfferShown = false,
+    productInterest = false,
   },
 ) {
   await query(
@@ -98,6 +99,11 @@ async function recordLeadSignal(
            THEN COALESCE(contact_offer_shown_at, now())
          ELSE contact_offer_shown_at
        END,
+       product_interest_at = CASE
+         WHEN $5::boolean
+           THEN COALESCE(product_interest_at, now())
+         ELSE product_interest_at
+       END,
        updated_at = now()
      WHERE id = $1`,
     [
@@ -105,6 +111,7 @@ async function recordLeadSignal(
       intentType || null,
       Math.max(0, Math.min(100, Number(score) || 0)),
       Boolean(contactOfferShown),
+      Boolean(productInterest),
     ],
   )
 }
@@ -465,6 +472,10 @@ export function createLiveChatRouter() {
         `UPDATE live_chat_conversations
          SET
            page_path = $2,
+           chat_started_at = COALESCE(
+             chat_started_at,
+             now()
+           ),
            last_message_at = now(),
            updated_at = now(),
            status = CASE
@@ -497,6 +508,11 @@ export function createLiveChatRouter() {
           score: initialConversion.score,
           contactOfferShown:
             initialConversion.shouldOfferContact,
+          productInterest: [
+            'product',
+            'wholesale',
+            'production',
+          ].includes(localIntent.type),
         },
       )
 

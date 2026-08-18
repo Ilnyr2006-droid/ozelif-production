@@ -1,6 +1,9 @@
 
 import { query } from './db.mjs'
-import { searchPublishedProducts } from './ai-catalog.mjs'
+import {
+  normalizeCatalogQuery,
+  searchPublishedProducts,
+} from './ai-catalog.mjs'
 import { openAiRequest } from './openai-vector-store.mjs'
 
 const UUID_PATTERN =
@@ -42,6 +45,279 @@ const EXPLICIT_CATEGORY_SIGNALS = [
   },
 ]
 
+const EXPLICIT_COLOR_GROUPS = [
+  {
+    color: 'black',
+    tokens: ['черн', 'black', 'nero'],
+  },
+  {
+    color: 'brown',
+    tokens: [
+      'коричн',
+      'brown',
+      'marrone',
+      'taba',
+      'cognac',
+      'коньяк',
+      'funduk',
+    ],
+  },
+  {
+    color: 'white',
+    tokens: ['бел', 'white', 'bianco'],
+  },
+  {
+    color: 'red',
+    tokens: ['красн', 'red', 'rosso', 'bordo', 'burgundy'],
+  },
+  {
+    color: 'blue',
+    tokens: ['син', 'blue', 'blu', 'navy'],
+  },
+  {
+    color: 'green',
+    tokens: ['зелен', 'green', 'verde'],
+  },
+  {
+    color: 'beige',
+    tokens: ['беж', 'beige', 'cream', 'крем'],
+  },
+  {
+    color: 'grey',
+    tokens: ['сер', 'grey', 'gray', 'grigio'],
+  },
+]
+
+function normalizedTokens(value) {
+  return normalizeCatalogQuery(value)
+    .split(/[^\p{L}\p{N}.]+/gu)
+    .filter(Boolean)
+}
+
+function tokenMatchesSignal(token, signal) {
+  return (
+    token === signal
+    || (
+      signal.length >= 4
+      && token.startsWith(signal)
+    )
+  )
+}
+
+export function inferExplicitColor(value) {
+  const tokens = normalizedTokens(value)
+  if (!tokens.length) return null
+
+  const matches = EXPLICIT_COLOR_GROUPS
+    .filter(group => (
+      group.tokens.some(signal => (
+        tokens.some(token => tokenMatchesSignal(token, signal))
+      ))
+    ))
+    .map(group => group.color)
+
+  const unique = [...new Set(matches)]
+  return unique.length === 1 ? unique[0] : null
+}
+
+export function inferExplicitThicknessMm(value) {
+  const text = normalizeCatalogQuery(value)
+  if (!text) return null
+
+  const range = text.match(
+    /(\d+(?:\.\d+)?)\s*[-–—]\s*(\d+(?:\.\d+)?)\s*(?:мм|mm)/iu,
+  )
+
+  if (range) {
+    const left = Number(range[1])
+    const right = Number(range[2])
+
+    if (
+      Number.isFinite(left)
+      && Number.isFinite(right)
+      && left > 0
+      && right > 0
+    ) {
+      return {
+        min: Math.min(left, right),
+        max: Math.max(left, right),
+      }
+    }
+  }
+
+  const single = text.match(
+    /(\d+(?:\.\d+)?)\s*(?:мм|mm)/iu,
+  ) ?? text.match(
+    /толщ\p{L}*\D{0,20}(\d+(?:\.\d+)?)/iu,
+  )
+
+  if (!single) return null
+
+  const number = Number(single[1])
+
+  if (
+    !Number.isFinite(number)
+    || number <= 0
+    || number > 10
+  ) {
+    return null
+  }
+
+  return {
+    min: Math.max(0.1, number - 0.12),
+    max: number + 0.12,
+    target: number,
+  }
+}
+
+function productSearchDocument(product) {
+  return normalizeCatalogQuery([
+    product?.name,
+    product?.slug,
+    product?.category,
+    product?.description,
+    JSON.stringify(product?.attributes ?? {}),
+    ...(Array.isArray(product?.variants)
+      ? product.variants.map(item => item?.name)
+      : []),
+  ].filter(Boolean).join(' '))
+}
+
+function productMatchesColor(product, color) {
+  if (!color) return true
+
+  const group = EXPLICIT_COLOR_GROUPS.find(
+    item => item.color === color,
+  )
+
+  if (!group) return true
+
+  const tokens = normalizedTokens(
+    productSearchDocument(product),
+  )
+
+  return group.tokens.some(signal => (
+    tokens.some(token => tokenMatchesSignal(token, signal))
+  ))
+}
+
+function extractProductThicknesses(product) {
+  const values = []
+  const attributes = (
+    product?.attributes
+    && typeof product.attributes === 'object'
+    && !Array.isArray(product.attributes)
+  )
+    ? product.attributes
+    : {}
+
+  for (const [key, value] of Object.entries(attributes)) {
+    const normalizedKey = normalizeCatalogQuery(key)
+
+    if (
+      !normalizedKey.includes('толщ')
+      && !normalizedKey.includes('thick')
+    ) {
+      continue
+    }
+
+    for (const match of String(value ?? '').matchAll(
+      /(\d+(?:[.,]\d+)?)/gu,
+    )) {
+      const number = Number(
+        String(match[1]).replace(',', '.'),
+      )
+
+      if (
+        Number.isFinite(number)
+        && number > 0
+        && number <= 10
+      ) {
+        values.push(number)
+      }
+    }
+  }
+
+  const description = String(product?.description ?? '')
+
+  for (const match of description.matchAll(
+    /(\d+(?:[.,]\d+)?)\s*(?:мм|mm)/giu,
+  )) {
+    const number = Number(
+      String(match[1]).replace(',', '.'),
+    )
+
+    if (
+      Number.isFinite(number)
+      && number > 0
+      && number <= 10
+    ) {
+      values.push(number)
+    }
+  }
+
+  return [...new Set(values)]
+}
+
+function thicknessState(product, constraint) {
+  if (!constraint) return 'unknown'
+
+  const values = extractProductThicknesses(product)
+  if (!values.length) return 'unknown'
+
+  return values.some(value => (
+    value >= constraint.min
+    && value <= constraint.max
+  ))
+    ? 'match'
+    : 'mismatch'
+}
+
+export function applyExplicitProductConstraints(
+  products,
+  searchText,
+) {
+  const input = Array.isArray(products)
+    ? products
+    : []
+
+  const color = inferExplicitColor(searchText)
+  const thickness = inferExplicitThicknessMm(searchText)
+
+  let filtered = input
+
+  if (color) {
+    filtered = filtered.filter(
+      product => productMatchesColor(product, color),
+    )
+  }
+
+  if (thickness) {
+    filtered = filtered
+      .map(product => ({
+        product,
+        thicknessState: thicknessState(
+          product,
+          thickness,
+        ),
+      }))
+      .filter(item => item.thicknessState !== 'mismatch')
+      .sort((left, right) => (
+        (right.thicknessState === 'match' ? 1 : 0)
+        - (left.thicknessState === 'match' ? 1 : 0)
+      ))
+      .map(item => item.product)
+  }
+
+  return {
+    products: filtered,
+    constraints: {
+      color,
+      thicknessMm: thickness,
+    },
+  }
+}
+
 export function inferExplicitCategorySlug(value) {
   const text = String(value ?? '').trim()
   if (!text) return null
@@ -73,6 +349,12 @@ function safeLimit(value, fallback = 6) {
 function normalizeVariant(variant) {
   const price = Number(variant?.priceRub)
   const oldPrice = Number(variant?.oldPriceRub)
+  const stockQuantity = (
+    variant?.stockQuantity === null
+    || variant?.stockQuantity === undefined
+  )
+    ? null
+    : Number(variant.stockQuantity)
 
   return {
     id: variant?.id ?? null,
@@ -80,6 +362,9 @@ function normalizeVariant(variant) {
     unit: String(variant?.unit ?? '').trim() || null,
     priceRub: Number.isFinite(price) ? price : null,
     oldPriceRub: Number.isFinite(oldPrice) ? oldPrice : null,
+    stockQuantity: Number.isFinite(stockQuantity)
+      ? stockQuantity
+      : null,
   }
 }
 
@@ -106,6 +391,10 @@ function mapProduct(row) {
     categorySlug: row.category_slug,
     description: row.description,
     sku: row.sku,
+    stockQuantity: row.stock_quantity === null
+      || row.stock_quantity === undefined
+      ? null
+      : Number(row.stock_quantity),
     image: row.primary_image,
     attributes: row.attributes ?? {},
     variants: Array.isArray(row.variants)
@@ -264,6 +553,7 @@ export async function getPublishedProductsByIds(productIds) {
         p.slug,
         p.description,
         p.sku,
+        p.stock_quantity,
         p.primary_image,
         p.attributes,
         p.updated_at,
@@ -277,7 +567,8 @@ export async function getPublishedProductsByIds(productIds) {
                 'name', v.name,
                 'unit', v.unit,
                 'priceRub', v.price,
-                'oldPriceRub', v.old_price
+                'oldPriceRub', v.old_price,
+                'stockQuantity', v.stock_quantity
               )
               ORDER BY v.sort_order, v.created_at
             )
@@ -335,10 +626,17 @@ export async function findLiveProductCandidates(
     || inferExplicitCategorySlug(searchText)
   )
 
+  const retrievalLimit = Math.min(
+    12,
+    Math.max(limit, limit * 2),
+  )
+
   const [semantic, lexical] = await Promise.all([
-    searchProductIndex(searchText, { limit }),
+    searchProductIndex(searchText, {
+      limit: retrievalLimit,
+    }),
     searchPublishedProducts(searchText, {
-      limit,
+      limit: retrievalLimit,
       categorySlug,
     }),
   ])
@@ -353,14 +651,25 @@ export async function findLiveProductCandidates(
       )
     : semanticProductsRaw
 
-  const products = mergeCandidateProducts(
+  const mergedProducts = mergeCandidateProducts(
     semanticProducts,
     lexical.items,
-    limit,
+    retrievalLimit,
   )
+
+  const constrained = applyExplicitProductConstraints(
+    mergedProducts,
+    searchText,
+  )
+
+  const products = constrained.products.slice(0, limit)
 
   return {
     products,
+    constraints: {
+      categorySlug: categorySlug || null,
+      ...constrained.constraints,
+    },
     semantic: {
       available: semantic.available,
       vectorStoreId: semantic.vectorStoreId,

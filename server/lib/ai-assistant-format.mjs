@@ -45,6 +45,130 @@ export function formatVariantPrice(variant) {
   return `${number} ₽${unit ? ` за ${unit}` : ' за шт.'}`
 }
 
+function attributeLabel(value) {
+  const key = String(value ?? '').trim()
+  const normalized = key
+    .toLocaleLowerCase('ru')
+    .replace(/ё/g, 'е')
+    .replace(/\s+/g, ' ')
+
+  const labels = new Map([
+    ['grade', 'Сорт'],
+    ['гrade', 'Сорт'],
+    ['сорт', 'Сорт'],
+    ['color', 'Цвет'],
+    ['colour', 'Цвет'],
+    ['цвет', 'Цвет'],
+    ['origin', 'Происхождение'],
+    ['country', 'Происхождение'],
+    ['происхождение', 'Происхождение'],
+    ['thickness', 'Толщина'],
+    ['толщина', 'Толщина'],
+  ])
+
+  return labels.get(normalized) ?? key
+}
+
+function finiteStock(value) {
+  if (value === null || value === undefined || value === '') {
+    return null
+  }
+
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+function productStockLine(product) {
+  const productStock = finiteStock(
+    product?.stockQuantity,
+  )
+
+  if (productStock !== null) {
+    return (
+      `Подтверждённый остаток товара: `
+      + `${MONEY.format(productStock)}.`
+    )
+  }
+
+  const variantStocks = Array.isArray(product?.variants)
+    ? product.variants
+        .map(variant => ({
+          name: String(variant?.name ?? '').trim(),
+          stock: finiteStock(variant?.stockQuantity),
+        }))
+        .filter(item => item.stock !== null)
+    : []
+
+  if (variantStocks.length) {
+    return (
+      'Подтверждённые остатки вариантов: '
+      + variantStocks
+          .slice(0, 4)
+          .map(item => (
+            `${item.name || 'вариант'} — ${MONEY.format(item.stock)}`
+          ))
+          .join(' | ')
+      + '.'
+    )
+  }
+
+  return (
+    'Остаток: не опубликован. '
+    + 'Не утверждай, что товар есть или отсутствует в наличии.'
+  )
+}
+
+export function sanitizeUnverifiedStockClaims(
+  value,
+  products,
+) {
+  let text = String(value ?? '').trim()
+  if (!text) return ''
+
+  const rows = Array.isArray(products)
+    ? products
+    : []
+
+  const everyProductHasStock = (
+    rows.length > 0
+    && rows.every(product => {
+      if (finiteStock(product?.stockQuantity) !== null) {
+        return true
+      }
+
+      return (
+        Array.isArray(product?.variants)
+        && product.variants.some(
+          variant => finiteStock(
+            variant?.stockQuantity,
+          ) !== null,
+        )
+      )
+    })
+  )
+
+  if (everyProductHasStock) {
+    return text
+  }
+
+  // Unicode-safe boundaries: JS \b is unreliable for Cyrillic.
+  text = text
+    .replace(
+      /(?<![\p{L}\p{N}_])(?:товар|продукт)\s+доступен(?![\p{L}\p{N}_])/giu,
+      'товар опубликован в каталоге',
+    )
+    .replace(
+      /(?<![\p{L}\p{N}_])(?:товары|продукты)\s+доступны(?![\p{L}\p{N}_])/giu,
+      'товары опубликованы в каталоге',
+    )
+    .replace(
+      /(?<![\p{L}\p{N}_])точно\s+есть\s+в\s+наличии(?![\p{L}\p{N}_])/giu,
+      'опубликован в каталоге; фактический остаток нужно уточнить',
+    )
+
+  return text
+}
+
 function compactAttributes(attributes, limit = 6) {
   if (
     !attributes
@@ -63,7 +187,9 @@ function compactAttributes(attributes, limit = 6) {
     ))
     .slice(0, limit)
     .map(([key, value]) => (
-      `${key}: ${String(value).replace(/\s+/g, ' ').trim()}`
+      `${attributeLabel(key)}: ${String(value)
+        .replace(/\s+/g, ' ')
+        .trim()}`
     ))
 }
 
@@ -98,6 +224,7 @@ export function compactProductContext(products) {
           ? `Характеристики: ${attributes.join('; ')}`
           : '',
         prices.length ? `Актуальные цены: ${prices.join(' | ')}` : '',
+        productStockLine(product),
       ]
         .filter(Boolean)
         .join('\n')

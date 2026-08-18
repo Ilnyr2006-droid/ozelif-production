@@ -145,6 +145,12 @@ function productUrl(row) {
 function normalizeVariant(variant) {
   const price = Number(variant?.priceRub)
   const oldPrice = Number(variant?.oldPriceRub)
+  const stockQuantity = (
+    variant?.stockQuantity === null
+    || variant?.stockQuantity === undefined
+  )
+    ? null
+    : Number(variant.stockQuantity)
 
   return {
     id: variant?.id ?? null,
@@ -152,6 +158,9 @@ function normalizeVariant(variant) {
     unit: String(variant?.unit ?? '').trim() || null,
     priceRub: Number.isFinite(price) ? price : null,
     oldPriceRub: Number.isFinite(oldPrice) ? oldPrice : null,
+    stockQuantity: Number.isFinite(stockQuantity)
+      ? stockQuantity
+      : null,
     sourcePriceUsd: variant?.sourcePriceUsd === null
       || variant?.sourcePriceUsd === undefined
       ? null
@@ -171,6 +180,10 @@ function mapProduct(row) {
     categorySlug: row.category_slug,
     description: row.description,
     sku: row.sku,
+    stockQuantity: row.stock_quantity === null
+      || row.stock_quantity === undefined
+      ? null
+      : Number(row.stock_quantity),
     image: row.primary_image,
     attributes: row.attributes ?? {},
     variants: Array.isArray(row.variants)
@@ -231,6 +244,7 @@ export async function searchPublishedProducts(searchText, options = {}) {
                   'unit', v.unit,
                   'priceRub', v.price,
                   'oldPriceRub', v.old_price,
+                  'stockQuantity', v.stock_quantity,
                   'sourcePriceUsd', v.source_price_usd
                 )
                 ORDER BY v.sort_order, v.created_at
@@ -311,6 +325,7 @@ export async function getPublishedProduct(identifier) {
         p.slug,
         p.description,
         p.sku,
+        p.stock_quantity,
         p.primary_image,
         p.attributes,
         p.updated_at,
@@ -325,6 +340,7 @@ export async function getPublishedProduct(identifier) {
                 'unit', v.unit,
                 'priceRub', v.price,
                 'oldPriceRub', v.old_price,
+                'stockQuantity', v.stock_quantity,
                 'sourcePriceUsd', v.source_price_usd
               )
               ORDER BY v.sort_order, v.created_at

@@ -164,6 +164,10 @@ export function createAdminLiveChatsRouter() {
          status = 'human',
          ai_enabled = false,
          assigned_admin_id = $2,
+         manager_takeover_at = COALESCE(
+           manager_takeover_at,
+           now()
+         ),
          updated_at = now()
        WHERE id = $1
        RETURNING
@@ -246,6 +250,10 @@ export function createAdminLiveChatsRouter() {
          status = 'human',
          ai_enabled = false,
          assigned_admin_id = $2,
+         manager_takeover_at = COALESCE(
+           manager_takeover_at,
+           now()
+         ),
          last_message_at = now(),
          updated_at = now()
        WHERE id = $1`,

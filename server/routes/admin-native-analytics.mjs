@@ -39,6 +39,7 @@ export function createAdminNativeAnalyticsRouter() {
         statusResult,
         deliveryResult,
         topProductsResult,
+        chatFunnelResult,
       ] = await Promise.all([
         query(`
           SELECT
@@ -191,6 +192,39 @@ export function createAdminNativeAnalyticsRouter() {
           ORDER BY revenue DESC
           LIMIT 10
         `),
+,
+
+        query(`
+          WITH cohort AS (
+            SELECT *
+            FROM live_chat_conversations
+            WHERE chat_started_at >=
+              CURRENT_DATE - ($1::int - 1)
+          )
+          SELECT
+            COUNT(*)::int AS chat_started,
+
+            COUNT(*) FILTER (
+              WHERE product_interest_at IS NOT NULL
+            )::int AS product_interest,
+
+            COUNT(*) FILTER (
+              WHERE contact_offer_shown_at IS NOT NULL
+            )::int AS contact_offer,
+
+            COUNT(*) FILTER (
+              WHERE contact_captured_at IS NOT NULL
+            )::int AS phone_captured,
+
+            COUNT(*) FILTER (
+              WHERE manager_requested_at IS NOT NULL
+            )::int AS manager_requested,
+
+            COUNT(*) FILTER (
+              WHERE manager_takeover_at IS NOT NULL
+            )::int AS manager_takeover
+          FROM cohort
+        `, [days])
       ])
 
       const summaryRow =
@@ -256,6 +290,44 @@ export function createAdminNativeAnalyticsRouter() {
             orders:
               number(row.orders_count),
           })),
+
+        chatFunnel: (() => {
+          const row =
+            chatFunnelResult.rows[0] ?? {}
+
+          return [
+            {
+              key: 'chat_started',
+              label: 'Начали чат',
+              count: number(row.chat_started),
+            },
+            {
+              key: 'product_interest',
+              label: 'Коммерческий интерес',
+              count: number(row.product_interest),
+            },
+            {
+              key: 'contact_offer',
+              label: 'Показали форму контакта',
+              count: number(row.contact_offer),
+            },
+            {
+              key: 'phone_captured',
+              label: 'Оставили телефон',
+              count: number(row.phone_captured),
+            },
+            {
+              key: 'manager_requested',
+              label: 'Запрошен менеджер',
+              count: number(row.manager_requested),
+            },
+            {
+              key: 'manager_takeover',
+              label: 'Менеджер подключился',
+              count: number(row.manager_takeover),
+            },
+          ]
+        })(),
 
         topProducts:
           topProductsResult.rows.map(
