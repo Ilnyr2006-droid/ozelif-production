@@ -38,17 +38,35 @@ async function resolveLine(client, item) {
   return { productId: row.product_id, variantId: row.variant_id, productName: row.product_name, categoryName: row.category_name, sku: row.variant_sku ?? row.product_sku, price, quantity, unit: row.unit ?? row.product_unit, lineTotal: price ? Math.round(price * quantity * 100) / 100 : 0, selectedOptions: row.attributes ?? {} }
 }
 
-export async function createOrder(input, { telegramEnabled = false, telegramUsername = '' } = {}) {
+export async function createOrderWithClient(
+  client,
+  input,
+  {
+    telegramEnabled = false,
+    telegramUsername = '',
+  } = {},
+) {
   const phone = normalizePhone(input?.phone)
   const name = clean(input?.name, 160)
   const idempotencyKey = clean(input?.idempotencyKey, 160)
+  const source = (
+    input?.source === 'ai_chat'
+      ? 'ai_chat'
+      : 'website_cart'
+  )
   const items = Array.isArray(input?.items) ? input.items : []
   if (!phone || !items.length) { const error = new Error('Укажите телефон и хотя бы один материал'); error.status = 400; throw error }
   if (!idempotencyKey) { const error = new Error('Не удалось защитить заявку от повторной отправки'); error.status = 400; throw error }
   if (input?.privacyConsent !== true) { const error = new Error('Подтвердите согласие на обработку персональных данных'); error.status = 400; throw error }
-  return transaction(async client => {
-    if (idempotencyKey) {
-      const existing = await client.query(`SELECT * FROM orders WHERE source='website_cart' AND idempotency_key=$1 FOR UPDATE`, [idempotencyKey])
+  if (idempotencyKey) {
+      const existing = await client.query(
+        `SELECT *
+         FROM orders
+         WHERE source = $2
+           AND idempotency_key = $1
+         FOR UPDATE`,
+        [idempotencyKey, source],
+      )
       if (existing.rowCount) return { order: existing.rows[0], customer: null, deepLink: null, duplicate: true }
     }
     const customer = await client.query(`INSERT INTO customers (name, original_phone, normalized_phone, email) VALUES ($1,$2,$3,$4)
@@ -59,20 +77,44 @@ export async function createOrder(input, { telegramEnabled = false, telegramUser
     for (const item of items) lines.push(await resolveLine(client, item))
     const total = lines.reduce((sum, line) => sum + line.lineTotal, 0)
     const orderResult = await client.query(`INSERT INTO orders (customer_id, total_amount, customer_name_snapshot, customer_phone_snapshot, customer_email_snapshot, delivery_method, delivery_address, delivery_city, desired_delivery_date, customer_comment, privacy_consent_at, source, idempotency_key)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now(),'website_cart',$11) RETURNING *`, [customer.rows[0].id, total, name, phone, clean(input?.email, 240), clean(input?.deliveryMethod, 120), clean(input?.deliveryAddress, 1000), clean(input?.city, 160), dateOnly(input?.desiredDeliveryDate), clean(input?.comment, 2000), idempotencyKey])
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now(),$11,$12) RETURNING *`, [customer.rows[0].id, total, name, phone, clean(input?.email, 240), clean(input?.deliveryMethod, 120), clean(input?.deliveryAddress, 1000), clean(input?.city, 160), dateOnly(input?.desiredDeliveryDate), clean(input?.comment, 2000), source, idempotencyKey])
     const order = orderResult.rows[0]
     for (const line of lines) await client.query(`INSERT INTO order_items (order_id, product_id, variant_id, product_name_snapshot, category_name_snapshot, sku_snapshot, price_snapshot, quantity, unit, line_total, selected_options)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`, [order.id, line.productId, line.variantId, line.productName, line.categoryName, line.sku, line.price, line.quantity, line.unit, line.lineTotal, line.selectedOptions])
-    await client.query(`INSERT INTO order_status_history (order_id, new_status, source) VALUES ($1, 'new', 'website_cart')`, [order.id])
-    await client.query(`INSERT INTO notification_outbox (event_type, aggregate_type, aggregate_id, channel, recipient, payload) VALUES ('order.created','order',$1,'admin','crm',$2) ON CONFLICT DO NOTHING`, [order.id, JSON.stringify({ publicNumber: order.public_number, source: 'website_cart' })])
+    await client.query(
+      `INSERT INTO order_status_history (
+         order_id,
+         new_status,
+         source
+       )
+       VALUES ($1, 'new', $2)`,
+      [order.id, source],
+    )
+    await client.query(`INSERT INTO notification_outbox (event_type, aggregate_type, aggregate_id, channel, recipient, payload) VALUES ('order.created','order',$1,'admin','crm',$2) ON CONFLICT DO NOTHING`, [order.id, JSON.stringify({ publicNumber: order.public_number, source })])
     let deepLink = null
     if (telegramEnabled && telegramUsername) {
       const token = createLinkToken()
       await client.query(`INSERT INTO telegram_link_tokens (token_hash, customer_id, order_id, expires_at) VALUES ($1,$2,$3,now() + interval '30 minutes')`, [hashLinkToken(token), customer.rows[0].id, order.id])
       deepLink = `https://t.me/${telegramUsername}?start=order_${token}`
     }
-    return { order, customer: customer.rows[0], deepLink }
-  })
+    return {
+      order,
+      customer: customer.rows[0],
+      deepLink,
+    }
+}
+
+export async function createOrder(
+  input,
+  options = {},
+) {
+  return transaction(
+    client => createOrderWithClient(
+      client,
+      input,
+      options,
+    ),
+  )
 }
 
 export async function changeOrderStatus(orderId, input, adminId, query) {

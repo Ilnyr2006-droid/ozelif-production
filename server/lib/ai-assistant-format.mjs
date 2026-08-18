@@ -234,6 +234,45 @@ function compactAttributes(attributes, limit = 5) {
     ))
 }
 
+function compactOrderVariants(product) {
+  const variants = Array.isArray(product?.variants)
+    ? product.variants
+    : []
+
+  const rows = variants
+    .filter(variant => variant?.id)
+    .slice(0, 6)
+    .map(variant => {
+      const parts = [
+        `VARIANT_ID=${variant.id}`,
+      ]
+
+      if (variant.name) {
+        parts.push(`название=${variant.name}`)
+      }
+
+      if (variant.unit) {
+        parts.push(`единица=${variant.unit}`)
+      }
+
+      if (Number(variant.priceRub) > 0) {
+        parts.push(
+          `цена=${formatVariantPrice(variant)}`,
+        )
+      }
+
+      return parts.join('; ')
+    })
+
+  return rows.length
+    ? (
+        'Служебные варианты для заказа '
+        + '(ID не показывать покупателю): '
+        + rows.join(' | ')
+      )
+    : ''
+}
+
 export function compactProductContext(products) {
   if (!Array.isArray(products) || !products.length) {
     return 'Подходящих опубликованных товаров не найдено.'
@@ -271,6 +310,7 @@ export function compactProductContext(products) {
           ? `Характеристики: ${attributes.join('; ')}`
           : '',
         prices.length ? `Актуальные цены: ${prices.join(' | ')}` : '',
+        compactOrderVariants(product),
         productStockLine(product),
       ]
         .filter(Boolean)

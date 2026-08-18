@@ -11,6 +11,13 @@ import { normalizeCustomerProfileUpdate } from '../lib/ai-customer-profile.mjs'
 import { syncCustomerFromLiveChatContact } from '../lib/customer-contact.mjs'
 import { classifyAssistantIntent } from '../lib/ai-query-intent.mjs'
 import { buildConversionDecision } from '../lib/ai-conversion.mjs'
+import {
+  applyChatOrderDraftUpdate,
+  applyImplicitChatOrderSignals,
+  createChatOrderIfReady,
+  formatChatOrderDraftReply,
+  loadChatOrderDraft,
+} from '../lib/chat-order.mjs'
 
 function asyncRoute(handler) {
   return (request, response, next) => {
@@ -207,6 +214,7 @@ async function callAssistant(
   pathname,
   profile,
   requestIp,
+  orderDraft,
 ) {
   const port = Number(process.env.PORT ?? 8093)
 
@@ -230,6 +238,8 @@ async function callAssistant(
     visitorName: profile?.visitorName ?? null,
     visitorPhone: profile?.visitorPhone ?? null,
   }
+
+  payload.orderDraft = orderDraft ?? null
 
   const response = await fetch(
     `http://127.0.0.1:${port}/api/assistant`,
@@ -671,6 +681,10 @@ export function createLiveChatRouter() {
       let assistantError = null
       let responseConversation = freshConversation
       let conversion = initialConversion.offer
+      let currentOrderDraft = await loadChatOrderDraft(
+        conversation.id,
+      )
+      let orderFlow = null
 
       if (freshConversation?.aiEnabled) {
         const historyResult = await query(
@@ -693,6 +707,7 @@ export function createLiveChatRouter() {
             safePath(request.body?.path),
             freshConversation,
             clientIp(request),
+            currentOrderDraft,
           )
 
           const profileUpdate = normalizeCustomerProfileUpdate(
@@ -731,6 +746,100 @@ export function createLiveChatRouter() {
               )
               responseConversation = { ...responseConversation, ...updatedProfile.rows[0] }
             }
+          }
+
+          let draftResult = null
+
+          if (generated.orderDraftUpdate) {
+            draftResult = await applyChatOrderDraftUpdate(
+              conversation.id,
+              generated.orderDraftUpdate,
+            )
+
+            currentOrderDraft = draftResult.draft
+          } else {
+            const implicit = await applyImplicitChatOrderSignals(
+              conversation.id,
+              content,
+              currentOrderDraft,
+            )
+
+            if (implicit) {
+              draftResult = implicit
+              currentOrderDraft = implicit.draft
+            }
+          }
+
+          // If this turn captured a phone after a previously confirmed
+          // draft, create the order now. Otherwise a confirmed draft
+          // waits for contact details.
+          const creation = await createChatOrderIfReady({
+            conversationId: conversation.id,
+            draft: currentOrderDraft,
+            name:
+              responseConversation?.visitorName
+              ?? profileUpdate?.name
+              ?? null,
+            phone:
+              responseConversation?.visitorPhone
+              ?? profileUpdate?.phone
+              ?? null,
+          })
+
+          if (creation.created) {
+            currentOrderDraft = creation.draft
+
+            orderFlow = {
+              type: 'order',
+              status: 'created',
+              created: true,
+            }
+
+            generated.reply = formatChatOrderDraftReply(
+              currentOrderDraft,
+              {
+                created: true,
+              },
+            )
+          } else if (
+            draftResult
+            || generated.orderDraftUpdate
+          ) {
+            const confirmed = (
+              currentOrderDraft?.status
+              === 'awaiting_contact'
+            )
+
+            orderFlow = {
+              type: 'order',
+              status:
+                currentOrderDraft?.status
+                ?? 'collecting',
+              created: false,
+            }
+
+            generated.reply = formatChatOrderDraftReply(
+              currentOrderDraft,
+              {
+                needsContact:
+                  confirmed
+                  && !responseConversation?.visitorPhone,
+                needsNewOrderCommand:
+                  Boolean(
+                    draftResult?.needsNewOrderCommand,
+                  ),
+              },
+            )
+          } else if (
+            currentOrderDraft?.status === 'awaiting_contact'
+            && profileUpdate?.phone
+          ) {
+            generated.reply = formatChatOrderDraftReply(
+              currentOrderDraft,
+              {
+                needsContact: true,
+              },
+            )
           }
 
           const afterProfileDecision = buildConversionDecision({
@@ -791,6 +900,7 @@ export function createLiveChatRouter() {
                 actions: generated.actions ?? [],
                 meta: generated.meta ?? {},
                 conversion,
+                orderFlow,
                 replyToClientMessageId: requestMessageId,
               }),
             ],
@@ -801,6 +911,7 @@ export function createLiveChatRouter() {
           }
 
           delete assistantPayload.profileUpdate
+          delete assistantPayload.orderDraftUpdate
 
           assistant = {
             ...assistantPayload,
@@ -831,6 +942,7 @@ export function createLiveChatRouter() {
         assistant,
         assistantError,
         conversion,
+        orderFlow,
       })
     }),
   )

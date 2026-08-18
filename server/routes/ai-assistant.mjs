@@ -19,6 +19,11 @@ import {
   CUSTOMER_PROFILE_TOOL,
   extractCustomerProfileToolCalls,
 } from '../lib/ai-customer-profile.mjs'
+import {
+  ORDER_DRAFT_TOOL,
+  extractOrderDraftToolCalls,
+  formatOrderDraftContext,
+} from '../lib/ai-order-draft.mjs'
 
 const WINDOW_MS = 10 * 60 * 1000
 const MAX_REQUESTS_PER_WINDOW = 24
@@ -134,6 +139,8 @@ async function createAssistantReply({
   clarificationQuestion = null,
   allowProfileCapture = false,
   currentProfile = {},
+  allowOrderDraftUpdate = false,
+  currentOrderDraft = null,
 }) {
   const apiKey = String(
     process.env.OPENAI_API_KEY ?? '',
@@ -186,6 +193,15 @@ async function createAssistantReply({
       'Если покупатель проигнорировал вопрос о контактах, не повторяй '
         + 'его и продолжай консультацию.',
       'Не повторяй полный телефон в своём текстовом ответе.',
+      '',
+      'ЗАКАЗ ЧЕРЕЗ ЧАТ:',
+      'Если покупатель хочет заказать, добавить/убрать товар, изменить количество или оформить заказ — используй update_chat_order_draft.',
+      'В одном заказе может быть несколько разных товаров. Для каждого товара количество хранится отдельно.',
+      'Если товар назван, но количество ещё не сказано — добавь его с quantity=null и спроси количество.',
+      'Если покупатель сообщает количества сразу для нескольких товаров — передай несколько operations в одном вызове.',
+      'confirm=true ставь только после явного «оформляй», «можешь», «подтверждаю», «да» на вопрос об оформлении или эквивалента.',
+      'Никогда не утверждай, что заказ создан: update_chat_order_draft меняет только черновик. Факт создания сообщает только сервер.',
+      'Не показывай PRODUCT_ID или VARIANT_ID покупателю.',
     ].join('\n')
 
     const input = [
@@ -204,6 +220,11 @@ async function createAssistantReply({
               assistantProductContext(
                 products,
                 needsProducts,
+              ),
+              '',
+              'ТЕКУЩИЙ ЧЕРНОВИК ЗАКАЗА:',
+              formatOrderDraftContext(
+                currentOrderDraft,
               ),
               '',
               'УТОЧНЯЮЩИЙ ВОПРОС:',
@@ -228,13 +249,23 @@ async function createAssistantReply({
       instructions,
       input,
       max_output_tokens: 520,
-      ...(allowProfileCapture
-        ? {
-            tools: [CUSTOMER_PROFILE_TOOL],
-            tool_choice: 'auto',
-            parallel_tool_calls: false,
-          }
-        : {}),
+      ...(
+        allowProfileCapture
+        || allowOrderDraftUpdate
+          ? {
+              tools: [
+                ...(allowProfileCapture
+                  ? [CUSTOMER_PROFILE_TOOL]
+                  : []),
+                ...(allowOrderDraftUpdate
+                  ? [ORDER_DRAFT_TOOL]
+                  : []),
+              ],
+              tool_choice: 'auto',
+              parallel_tool_calls: false,
+            }
+          : {}
+      ),
     }
 
     let body = await requestOpenAiResponse({
@@ -244,34 +275,58 @@ async function createAssistantReply({
     })
 
     let profileUpdate = null
+    let orderDraftUpdate = null
 
-    if (allowProfileCapture) {
-      const extracted = extractCustomerProfileToolCalls(body)
+    const profileExtracted = allowProfileCapture
+      ? extractCustomerProfileToolCalls(body)
+      : {
+          update: null,
+          functionOutputs: [],
+        }
 
-      profileUpdate = extracted.update
+    const orderExtracted = allowOrderDraftUpdate
+      ? extractOrderDraftToolCalls(body)
+      : {
+          update: null,
+          functionOutputs: [],
+        }
 
-      if (extracted.functionOutputs.length) {
-        body = await requestOpenAiResponse({
-          apiKey,
-          controller,
-          payload: {
-            model,
-            store: false,
-            instructions,
-            input: [
-              ...input,
-              ...(Array.isArray(body?.output)
-                ? body.output
-                : []),
-              ...extracted.functionOutputs,
-            ],
-            tools: [CUSTOMER_PROFILE_TOOL],
-            tool_choice: 'none',
-            parallel_tool_calls: false,
-            max_output_tokens: 520,
-          },
-        })
-      }
+    profileUpdate = profileExtracted.update
+    orderDraftUpdate = orderExtracted.update
+
+    const functionOutputs = [
+      ...profileExtracted.functionOutputs,
+      ...orderExtracted.functionOutputs,
+    ]
+
+    if (functionOutputs.length) {
+      body = await requestOpenAiResponse({
+        apiKey,
+        controller,
+        payload: {
+          model,
+          store: false,
+          instructions,
+          input: [
+            ...input,
+            ...(Array.isArray(body?.output)
+              ? body.output
+              : []),
+            ...functionOutputs,
+          ],
+          tools: [
+            ...(allowProfileCapture
+              ? [CUSTOMER_PROFILE_TOOL]
+              : []),
+            ...(allowOrderDraftUpdate
+              ? [ORDER_DRAFT_TOOL]
+              : []),
+          ],
+          tool_choice: 'none',
+          parallel_tool_calls: false,
+          max_output_tokens: 520,
+        },
+      })
     }
 
     const text = removeProductNavigationPromises(
@@ -285,6 +340,7 @@ async function createAssistantReply({
     return {
       text,
       profileUpdate,
+      orderDraftUpdate,
       model: body?.model ?? model,
       responseId: body?.id ?? null,
       usage: body?.usage ?? null,
@@ -323,6 +379,14 @@ export function createAiAssistantRouter() {
       ),
     }
 
+    const currentOrderDraft = (
+      request.body?.orderDraft
+      && typeof request.body.orderDraft === 'object'
+      && !Array.isArray(request.body.orderDraft)
+    )
+      ? request.body.orderDraft
+      : null
+
     if (!message) {
       response.status(400).json({
         error: 'Сообщение не должно быть пустым.',
@@ -350,6 +414,8 @@ export function createAiAssistantRouter() {
           retrieval.clarificationQuestion ?? null,
         allowProfileCapture,
         currentProfile,
+        allowOrderDraftUpdate: allowProfileCapture,
+        currentOrderDraft,
       })
 
       const reply = sanitizeSalesReply(
@@ -366,6 +432,8 @@ export function createAiAssistantRouter() {
       response.json({
         reply,
         profileUpdate: generated.profileUpdate ?? null,
+        orderDraftUpdate:
+          generated.orderDraftUpdate ?? null,
         actions,
         products: products.slice(0, 3),
         meta: {
@@ -408,6 +476,7 @@ export function createAiAssistantRouter() {
       response.json({
         reply: fallbackReply,
         profileUpdate: null,
+        orderDraftUpdate: null,
         actions,
         products: products.slice(0, 3),
         meta: {
