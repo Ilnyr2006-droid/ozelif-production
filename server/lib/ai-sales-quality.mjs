@@ -20,6 +20,11 @@ const SALES_OVERCLAIM_PATTERNS = [
       /(?<![\p{L}\p{N}_])идеальн\p{L}*\s+(?:выбор\p{L}*|вариант\p{L}*)(?![\p{L}\p{N}_])/giu,
   },
   {
+    id: 'ideal_for',
+    pattern:
+      /(?<![\p{L}\p{N}_])идеальн\p{L}*\s+для\s+/giu,
+  },
+  {
     id: 'hundred_percent_fit',
     pattern:
       /(?<![\p{L}\p{N}_])100\s*%\s*подход\p{L}*(?![\p{L}\p{N}_])/giu,
@@ -63,6 +68,10 @@ function replaceOverclaims(value) {
     .replace(
       /(?<![\p{L}\p{N}_])идеальн\p{L}*\s+(?:выбор\p{L}*|вариант\p{L}*)(?![\p{L}\p{N}_])/giu,
       'подходящий вариант',
+    )
+    .replace(
+      /(?<![\p{L}\p{N}_])идеальн\p{L}*\s+для\s+/giu,
+      'подходит для ',
     )
     .replace(
       /(?<![\p{L}\p{N}_])100\s*%\s*подход\p{L}*(?![\p{L}\p{N}_])/giu,

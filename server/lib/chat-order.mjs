@@ -345,6 +345,168 @@ function uniqueProductTokens(item, allItems) {
   return own.filter(token => !otherTokens.has(token))
 }
 
+function transliterateLatinToken(value) {
+  const source = String(value ?? '')
+    .toLocaleLowerCase('ru')
+
+  if (!/[a-z]/u.test(source)) return source
+
+  const digraphs = [
+    ['shch', 'щ'], ['sch', 'щ'], ['yo', 'ё'],
+    ['yu', 'ю'], ['ya', 'я'], ['zh', 'ж'],
+    ['kh', 'х'], ['ts', 'ц'], ['ch', 'ч'],
+    ['sh', 'ш'],
+  ]
+
+  let text = source
+
+  for (const [latin, russian] of digraphs) {
+    text = text.replaceAll(latin, russian)
+  }
+
+  const letters = {
+    a: 'а', b: 'б', c: 'к', d: 'д', e: 'е',
+    f: 'ф', g: 'г', h: 'х', i: 'и', j: 'дж',
+    k: 'к', l: 'л', m: 'м', n: 'н', o: 'о',
+    p: 'п', q: 'к', r: 'р', s: 'с', t: 'т',
+    u: 'у', v: 'в', w: 'в', x: 'кс', y: 'и', z: 'з',
+  }
+
+  return [...text]
+    .map(char => letters[char] ?? char)
+    .join('')
+}
+
+function tokenMatchesAlias(messageToken, productToken) {
+  const message = normalizeReferenceText(messageToken)
+  const product = normalizeReferenceText(productToken)
+
+  if (!message || !product) return false
+
+  const candidates = [
+    product,
+    normalizeReferenceText(
+      transliterateLatinToken(product),
+    ),
+  ].filter(Boolean)
+
+  return candidates.some(candidate => (
+    message === candidate
+    || (
+      Math.min(message.length, candidate.length) >= 5
+      && message.slice(0, 5) === candidate.slice(0, 5)
+    )
+  ))
+}
+
+function parsedMessageTokens(value) {
+  const source = String(value ?? '')
+    .toLocaleLowerCase('ru')
+    .replace(/ё/g, 'е')
+
+  return [...source.matchAll(
+    /\d+(?:[.,]\d+)?|[\p{L}]+/gu,
+  )].map(match => ({
+    value: match[0],
+    index: match.index ?? 0,
+    number: /^\d/u.test(match[0])
+      ? Number(match[0].replace(',', '.'))
+      : null,
+  }))
+}
+
+function nearestQuantityForItem(message, item, allItems) {
+  const aliases = uniqueProductTokens(item, allItems)
+  const tokens = parsedMessageTokens(message)
+
+  const refs = tokens.filter(token => (
+    token.number === null
+    && aliases.some(alias => (
+      tokenMatchesAlias(token.value, alias)
+    ))
+  ))
+
+  const numbers = tokens.filter(token => (
+    Number.isFinite(token.number)
+    && token.number > 0
+  ))
+
+  if (!refs.length || !numbers.length) return null
+
+  let best = null
+
+  for (const ref of refs) {
+    for (const candidate of numbers) {
+      const distance = Math.abs(candidate.index - ref.index)
+
+      if (!best || distance < best.distance) {
+        best = {
+          quantity: candidate.number,
+          absoluteIndex: candidate.index,
+          distance,
+        }
+      }
+    }
+  }
+
+  return best && best.distance <= 34
+    ? best
+    : null
+}
+
+export function parseExplicitMultiItemQuantities(
+  draft,
+  message,
+) {
+  const items = Array.isArray(draft?.items)
+    ? draft.items
+    : []
+
+  const missing = items.filter(
+    item => !(number(item.quantity) > 0),
+  )
+
+  if (missing.length < 2) return null
+
+  const matches = missing.flatMap(item => {
+    const found = nearestQuantityForItem(
+      message,
+      item,
+      items,
+    )
+
+    return found ? [{ item, found }] : []
+  })
+
+  if (matches.length < 2) return null
+
+  const used = new Set()
+
+  for (const match of matches) {
+    if (used.has(match.found.absoluteIndex)) {
+      return null
+    }
+    used.add(match.found.absoluteIndex)
+  }
+
+  return {
+    startNewOrder: false,
+    cancel: false,
+    confirm: false,
+    deliveryMethod: null,
+    deliveryCity: null,
+    deliveryAddress: null,
+    operations: matches.map(({ item, found }) => ({
+      operation: 'upsert',
+      productId: item.productId,
+      productName: item.productName,
+      variantId: item.variantId ?? null,
+      quantity: found.quantity,
+      unit: item.unit ?? null,
+    })),
+  }
+}
+
 function operationDraftItem(operation, items) {
   const productId = clean(operation?.productId)
   const productName = normalizeReferenceText(operation?.productName)
@@ -448,17 +610,11 @@ export function formatAmbiguousQuantityReply(draft) {
     : ''
 
   return [
-    'Чтобы не перепутать количество между товарами, подпишите каждое число названием товара.',
+    'Я вижу несколько количеств, но не буду угадывать, какое относится к какому товару.',
     '',
+    'Напишите количество рядом с названием:',
     ...items.map(item => (
-      `• ${item.productName} — сколько${unitSuffix}?`
-    )),
-    '',
-    'Например:',
-    ...items.slice(0, 3).map((item, index) => (
-      `${item.productName} — ${
-        index === 0 ? '80' : index === 1 ? '20' : '10'
-      }${unitSuffix}`
+      `• ${item.productName} — количество${unitSuffix}`
     )),
   ].join('\n')
 }
@@ -787,11 +943,13 @@ function simpleConfirmation(value) {
   const text = String(value ?? '')
     .trim()
     .toLocaleLowerCase('ru')
+    .replace(/ё/g, 'е')
     .replace(/[.!?]+$/gu, '')
+    .replace(/\s+/g, ' ')
     .trim()
 
   return (
-    /^(?:да|давай|можешь|можно|оформляй|оформить|подтверждаю|подтвердить|согласен|согласна)$/u
+    /^(?:все верно|верно|правильно|да(?: все верно)?|оформляй|оформить|подтверждаю|согласен|согласна)$/u
   ).test(text)
 }
 
@@ -1138,9 +1296,15 @@ export function formatChatOrderDraftReply(
   }
 
   return [
-    ...summary,
+    'Проверьте заказ:',
     '',
-    'Оформить этот заказ?',
+    ...lines,
+    '',
+    fulfillmentLine,
+    `Предварительная сумма: ${money(total)}.`,
+    '',
+    'Если всё верно — напишите «всё верно».',
+    'Если нужно что-то изменить — просто напишите изменение.',
   ].join('\n')
 }
 

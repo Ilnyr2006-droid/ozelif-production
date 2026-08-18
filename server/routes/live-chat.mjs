@@ -19,6 +19,7 @@ import {
   formatChatOrderDraftReply,
   guardAmbiguousMultiItemQuantities,
   loadChatOrderDraft,
+  parseExplicitMultiItemQuantities,
 } from '../lib/chat-order.mjs'
 
 function asyncRoute(handler) {
@@ -853,7 +854,20 @@ export function createLiveChatRouter() {
           let draftResult = null
           let quantityAmbiguity = false
 
-          if (generated.orderDraftUpdate) {
+          const explicitQuantityUpdate =
+            parseExplicitMultiItemQuantities(
+              currentOrderDraft,
+              content,
+            )
+
+          if (explicitQuantityUpdate) {
+            draftResult = await applyChatOrderDraftUpdate(
+              conversation.id,
+              explicitQuantityUpdate,
+            )
+
+            currentOrderDraft = draftResult.draft
+          } else if (generated.orderDraftUpdate) {
             const guardedOrderUpdate =
               guardAmbiguousMultiItemQuantities(
                 currentOrderDraft,

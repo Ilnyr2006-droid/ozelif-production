@@ -84,3 +84,12 @@ test('puts two-digit numbered steps on a new line', () => {
     /9\. Размещение партии\.\n10\. Согласование/u,
   )
 })
+
+test('softens standalone ideal-for wording', () => {
+  const reply = sanitizeSalesReply(
+    'Full Vegetale Chestnut идеальна для одежды и аксессуаров.',
+  )
+  assert.doesNotMatch(reply, /идеальн/iu)
+  assert.match(reply, /подходит для одежды и аксессуаров/u)
+  assert.equal(findSalesQualityViolations(reply).length, 0)
+})

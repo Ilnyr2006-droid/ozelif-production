@@ -6,6 +6,7 @@ import {
   formatChatOrderDraftReply,
   guardAmbiguousMultiItemQuantities,
   orderDraftMissingFields,
+  parseExplicitMultiItemQuantities,
 } from './chat-order.mjs'
 
 const readyDraft = {
@@ -100,8 +101,13 @@ test('ready items without fulfillment ask delivery or pickup', () => {
 test('ready order summary shows selected pickup method', () => {
   const reply = formatChatOrderDraftReply(readyDraft)
 
+  assert.match(reply, /^Проверьте заказ:/u)
   assert.match(reply, /Получение: Самовывоз\./u)
-  assert.match(reply, /Оформить этот заказ\?/u)
+  assert.match(
+    reply,
+    /Если всё верно — напишите «всё верно»\./u,
+  )
+  assert.doesNotMatch(reply, /Оформить этот заказ\?/u)
 })
 
 test('blocks unlabeled quantities for several products', () => {
@@ -165,8 +171,13 @@ test('blocks unlabeled quantities for several products', () => {
 
   assert.match(reply, /Vegetale Visky/u)
   assert.match(reply, /Nappa Visky/u)
-  assert.match(reply, /Vegetale Visky — 80 фут²/u)
-  assert.match(reply, /Nappa Visky — 20 фут²/u)
+  assert.match(reply, /не буду угадывать/u)
+  assert.match(
+    reply,
+    /Напишите количество рядом с названием:/u,
+  )
+  assert.doesNotMatch(reply, /Vegetale Visky — 80 фут²/u)
+  assert.doesNotMatch(reply, /Nappa Visky — 20 фут²/u)
 })
 
 test('allows quantities explicitly attached to product names', () => {
@@ -255,8 +266,13 @@ test('courier summary shows city and address when complete', () => {
     status: 'awaiting_confirmation',
   })
 
+  assert.match(reply, /^Проверьте заказ:/u)
   assert.match(reply, /Доставка: Москва, ул\. Тверская, 10\./u)
-  assert.match(reply, /Оформить этот заказ\?/u)
+  assert.match(
+    reply,
+    /Если всё верно — напишите «всё верно»\./u,
+  )
+  assert.doesNotMatch(reply, /Оформить этот заказ\?/u)
 })
 
 test('order summary hides duplicated technical variant name', () => {
@@ -272,4 +288,74 @@ test('order summary hides duplicated technical variant name', () => {
 
   assert.match(reply, /• Nappa Visky — 8 фут²/u)
   assert.doesNotMatch(reply, /Nappa Visky - фут2 - Оттенок/u)
+})
+
+test('accepts shortened aliases with explicit quantities', () => {
+  const draft = {
+    status: 'collecting',
+    items: [
+      { productId: 'vegetale', productName: 'Full Vegetale Chestnut', variantId: 'v1', quantity: null, unit: 'фут²' },
+      { productId: 'napato', productName: 'Napato Black', variantId: 'v2', quantity: null, unit: 'фут²' },
+    ],
+  }
+
+  const update = parseExplicitMultiItemQuantities(
+    draft,
+    'вегетел 40 футов напато 50',
+  )
+
+  assert.ok(update)
+  const values = Object.fromEntries(
+    update.operations.map(item => [item.productName, item.quantity]),
+  )
+  assert.equal(values['Full Vegetale Chestnut'], 40)
+  assert.equal(values['Napato Black'], 50)
+})
+
+test('bare quantities remain ambiguous', () => {
+  const draft = {
+    items: [
+      { productId: 'vegetale', productName: 'Full Vegetale Chestnut', variantId: 'v1', quantity: null, unit: 'фут²' },
+      { productId: 'napato', productName: 'Napato Black', variantId: 'v2', quantity: null, unit: 'фут²' },
+    ],
+  }
+  assert.equal(
+    parseExplicitMultiItemQuantities(draft, '40 и 50 футов'),
+    null,
+  )
+})
+
+test('names followed by ambiguous number tail are not guessed', () => {
+  const draft = {
+    items: [
+      { productId: 'vegetale', productName: 'Full Vegetale Chestnut', variantId: 'v1', quantity: null, unit: 'фут²' },
+      { productId: 'napato', productName: 'Napato Black', variantId: 'v2', quantity: null, unit: 'фут²' },
+    ],
+  }
+  assert.equal(
+    parseExplicitMultiItemQuantities(draft, 'Vegetale и Napato 40 и 50'),
+    null,
+  )
+})
+
+test('complete order asks user to review instead of formal confirmation', () => {
+  const reply = formatChatOrderDraftReply({
+    ...readyDraft,
+    deliveryMethod: 'pickup',
+    status: 'awaiting_confirmation',
+  })
+  assert.match(reply, /^Проверьте заказ:/u)
+  assert.match(reply, /Если всё верно — напишите «всё верно»\./u)
+  assert.doesNotMatch(reply, /Оформить этот заказ\?/u)
+})
+
+test('ambiguous quantity prompt does not invent example values', () => {
+  const reply = formatAmbiguousQuantityReply({
+    items: [
+      { productName: 'Full Vegetale Chestnut', quantity: null, unit: 'фут²' },
+      { productName: 'Napato Black', quantity: null, unit: 'фут²' },
+    ],
+  })
+  assert.match(reply, /не буду угадывать/u)
+  assert.doesNotMatch(reply, /80|20/u)
 })
