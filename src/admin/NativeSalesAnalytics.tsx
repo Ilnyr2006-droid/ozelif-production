@@ -54,6 +54,13 @@ type AnalyticsPayload = {
     count: number
   }>
 
+  recommendationProducts: Array<{
+    name: string
+    clicks: number
+    phoneLeads: number
+    managerRequests: number
+  }>
+
   topProducts: Array<{
     name: string
     quantity: number
@@ -476,6 +483,56 @@ export function NativeSalesAnalytics() {
                       </div>
                     )
                   },
+                )}
+              </div>
+            </article>
+
+            <article className="native-analytics-card native-analytics-card--wide">
+              <header>
+                <div>
+                  <p>AI-рекомендации</p>
+                  <h4>Какие товары приводят к лидам</h4>
+                </div>
+
+                <span>
+                  Последние {period} дней
+                </span>
+              </header>
+
+              <div className="native-recommendation-table">
+                <div className="native-recommendation-table__head">
+                  <span>Товар</span>
+                  <span>Клики</span>
+                  <span>Телефон</span>
+                  <span>Менеджер</span>
+                </div>
+
+                {prepared.payload.recommendationProducts.length ? (
+                  prepared.payload.recommendationProducts.map(
+                    product => (
+                      <div
+                        className="native-recommendation-table__row"
+                        key={product.name}
+                      >
+                        <span>{product.name}</span>
+                        <strong>
+                          {numberFormatter.format(product.clicks)}
+                        </strong>
+                        <strong>
+                          {numberFormatter.format(product.phoneLeads)}
+                        </strong>
+                        <strong>
+                          {numberFormatter.format(
+                            product.managerRequests,
+                          )}
+                        </strong>
+                      </div>
+                    ),
+                  )
+                ) : (
+                  <div className="native-recommendation-table__empty">
+                    Пока нет кликов по рекомендациям AI.
+                  </div>
                 )}
               </div>
             </article>

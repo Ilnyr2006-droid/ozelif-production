@@ -128,6 +128,7 @@ async function createAssistantReply({
   products,
   needsProducts = false,
   intentType = null,
+  clarificationQuestion = null,
   allowProfileCapture = false,
   currentProfile = {},
 }) {
@@ -157,6 +158,12 @@ async function createAssistantReply({
         pathname,
         intentType,
       }),
+      '',
+      'ПРАВИЛО РЕКОМЕНДАЦИЙ: если товары найдены, рекомендуй '
+        + 'не более 3 позиций. Для каждой назови товар и одним коротким '
+        + 'фактом объясни, почему он подходит, используя только '
+        + 'ПРОВЕРЕННЫЕ ТОВАРЫ. Не перечисляй технические поля без '
+        + 'пользы для покупателя.',
       '',
       'КРИТИЧЕСКОЕ ПРАВИЛО ИНТЕРФЕЙСА: никогда не обещай '
         + 'открыть, показать или перейти в карточку товара. '
@@ -195,6 +202,15 @@ async function createAssistantReply({
                 products,
                 needsProducts,
               ),
+              '',
+              'УТОЧНЯЮЩИЙ ВОПРОС:',
+              clarificationQuestion
+                ? (
+                    clarificationQuestion
+                    + ' Задай именно этот один вопрос в конце ответа '
+                    + 'и не добавляй второй уточняющий вопрос.'
+                  )
+                : 'Не требуется.',
               '',
               'Ответь на последнее сообщение покупателя.',
             ].join('\n'),
@@ -313,7 +329,7 @@ export function createAiAssistantRouter() {
 
     const intent = classifyAssistantIntent(message)
     const retrieval = intent.needsProducts
-      ? await findLiveProductCandidates(message, { limit: 6 })
+      ? await findLiveProductCandidates(message, { limit: 3 })
       : emptyRetrievalResult()
     const products = retrieval.products
     const actions = productActions(products)
@@ -327,6 +343,8 @@ export function createAiAssistantRouter() {
         products,
         needsProducts: intent.needsProducts,
         intentType: intent.type,
+        clarificationQuestion:
+          retrieval.clarificationQuestion ?? null,
         allowProfileCapture,
         currentProfile,
       })
@@ -344,7 +362,7 @@ export function createAiAssistantRouter() {
         reply,
         profileUpdate: generated.profileUpdate ?? null,
         actions,
-        products: products.slice(0, 5),
+        products: products.slice(0, 3),
         meta: {
           source: retrieval.semantic.available
             ? 'product_index+postgresql'
@@ -356,6 +374,8 @@ export function createAiAssistantRouter() {
           semanticMatches: retrieval.semantic.matches.length,
           lexicalMatches: retrieval.lexical.count,
           constraints: retrieval.constraints ?? null,
+          clarificationQuestion:
+            retrieval.clarificationQuestion ?? null,
         },
       })
     } catch (error) {
@@ -367,7 +387,10 @@ export function createAiAssistantRouter() {
       const fallbackReply = sanitizeUnverifiedStockClaims(
         enforceCriticalIntentFacts(
           intent.needsProducts
-            ? deterministicCatalogReply(products)
+            ? deterministicCatalogReply(
+                products,
+                retrieval.clarificationQuestion ?? null,
+              )
             : buildInformationFallback(intent),
           intent.type,
         ),
@@ -379,7 +402,7 @@ export function createAiAssistantRouter() {
         reply: fallbackReply,
         profileUpdate: null,
         actions,
-        products: products.slice(0, 5),
+        products: products.slice(0, 3),
         meta: {
           source: intent.needsProducts
             ? 'deterministic_live_catalog_fallback'
@@ -388,6 +411,8 @@ export function createAiAssistantRouter() {
           semanticMatches: retrieval.semantic.matches.length,
           lexicalMatches: retrieval.lexical.count,
           constraints: retrieval.constraints ?? null,
+          clarificationQuestion:
+            retrieval.clarificationQuestion ?? null,
         },
       })
     }

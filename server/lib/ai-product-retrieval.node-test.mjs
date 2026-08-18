@@ -9,11 +9,15 @@ process.env.ADMIN_SESSION_SECRET ??=
 
 const {
   applyExplicitProductConstraints,
+  buildProductClarificationQuestion,
+  buildRecommendationReason,
   inferExplicitCategorySlug,
   inferExplicitColor,
   inferExplicitThicknessMm,
+  inferExplicitUse,
   mergeCandidateProducts,
   parseVectorSearchMatches,
+  rankProductRecommendations,
 } = await import('./ai-product-retrieval.mjs')
 
 test('parses product ids from vector search attributes', () => {
@@ -173,5 +177,107 @@ test('known thickness mismatch is removed while unknown metadata stays eligible'
   assert.deepEqual(
     result.products.map(item => item.name),
     ['Black 0.8', 'Black unknown'],
+  )
+})
+
+test('rejects explicit multi-color product for a pure black request', () => {
+  const result = applyExplicitProductConstraints(
+    [
+      {
+        id: '1',
+        name: 'Soft Black',
+        attributes: {
+          Цвет: 'Черный',
+        },
+      },
+      {
+        id: '2',
+        name: 'Soft White-Black',
+        attributes: {
+          Цвет: 'White-Black',
+        },
+      },
+    ],
+    'нужна черная кожа',
+  )
+
+  assert.deepEqual(
+    result.products.map(item => item.name),
+    ['Soft Black'],
+  )
+})
+
+test('detects product use and ranks suitable clothing leather first', () => {
+  assert.equal(
+    inferExplicitUse('кожа для женской куртки'),
+    'jacket',
+  )
+
+  const ranked = rankProductRecommendations(
+    [
+      {
+        id: '1',
+        name: 'Generic Black',
+        categorySlug: 'dublyonka',
+        description: 'Материал для дубленок',
+        attributes: { Цвет: 'Черный' },
+        variants: [],
+      },
+      {
+        id: '2',
+        name: 'Jacket Black',
+        categorySlug: 'odejnayakozha',
+        description: 'Мягкая кожа для одежды и курток',
+        attributes: { Цвет: 'Черный', Толщина: '0,8 мм' },
+        variants: [{ priceRub: 100 }],
+      },
+    ],
+    'мягкая черная кожа 0,8 мм для куртки',
+    [],
+  )
+
+  assert.equal(ranked[0].name, 'Jacket Black')
+  assert.match(
+    ranked[0].recommendationReason,
+    /куртки|верхней одежды/,
+  )
+})
+
+test('builds a deterministic recommendation reason', () => {
+  const reason = buildRecommendationReason(
+    {
+      name: 'Soft Black',
+      categorySlug: 'odejnayakozha',
+      description: 'Мягкая кожа для одежды',
+      attributes: {
+        Цвет: 'Черный',
+        Толщина: '0,8 мм',
+      },
+      variants: [{ priceRub: 100 }],
+    },
+    'черная кожа 0,8 мм для куртки',
+  )
+
+  assert.match(reason, /чёрный цвет/)
+  assert.match(reason, /0,8 мм/)
+})
+
+test('asks one useful question only for an under-specified selection', () => {
+  const question = buildProductClarificationQuestion(
+    'покажи черную кожу',
+    [
+      { name: 'Soft Black' },
+      { name: 'Vip Black' },
+    ],
+  )
+
+  assert.match(question, /Что вы планируете изготовить/)
+
+  assert.equal(
+    buildProductClarificationQuestion(
+      'Amazon Black',
+      [{ name: 'Amazon Black' }],
+    ),
+    null,
   )
 })

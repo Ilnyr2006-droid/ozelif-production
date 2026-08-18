@@ -88,6 +88,78 @@ const EXPLICIT_COLOR_GROUPS = [
   },
 ]
 
+const EXPLICIT_USE_GROUPS = [
+  {
+    use: 'jacket',
+    label: 'куртки и верхней одежды',
+    patterns: [
+      /куртк\p{L}*/iu,
+      /косух\p{L}*/iu,
+      /пальто/iu,
+      /плащ\p{L}*/iu,
+      /верхн\p{L}*\s+одежд\p{L}*/iu,
+    ],
+    productPatterns: [
+      /куртк\p{L}*/iu,
+      /одежд\p{L}*/iu,
+      /пальто/iu,
+      /garment/iu,
+      /clothing/iu,
+    ],
+    preferredCategories: ['odejnayakozha'],
+  },
+  {
+    use: 'bag',
+    label: 'сумки или аксессуара',
+    patterns: [
+      /сумк\p{L}*/iu,
+      /рюкзак\p{L}*/iu,
+      /кошел\p{L}*/iu,
+      /клатч\p{L}*/iu,
+      /аксессуар\p{L}*/iu,
+    ],
+    productPatterns: [
+      /сумк\p{L}*/iu,
+      /аксессуар\p{L}*/iu,
+      /галантер\p{L}*/iu,
+      /bag/iu,
+      /accessor\p{L}*/iu,
+    ],
+    preferredCategories: ['odejnayakozha'],
+  },
+  {
+    use: 'shoes',
+    label: 'обуви',
+    patterns: [
+      /обув\p{L}*/iu,
+      /ботин\p{L}*/iu,
+      /туфл\p{L}*/iu,
+      /сапог\p{L}*/iu,
+      /кроссов\p{L}*/iu,
+    ],
+    productPatterns: [
+      /обув\p{L}*/iu,
+      /shoe/iu,
+      /footwear/iu,
+    ],
+    preferredCategories: ['obuvnayakozha'],
+  },
+  {
+    use: 'belt',
+    label: 'ремня',
+    patterns: [
+      /ремн\p{L}*/iu,
+      /пояс\p{L}*/iu,
+    ],
+    productPatterns: [
+      /ремн\p{L}*/iu,
+      /пояс\p{L}*/iu,
+      /belt/iu,
+    ],
+    preferredCategories: [],
+  },
+]
+
 function normalizedTokens(value) {
   return normalizeCatalogQuery(value)
     .split(/[^\p{L}\p{N}.]+/gu)
@@ -115,6 +187,20 @@ export function inferExplicitColor(value) {
       ))
     ))
     .map(group => group.color)
+
+  const unique = [...new Set(matches)]
+  return unique.length === 1 ? unique[0] : null
+}
+
+export function inferExplicitUse(value) {
+  const source = String(value ?? '').trim()
+  if (!source) return null
+
+  const matches = EXPLICIT_USE_GROUPS
+    .filter(group => (
+      group.patterns.some(pattern => pattern.test(source))
+    ))
+    .map(group => group.use)
 
   const unique = [...new Set(matches)]
   return unique.length === 1 ? unique[0] : null
@@ -183,22 +269,75 @@ function productSearchDocument(product) {
   ].filter(Boolean).join(' '))
 }
 
+function productColorDocument(product) {
+  const attributes = (
+    product?.attributes
+    && typeof product.attributes === 'object'
+    && !Array.isArray(product.attributes)
+  )
+    ? product.attributes
+    : {}
+
+  const explicitColorValues = Object.entries(attributes)
+    .filter(([key]) => {
+      const normalized = normalizeCatalogQuery(key)
+      return (
+        normalized.includes('цвет')
+        || normalized.includes('color')
+        || normalized.includes('colour')
+      )
+    })
+    .map(([, value]) => value)
+
+  return normalizeCatalogQuery([
+    product?.name,
+    ...explicitColorValues,
+  ].filter(Boolean).join(' '))
+}
+
+function detectedColorGroups(value) {
+  const tokens = normalizedTokens(value)
+
+  return EXPLICIT_COLOR_GROUPS
+    .filter(group => (
+      group.tokens.some(signal => (
+        tokens.some(token => tokenMatchesSignal(token, signal))
+      ))
+    ))
+    .map(group => group.color)
+}
+
+function productColorGroups(product) {
+  const explicit = detectedColorGroups(
+    productColorDocument(product),
+  )
+
+  if (explicit.length) {
+    return [...new Set(explicit)]
+  }
+
+  return [...new Set(
+    detectedColorGroups(
+      productSearchDocument(product),
+    ),
+  )]
+}
+
 function productMatchesColor(product, color) {
   if (!color) return true
 
-  const group = EXPLICIT_COLOR_GROUPS.find(
-    item => item.color === color,
+  const colors = productColorGroups(product)
+
+  if (!colors.length) {
+    return true
+  }
+
+  // A single-color request should not return White-Black,
+  // Black-Brown or another explicitly multi-color material.
+  return (
+    colors.length === 1
+    && colors[0] === color
   )
-
-  if (!group) return true
-
-  const tokens = normalizedTokens(
-    productSearchDocument(product),
-  )
-
-  return group.tokens.some(signal => (
-    tokens.some(token => tokenMatchesSignal(token, signal))
-  ))
 }
 
 function extractProductThicknesses(product) {
@@ -273,6 +412,225 @@ function thicknessState(product, constraint) {
     : 'mismatch'
 }
 
+function useGroupById(use) {
+  return EXPLICIT_USE_GROUPS.find(
+    group => group.use === use,
+  ) ?? null
+}
+
+function productMatchesUse(product, use) {
+  if (!use) return false
+
+  const group = useGroupById(use)
+  if (!group) return false
+
+  if (
+    group.preferredCategories.includes(
+      String(product?.categorySlug ?? ''),
+    )
+  ) {
+    return true
+  }
+
+  const document = [
+    product?.name,
+    product?.category,
+    product?.description,
+    JSON.stringify(product?.attributes ?? {}),
+  ].filter(Boolean).join(' ')
+
+  return group.productPatterns.some(
+    pattern => pattern.test(document),
+  )
+}
+
+function bestPublishedPrice(product) {
+  const variants = Array.isArray(product?.variants)
+    ? product.variants
+    : []
+
+  return variants
+    .map(variant => Number(variant?.priceRub))
+    .find(value => Number.isFinite(value) && value > 0)
+    ?? null
+}
+
+function exactProductNameMatch(product, searchText) {
+  const queryText = normalizeCatalogQuery(searchText)
+  const name = normalizeCatalogQuery(product?.name)
+
+  return Boolean(
+    name
+    && name.length >= 4
+    && queryText.includes(name)
+  )
+}
+
+export function buildRecommendationReason(
+  product,
+  searchText,
+) {
+  const color = inferExplicitColor(searchText)
+  const thickness = inferExplicitThicknessMm(searchText)
+  const use = inferExplicitUse(searchText)
+  const pieces = []
+
+  if (use && productMatchesUse(product, use)) {
+    const group = useGroupById(use)
+    if (group) {
+      pieces.push(`подходит для ${group.label}`)
+    }
+  }
+
+  if (color && productMatchesColor(product, color)) {
+    const labels = {
+      black: 'чёрный цвет',
+      brown: 'коричневый цвет',
+      white: 'белый цвет',
+      red: 'красный цвет',
+      blue: 'синий цвет',
+      green: 'зелёный цвет',
+      beige: 'бежевый цвет',
+      grey: 'серый цвет',
+    }
+
+    pieces.push(labels[color] ?? 'нужный цвет')
+  }
+
+  if (
+    thickness
+    && thicknessState(product, thickness) === 'match'
+  ) {
+    const target = thickness.target
+
+    pieces.push(
+      target
+        ? `толщина около ${String(target).replace('.', ',')} мм`
+        : 'толщина входит в заданный диапазон',
+    )
+  }
+
+  if (bestPublishedPrice(product) !== null) {
+    pieces.push('цена опубликована')
+  }
+
+  if (!pieces.length) {
+    return 'близко соответствует запросу по данным каталога'
+  }
+
+  return pieces.slice(0, 3).join(', ')
+}
+
+export function rankProductRecommendations(
+  products,
+  searchText,
+  semanticMatches = [],
+) {
+  const input = Array.isArray(products) ? products : []
+  const use = inferExplicitUse(searchText)
+  const color = inferExplicitColor(searchText)
+  const thickness = inferExplicitThicknessMm(searchText)
+
+  const semanticScores = new Map(
+    (semanticMatches ?? []).map(match => [
+      String(match?.productId ?? ''),
+      Number(match?.score),
+    ]),
+  )
+
+  return input
+    .map((product, index) => {
+      let score = 100 - index * 4
+
+      if (exactProductNameMatch(product, searchText)) {
+        score += 500
+      }
+
+      const semanticScore = semanticScores.get(
+        String(product?.id ?? ''),
+      )
+
+      if (Number.isFinite(semanticScore)) {
+        score += semanticScore * 70
+      }
+
+      if (use && productMatchesUse(product, use)) {
+        score += 90
+      }
+
+      if (color && productMatchesColor(product, color)) {
+        score += 55
+      }
+
+      if (
+        thickness
+        && thicknessState(product, thickness) === 'match'
+      ) {
+        score += 65
+      }
+
+      if (bestPublishedPrice(product) !== null) {
+        score += 8
+      }
+
+      return {
+        product: {
+          ...product,
+          recommendationReason:
+            buildRecommendationReason(
+              product,
+              searchText,
+            ),
+        },
+        score,
+        index,
+      }
+    })
+    .sort((left, right) => (
+      right.score - left.score
+      || left.index - right.index
+    ))
+    .map(item => item.product)
+}
+
+export function buildProductClarificationQuestion(
+  searchText,
+  products,
+) {
+  const rows = Array.isArray(products) ? products : []
+  const normalized = normalizeCatalogQuery(searchText)
+
+  if (
+    rows.some(product => {
+      const name = normalizeCatalogQuery(product?.name)
+      return (
+        name
+        && name.length >= 4
+        && normalized.includes(name)
+      )
+    })
+  ) {
+    return null
+  }
+
+  const use = inferExplicitUse(searchText)
+  const category = inferExplicitCategorySlug(searchText)
+  const color = inferExplicitColor(searchText)
+
+  if (!use && !category) {
+    return (
+      'Что вы планируете изготовить — куртку, '
+      + 'сумку, обувь, ремень или другое изделие?'
+    )
+  }
+
+  if (!color && rows.length > 1) {
+    return 'Какой цвет материала вам нужен?'
+  }
+
+  return null
+}
+
 export function applyExplicitProductConstraints(
   products,
   searchText,
@@ -283,6 +641,7 @@ export function applyExplicitProductConstraints(
 
   const color = inferExplicitColor(searchText)
   const thickness = inferExplicitThicknessMm(searchText)
+  const use = inferExplicitUse(searchText)
 
   let filtered = input
 
@@ -314,6 +673,7 @@ export function applyExplicitProductConstraints(
     constraints: {
       color,
       thicknessMm: thickness,
+      use,
     },
   }
 }
@@ -662,10 +1022,26 @@ export async function findLiveProductCandidates(
     searchText,
   )
 
-  const products = constrained.products.slice(0, limit)
+  const ranked = rankProductRecommendations(
+    constrained.products,
+    searchText,
+    semantic.matches,
+  )
+
+  const products = ranked.slice(
+    0,
+    Math.min(limit, 3),
+  )
+
+  const clarificationQuestion =
+    buildProductClarificationQuestion(
+      searchText,
+      products,
+    )
 
   return {
     products,
+    clarificationQuestion,
     constraints: {
       categorySlug: categorySlug || null,
       ...constrained.constraints,

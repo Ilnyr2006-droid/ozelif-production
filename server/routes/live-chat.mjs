@@ -413,6 +413,119 @@ export function createLiveChatRouter() {
   )
 
   router.post(
+    '/conversations/:id/recommendation-click',
+    asyncRoute(async (request, response) => {
+      const conversation = await findConversation(
+        request.params.id,
+        readPublicToken(request),
+      )
+
+      if (!conversation) {
+        response.status(404).json({
+          error: 'conversation_not_found',
+        })
+        return
+      }
+
+      const productId = String(
+        request.body?.productId ?? '',
+      ).trim()
+      const messageId = String(
+        request.body?.messageId ?? '',
+      ).trim()
+      const href = String(
+        request.body?.href ?? '',
+      ).trim().slice(0, 900)
+
+      if (
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(
+          productId,
+        )
+        || !/^\d+$/u.test(messageId)
+      ) {
+        response.status(400).json({
+          error: 'invalid_recommendation_click',
+        })
+        return
+      }
+
+      const messageResult = await query(
+        `SELECT metadata
+         FROM live_chat_messages
+         WHERE conversation_id = $1
+           AND id = $2::bigint
+           AND role = 'assistant'
+         LIMIT 1`,
+        [conversation.id, messageId],
+      )
+
+      const metadata =
+        messageResult.rows[0]?.metadata ?? {}
+      const products = Array.isArray(metadata.products)
+        ? metadata.products
+        : []
+      const actions = Array.isArray(metadata.actions)
+        ? metadata.actions
+        : []
+
+      const recommended = products.some(
+        product => String(product?.id ?? '') === productId,
+      )
+
+      const allowedAction = actions.some(
+        action => (
+          String(action?.productId ?? '') === productId
+          && (
+            !href
+            || String(action?.href ?? '') === href
+          )
+        ),
+      )
+
+      if (!recommended || !allowedAction) {
+        response.status(400).json({
+          error: 'recommendation_not_found',
+        })
+        return
+      }
+
+      await query(
+        `INSERT INTO live_chat_recommendation_clicks (
+           conversation_id,
+           message_id,
+           product_id,
+           href
+         )
+         VALUES ($1, $2::bigint, $3::uuid, $4)`,
+        [
+          conversation.id,
+          messageId,
+          productId,
+          href,
+        ],
+      )
+
+      await query(
+        `UPDATE live_chat_conversations
+         SET
+           recommendation_clicked_at = COALESCE(
+             recommendation_clicked_at,
+             now()
+           ),
+           product_interest_at = COALESCE(
+             product_interest_at,
+             now()
+           ),
+           updated_at = now()
+         WHERE id = $1`,
+        [conversation.id],
+      )
+
+      response.status(204).end()
+    }),
+  )
+
+  router.post(
     '/conversations/:id/messages',
     asyncRoute(async (request, response) => {
       const conversation = await findConversation(

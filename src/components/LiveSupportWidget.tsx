@@ -14,8 +14,17 @@ type LiveMessage = {
   role: 'user' | 'assistant' | 'manager' | 'system'
   content: string
   metadata?: {
-    actions?: Array<{ label: string; href: string }>
-    products?: Array<{ id: string; name: string }>
+    actions?: Array<{
+      label: string
+      href: string
+      productId?: string
+      reason?: string | null
+    }>
+    products?: Array<{
+      id: string
+      name: string
+      recommendationReason?: string | null
+    }>
   }
   createdAt: string
 }
@@ -291,6 +300,45 @@ export function LiveSupportWidget() {
     }
   }
 
+  function trackRecommendationClick(
+    messageId: string,
+    action: {
+      href: string
+      productId?: string
+    },
+  ) {
+    const conversationId = conversation?.id
+    const currentToken =
+      token
+      || localStorage.getItem(STORAGE_TOKEN)
+      || ''
+
+    if (
+      !conversationId
+      || !currentToken
+      || !action.productId
+    ) {
+      return
+    }
+
+    void fetch(
+      `/api/live-chat/conversations/${conversationId}/recommendation-click`,
+      {
+        method: 'POST',
+        keepalive: true,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Ozelif-Live-Chat-Token': currentToken,
+        },
+        body: JSON.stringify({
+          messageId,
+          productId: action.productId,
+          href: action.href,
+        }),
+      },
+    ).catch(() => undefined)
+  }
+
   const humanMode = conversation && !conversation.aiEnabled
 
   return (
@@ -341,7 +389,16 @@ export function LiveSupportWidget() {
                 {message.metadata?.actions?.length ? (
                   <div className="live-support-actions">
                     {message.metadata.actions.slice(0, 3).map(action => (
-                      <a href={action.href} key={action.href}>
+                      <a
+                        href={action.href}
+                        key={`${action.href}-${action.productId ?? ''}`}
+                        onClick={() => {
+                          trackRecommendationClick(
+                            message.id,
+                            action,
+                          )
+                        }}
+                      >
                         {action.label}
                       </a>
                     ))}

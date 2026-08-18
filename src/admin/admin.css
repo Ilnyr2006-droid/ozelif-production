@@ -640,7 +640,7 @@ img{max-width:100%}
 /* OZELIF_AI_CHAT_FUNNEL */
 .native-chat-funnel {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 10px;
   margin-top: 16px;
 }
@@ -682,5 +682,65 @@ img{max-width:100%}
 @media (max-width: 640px) {
   .native-chat-funnel {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* OZELIF_AI_RECOMMENDATION_ATTRIBUTION */
+.native-recommendation-table {
+  margin-top: 14px;
+  overflow: hidden;
+  border: 1px solid #e4ddd4;
+  border-radius: 14px;
+}
+
+.native-recommendation-table__head,
+.native-recommendation-table__row {
+  display: grid;
+  grid-template-columns:
+    minmax(180px, 1fr)
+    repeat(3, minmax(72px, .18fr));
+  gap: 12px;
+  align-items: center;
+  padding: 11px 13px;
+}
+
+.native-recommendation-table__head {
+  background: #f7f3ee;
+  color: #766a61;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.native-recommendation-table__row {
+  border-top: 1px solid #ece5dd;
+  background: #fff;
+}
+
+.native-recommendation-table__row > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.native-recommendation-table__row > strong {
+  color: #263f34;
+  text-align: right;
+}
+
+.native-recommendation-table__empty {
+  padding: 18px 13px;
+  color: #897d73;
+  font-size: 12px;
+}
+
+@media (max-width: 640px) {
+  .native-recommendation-table__head,
+  .native-recommendation-table__row {
+    grid-template-columns:
+      minmax(120px, 1fr)
+      repeat(3, 58px);
+    gap: 7px;
+    font-size: 11px;
   }
 }

@@ -64,6 +64,10 @@ function attributeLabel(value) {
     ['происхождение', 'Происхождение'],
     ['thickness', 'Толщина'],
     ['толщина', 'Толщина'],
+    ['unit', 'Единица измерения'],
+    ['единица', 'Единица измерения'],
+    ['article', 'Артикул'],
+    ['артикул', 'Артикул'],
   ])
 
   return labels.get(normalized) ?? key
@@ -169,7 +173,33 @@ export function sanitizeUnverifiedStockClaims(
   return text
 }
 
-function compactAttributes(attributes, limit = 6) {
+function attributeValue(key, value) {
+  const normalizedKey = String(key ?? '')
+    .trim()
+    .toLocaleLowerCase('ru')
+
+  const raw = String(value ?? '')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  if (
+    normalizedKey === 'unit'
+    || normalizedKey === 'единица'
+  ) {
+    const units = {
+      FOT: 'фут²',
+      FT2: 'фут²',
+      DM2: 'дм²',
+      M2: 'м²',
+    }
+
+    return units[raw.toUpperCase()] ?? raw
+  }
+
+  return raw
+}
+
+function compactAttributes(attributes, limit = 5) {
   if (
     !attributes
     || typeof attributes !== 'object'
@@ -178,18 +208,29 @@ function compactAttributes(attributes, limit = 6) {
     return []
   }
 
+  const hiddenKeys = new Set([
+    'portion',
+    'coefficient',
+    'коэффициент',
+  ])
+
   return Object.entries(attributes)
-    .filter(([key, value]) => (
-      !key.startsWith('__')
-      && value !== null
-      && value !== undefined
-      && String(value).trim()
-    ))
+    .filter(([key, value]) => {
+      const normalized = String(key ?? '')
+        .trim()
+        .toLocaleLowerCase('ru')
+
+      return (
+        !key.startsWith('__')
+        && !hiddenKeys.has(normalized)
+        && value !== null
+        && value !== undefined
+        && String(value).trim()
+      )
+    })
     .slice(0, limit)
     .map(([key, value]) => (
-      `${attributeLabel(key)}: ${String(value)
-        .replace(/\s+/g, ' ')
-        .trim()}`
+      `${attributeLabel(key)}: ${attributeValue(key, value)}`
     ))
 }
 
@@ -199,7 +240,7 @@ export function compactProductContext(products) {
   }
 
   return products
-    .slice(0, 6)
+    .slice(0, 3)
     .map((product, index) => {
       const prices = Array.isArray(product.variants)
         ? product.variants
@@ -218,7 +259,13 @@ export function compactProductContext(products) {
           ? `Описание: ${String(product.description)
               .replace(/\s+/g, ' ')
               .trim()
-              .slice(0, 240)}`
+              .slice(0, 220)}`
+          : '',
+        product.recommendationReason
+          ? `Почему подходит: ${String(product.recommendationReason)
+              .replace(/\s+/g, ' ')
+              .trim()
+              .slice(0, 180)}`
           : '',
         attributes.length
           ? `Характеристики: ${attributes.join('; ')}`
@@ -239,10 +286,15 @@ export function productActions(products, limit = 3) {
     .map(product => ({
       label: `Открыть ${String(product.name).slice(0, 52)}`,
       href: product.productUrl,
+      productId: product.id,
+      reason: product.recommendationReason ?? null,
     }))
 }
 
-export function deterministicCatalogReply(products) {
+export function deterministicCatalogReply(
+  products,
+  clarificationQuestion = null,
+) {
   if (!Array.isArray(products) || !products.length) {
     return (
       'По этому запросу я пока не нашёл точного совпадения '
@@ -260,17 +312,24 @@ export function deterministicCatalogReply(products) {
           .map(formatVariantPrice)
       : []
 
+    const reason = String(
+      product?.recommendationReason ?? '',
+    ).trim()
+
     return `• ${product.name} — ${
       prices.length ? prices.join(', ') : 'цена уточняется'
-    }`
+    }${reason ? `; почему подходит: ${reason}` : ''}`
   })
 
   return [
     'Нашёл подходящие позиции в актуальном каталоге:',
     ...lines,
     '',
-    'Уточните цвет, толщину, назначение или бюджет — '
-      + 'я сузжу подбор.',
+    clarificationQuestion
+      || (
+        'Если хотите, уточните назначение, цвет или толщину — '
+        + 'я сузжу подбор.'
+      ),
   ].join('\n')
 }
 

@@ -40,6 +40,7 @@ export function createAdminNativeAnalyticsRouter() {
         deliveryResult,
         topProductsResult,
         chatFunnelResult,
+        recommendationProductsResult,
       ] = await Promise.all([
         query(`
           SELECT
@@ -192,7 +193,6 @@ export function createAdminNativeAnalyticsRouter() {
           ORDER BY revenue DESC
           LIMIT 10
         `),
-,
 
         query(`
           WITH cohort AS (
@@ -207,6 +207,10 @@ export function createAdminNativeAnalyticsRouter() {
             COUNT(*) FILTER (
               WHERE product_interest_at IS NOT NULL
             )::int AS product_interest,
+
+            COUNT(*) FILTER (
+              WHERE recommendation_clicked_at IS NOT NULL
+            )::int AS recommendation_click,
 
             COUNT(*) FILTER (
               WHERE contact_offer_shown_at IS NOT NULL
@@ -224,6 +228,40 @@ export function createAdminNativeAnalyticsRouter() {
               WHERE manager_takeover_at IS NOT NULL
             )::int AS manager_takeover
           FROM cohort
+        `, [days]),
+
+        query(`
+          SELECT
+            COALESCE(
+              product.name,
+              'Удалённый товар'
+            ) AS product_name,
+
+            COUNT(click.id)::int AS clicks,
+
+            COUNT(
+              DISTINCT click.conversation_id
+            ) FILTER (
+              WHERE conversation.contact_captured_at
+                >= click.clicked_at
+            )::int AS phone_leads,
+
+            COUNT(
+              DISTINCT click.conversation_id
+            ) FILTER (
+              WHERE conversation.manager_requested_at
+                >= click.clicked_at
+            )::int AS manager_requests
+          FROM live_chat_recommendation_clicks click
+          JOIN live_chat_conversations conversation
+            ON conversation.id = click.conversation_id
+          LEFT JOIN products product
+            ON product.id = click.product_id
+          WHERE click.clicked_at >=
+            CURRENT_DATE - ($1::int - 1)
+          GROUP BY product.name
+          ORDER BY clicks DESC, phone_leads DESC
+          LIMIT 10
         `, [days])
       ])
 
@@ -307,6 +345,11 @@ export function createAdminNativeAnalyticsRouter() {
               count: number(row.product_interest),
             },
             {
+              key: 'recommendation_click',
+              label: 'Клик по рекомендации',
+              count: number(row.recommendation_click),
+            },
+            {
               key: 'contact_offer',
               label: 'Показали форму контакта',
               count: number(row.contact_offer),
@@ -328,6 +371,17 @@ export function createAdminNativeAnalyticsRouter() {
             },
           ]
         })(),
+
+        recommendationProducts:
+          recommendationProductsResult.rows.map(
+            row => ({
+              name: row.product_name,
+              clicks: number(row.clicks),
+              phoneLeads: number(row.phone_leads),
+              managerRequests:
+                number(row.manager_requests),
+            }),
+          ),
 
         topProducts:
           topProductsResult.rows.map(

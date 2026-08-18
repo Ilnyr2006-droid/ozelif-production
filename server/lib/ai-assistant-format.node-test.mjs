@@ -37,10 +37,12 @@ test('builds compact verified product context', () => {
   assert.doesNotMatch(context, /__managed/)
 })
 
-test('returns existing widget actions', () => {
+test('returns attributable widget actions', () => {
   assert.deepEqual(productActions([product]), [{
     label: 'Открыть Napato Black',
     href: '/odejnayakozha/tproduct/1-napato-black',
+    productId: product.id,
+    reason: null,
   }])
 })
 
@@ -146,4 +148,36 @@ test('keeps confirmed stock wording when every candidate has stock data', () => 
   )
 
   assert.equal(reply, 'Товар доступен.')
+})
+
+test('hides technical portion and normalizes unit/article labels', () => {
+  const context = compactProductContext([{
+    ...product,
+    recommendationReason:
+      'подходит для сумки, чёрный цвет',
+    attributes: {
+      unit: 'FOT',
+      article: 'AMAZONBLACK',
+      portion: '1',
+      Grade: '1',
+    },
+  }])
+
+  assert.match(context, /Единица измерения: фут²/)
+  assert.match(context, /Артикул: AMAZONBLACK/)
+  assert.match(context, /Сорт: 1/)
+  assert.match(context, /Почему подходит:/)
+  assert.doesNotMatch(context, /portion:/i)
+  assert.doesNotMatch(context, /unit:/i)
+  assert.doesNotMatch(context, /article:/i)
+})
+
+test('product actions include product id for click attribution', () => {
+  const actions = productActions([{
+    ...product,
+    recommendationReason: 'чёрный цвет',
+  }])
+
+  assert.equal(actions[0].productId, product.id)
+  assert.equal(actions[0].reason, 'чёрный цвет')
 })
