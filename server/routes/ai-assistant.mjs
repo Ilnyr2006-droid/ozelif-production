@@ -124,6 +124,7 @@ async function createAssistantReply({
   messages,
   pathname,
   products,
+  intentType = null,
   allowProfileCapture = false,
   currentProfile = {},
 }) {
@@ -149,7 +150,10 @@ async function createAssistantReply({
 
   try {
     const instructions = [
-      await buildOzelifAssistantInstructions({ pathname }),
+      await buildOzelifAssistantInstructions({
+        pathname,
+        intentType,
+      }),
       '',
       'КРИТИЧЕСКОЕ ПРАВИЛО ИНТЕРФЕЙСА: никогда не обещай '
         + 'открыть, показать или перейти в карточку товара. '
@@ -313,6 +317,7 @@ export function createAiAssistantRouter() {
           : [{ role: 'user', content: message }],
         pathname,
         products,
+        intentType: intent.type,
         allowProfileCapture,
         currentProfile,
       })
