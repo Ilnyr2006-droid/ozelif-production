@@ -364,3 +364,26 @@
     min-height: 580px;
   }
 }
+
+/* OZELIF_AI_LEAD_PRIORITY */
+.admin-live-chat-badges {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.admin-live-chat-item > div .admin-live-chat-badges .is-lead {
+  min-width: 0;
+  background: #1f6b4f;
+  white-space: nowrap;
+}
+
+.admin-live-chat-lead-status {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: #e6f3ed;
+  color: #195940 !important;
+  font-weight: 750;
+}

@@ -9,6 +9,8 @@ import {
 import { normalizeClientMessageId, readPublicToken } from '../lib/live-chat-auth.mjs'
 import { normalizeCustomerProfileUpdate } from '../lib/ai-customer-profile.mjs'
 import { syncCustomerFromLiveChatContact } from '../lib/customer-contact.mjs'
+import { classifyAssistantIntent } from '../lib/ai-query-intent.mjs'
+import { buildConversionDecision } from '../lib/ai-conversion.mjs'
 
 function asyncRoute(handler) {
   return (request, response, next) => {
@@ -41,6 +43,12 @@ async function findConversation(id, token) {
        page_path AS "pagePath",
        status,
        ai_enabled AS "aiEnabled",
+       manager_requested_at AS "managerRequestedAt",
+       manager_request_reason AS "managerRequestReason",
+       lead_intent AS "leadIntent",
+       lead_score AS "leadScore",
+       contact_offer_shown_at AS "contactOfferShownAt",
+       contact_captured_at AS "contactCapturedAt",
        last_message_at AS "lastMessageAt",
        created_at AS "createdAt"
      FROM live_chat_conversations
@@ -70,6 +78,120 @@ async function conversationMessages(conversationId, afterId = 0) {
   )
 
   return result.rows
+}
+
+async function recordLeadSignal(
+  conversationId,
+  {
+    intentType,
+    score,
+    contactOfferShown = false,
+  },
+) {
+  await query(
+    `UPDATE live_chat_conversations
+     SET
+       lead_intent = COALESCE($2, lead_intent),
+       lead_score = GREATEST(lead_score, $3),
+       contact_offer_shown_at = CASE
+         WHEN $4::boolean
+           THEN COALESCE(contact_offer_shown_at, now())
+         ELSE contact_offer_shown_at
+       END,
+       updated_at = now()
+     WHERE id = $1`,
+    [
+      conversationId,
+      intentType || null,
+      Math.max(0, Math.min(100, Number(score) || 0)),
+      Boolean(contactOfferShown),
+    ],
+  )
+}
+
+async function requestManager(
+  conversationId,
+  {
+    intentType,
+    score,
+    reason,
+    disableAi = false,
+  },
+) {
+  await query(
+    `UPDATE live_chat_conversations
+     SET
+       manager_requested_at = COALESCE(manager_requested_at, now()),
+       manager_request_reason = COALESCE($2, manager_request_reason),
+       lead_intent = COALESCE($3, lead_intent),
+       lead_score = GREATEST(lead_score, $4),
+       status = CASE
+         WHEN $5::boolean THEN 'human'
+         ELSE status
+       END,
+       ai_enabled = CASE
+         WHEN $5::boolean THEN false
+         ELSE ai_enabled
+       END,
+       updated_at = now()
+     WHERE id = $1`,
+    [
+      conversationId,
+      reason || 'high_intent',
+      intentType || null,
+      Math.max(0, Math.min(100, Number(score) || 0)),
+      Boolean(disableAi),
+    ],
+  )
+}
+
+async function markContactCaptured(conversationId) {
+  await query(
+    `UPDATE live_chat_conversations
+     SET
+       contact_captured_at = COALESCE(contact_captured_at, now()),
+       manager_requested_at = COALESCE(manager_requested_at, now()),
+       manager_request_reason = COALESCE(
+         manager_request_reason,
+         'contact_captured'
+       ),
+       lead_score = GREATEST(lead_score, 80),
+       updated_at = now()
+     WHERE id = $1`,
+    [conversationId],
+  )
+}
+
+async function createManagerHandoffMessage(conversationId) {
+  const saved = await query(
+    `INSERT INTO live_chat_messages (
+       conversation_id,
+       role,
+       content,
+       metadata
+     )
+     VALUES (
+       $1,
+       'system',
+       $2,
+       $3::jsonb
+     )
+     RETURNING
+       id::text,
+       role,
+       content,
+       metadata,
+       created_at AS "createdAt"`,
+    [
+      conversationId,
+      'Запрос передан менеджеру. Он увидит переписку и подключится к этому чату. Вы можете продолжать писать здесь.',
+      JSON.stringify({
+        type: 'manager_handoff',
+      }),
+    ],
+  )
+
+  return saved.rows[0]
 }
 
 async function callAssistant(
@@ -186,8 +308,14 @@ export function createLiveChatRouter() {
          id,
          visitor_id AS "visitorId",
          page_path AS "pagePath",
+         visitor_name AS "visitorName",
+         visitor_phone AS "visitorPhone",
+         customer_id AS "customerId",
          status,
          ai_enabled AS "aiEnabled",
+         manager_requested_at AS "managerRequestedAt",
+         lead_intent AS "leadIntent",
+         lead_score AS "leadScore",
          created_at AS "createdAt"`,
       [
         hashPublicChatToken(token),
@@ -247,12 +375,22 @@ export function createLiveChatRouter() {
 
       const profile = normalizeCustomerProfileUpdate(request.body)
       if (profile?.phone) {
-        const synced = await syncCustomerFromLiveChatContact({
+        await syncCustomerFromLiveChatContact({
           conversationId: conversation.id,
           name: profile.name,
           phone: String(request.body?.phone ?? profile.phone),
         })
-        response.json({ ok: true, profile: synced?.conversation ?? null })
+
+        await markContactCaptured(conversation.id)
+
+        response.json({
+          ok: true,
+          profile: await findConversation(
+            conversation.id,
+            readPublicToken(request),
+          ),
+          managerRequested: true,
+        })
         return
       }
 
@@ -337,14 +475,73 @@ export function createLiveChatRouter() {
         [conversation.id, safePath(request.body?.path)],
       )
 
-      const freshConversation = await findConversation(
+      let freshConversation = await findConversation(
         conversation.id,
         readPublicToken(request),
       )
 
+      const localIntent = classifyAssistantIntent(content)
+      const initialConversion = buildConversionDecision({
+        message: content,
+        intentType: localIntent.type,
+        hasPhone: Boolean(freshConversation?.visitorPhone),
+        offerAlreadyShown: Boolean(
+          freshConversation?.contactOfferShownAt,
+        ),
+      })
+
+      await recordLeadSignal(
+        conversation.id,
+        {
+          intentType: localIntent.type,
+          score: initialConversion.score,
+          contactOfferShown:
+            initialConversion.shouldOfferContact,
+        },
+      )
+
+      if (initialConversion.explicitManagerRequest) {
+        await requestManager(
+          conversation.id,
+          {
+            intentType: localIntent.type,
+            score: initialConversion.score,
+            reason: 'explicit_customer_request',
+            disableAi: true,
+          },
+        )
+
+        const systemMessage = await createManagerHandoffMessage(
+          conversation.id,
+        )
+
+        freshConversation = await findConversation(
+          conversation.id,
+          readPublicToken(request),
+        )
+
+        response.status(201).json({
+          ok: true,
+          conversation: freshConversation,
+          userMessage: userMessage.rows[0],
+          assistant: {
+            message: systemMessage,
+          },
+          assistantError: null,
+          conversion: {
+            type: 'handoff',
+            status: 'requested',
+            message:
+              'Менеджер увидит ваш запрос в этом диалоге.',
+          },
+        })
+        return
+      }
+
       let assistant = null
       let assistantError = null
       let responseConversation = freshConversation
+      let conversion = initialConversion.offer
 
       if (freshConversation?.aiEnabled) {
         const historyResult = await query(
@@ -380,7 +577,21 @@ export function createLiveChatRouter() {
                 name: profileUpdate.name,
                 phone: profileUpdate.phone,
               })
-              responseConversation = { ...responseConversation, ...synced?.conversation }
+              responseConversation = {
+                ...responseConversation,
+                ...synced?.conversation,
+              }
+
+              await markContactCaptured(
+                conversation.id,
+              )
+
+              conversion = {
+                type: 'handoff',
+                status: 'requested',
+                message:
+                  'Контакт сохранён. Менеджер увидит запрос, а AI пока продолжит помогать в чате.',
+              }
             } else {
               const updatedProfile = await query(
                 `UPDATE live_chat_conversations
@@ -392,6 +603,42 @@ export function createLiveChatRouter() {
               responseConversation = { ...responseConversation, ...updatedProfile.rows[0] }
             }
           }
+
+          const afterProfileDecision = buildConversionDecision({
+            message: content,
+            intentType: localIntent.type,
+            hasPhone: Boolean(
+              responseConversation?.visitorPhone,
+            ),
+            offerAlreadyShown: true,
+          })
+
+          if (
+            !profileUpdate?.phone
+            && afterProfileDecision.shouldRequestManager
+          ) {
+            await requestManager(
+              conversation.id,
+              {
+                intentType: localIntent.type,
+                score: afterProfileDecision.score,
+                reason: 'high_intent_with_contact',
+                disableAi: false,
+              },
+            )
+
+            conversion = {
+              type: 'handoff',
+              status: 'requested',
+              message:
+                'Менеджер увидит запрос. AI пока продолжит помогать в чате.',
+            }
+          }
+
+          responseConversation = await findConversation(
+            conversation.id,
+            readPublicToken(request),
+          )
 
           const saved = await query(
             `INSERT INTO live_chat_messages (
@@ -414,6 +661,7 @@ export function createLiveChatRouter() {
                 products: generated.products ?? [],
                 actions: generated.actions ?? [],
                 meta: generated.meta ?? {},
+                conversion,
                 replyToClientMessageId: requestMessageId,
               }),
             ],
@@ -453,6 +701,7 @@ export function createLiveChatRouter() {
         userMessage: userMessage.rows[0],
         assistant,
         assistantError,
+        conversion,
       })
     }),
   )

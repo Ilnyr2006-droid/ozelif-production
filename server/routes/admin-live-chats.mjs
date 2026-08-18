@@ -20,6 +20,11 @@ async function ensureConversation(id) {
        status,
        ai_enabled AS "aiEnabled",
        assigned_admin_id AS "assignedAdminId",
+       manager_requested_at AS "managerRequestedAt",
+       manager_request_reason AS "managerRequestReason",
+       lead_intent AS "leadIntent",
+       lead_score AS "leadScore",
+       contact_captured_at AS "contactCapturedAt",
        last_message_at AS "lastMessageAt",
        last_read_by_admin_at AS "lastReadByAdminAt",
        created_at AS "createdAt"
@@ -55,6 +60,11 @@ export function createAdminLiveChatsRouter() {
          c.status,
          c.ai_enabled AS "aiEnabled",
          c.assigned_admin_id AS "assignedAdminId",
+         c.manager_requested_at AS "managerRequestedAt",
+         c.manager_request_reason AS "managerRequestReason",
+         c.lead_intent AS "leadIntent",
+         c.lead_score AS "leadScore",
+         c.contact_captured_at AS "contactCapturedAt",
          c.last_message_at AS "lastMessageAt",
          c.created_at AS "createdAt",
          COALESCE(last_message.content, '') AS "lastMessage",
@@ -88,6 +98,11 @@ export function createAdminLiveChatsRouter() {
          OR ($1 = 'active' AND c.status <> 'closed')
        )
        ORDER BY
+         (
+           c.manager_requested_at IS NOT NULL
+           AND c.status <> 'closed'
+         ) DESC,
+         c.lead_score DESC,
          (COALESCE(last_message.role, '') = 'user') DESC,
          c.last_message_at DESC NULLS LAST,
          c.created_at DESC

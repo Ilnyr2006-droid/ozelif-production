@@ -24,6 +24,18 @@ type Conversation = {
   id: string
   status: 'open' | 'human' | 'closed'
   aiEnabled: boolean
+  visitorName?: string | null
+  visitorPhone?: string | null
+  customerId?: string | null
+  managerRequestedAt?: string | null
+}
+
+type Conversion = {
+  type: 'contact' | 'handoff'
+  title?: string
+  text?: string
+  status?: string
+  message?: string
 }
 
 const STORAGE_ID = 'ozelif_live_chat_id'
@@ -68,6 +80,11 @@ export function LiveSupportWidget() {
   const [draft, setDraft] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
+  const [conversion, setConversion] = useState<Conversion | null>(null)
+  const [contactName, setContactName] = useState('')
+  const [contactPhone, setContactPhone] = useState('')
+  const [contactSending, setContactSending] = useState(false)
+  const [contactSaved, setContactSaved] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const lastId = useMemo(
     () => Number(messages.at(-1)?.id ?? 0),
@@ -176,6 +193,7 @@ export function LiveSupportWidget() {
           message: LiveMessage
         }
         assistantError?: string | null
+        conversion?: Conversion | null
       }>(
         `/api/live-chat/conversations/${session.conversation.id}/messages`,
         {
@@ -189,6 +207,7 @@ export function LiveSupportWidget() {
       )
 
       setConversation(result.conversation)
+      setConversion(result.conversion ?? null)
       mergeMessages([
         result.userMessage,
         ...(result.assistant?.message ? [result.assistant.message] : []),
@@ -208,6 +227,67 @@ export function LiveSupportWidget() {
       )
     } finally {
       setSending(false)
+    }
+  }
+
+  async function submitContact(event: FormEvent) {
+    event.preventDefault()
+
+    const phone = contactPhone.trim()
+    if (!phone || contactSending) return
+
+    setContactSending(true)
+    setError('')
+
+    try {
+      const session = conversation
+        ? {
+            conversation,
+            token:
+              token
+              || localStorage.getItem(STORAGE_TOKEN)
+              || '',
+          }
+        : await ensureSession()
+
+      const result = await jsonRequest<{
+        profile: Partial<Conversation> | null
+        managerRequested?: boolean
+      }>(
+        `/api/live-chat/conversations/${session.conversation.id}/profile`
+        + `?token=${encodeURIComponent(session.token)}`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            name: contactName.trim() || null,
+            phone,
+          }),
+        },
+      )
+
+      if (result.profile) {
+        setConversation(current => (
+          current
+            ? { ...current, ...result.profile }
+            : session.conversation
+        ))
+      }
+
+      setContactSaved(true)
+      setConversion({
+        type: 'handoff',
+        status: 'requested',
+        message:
+          'Контакт передан менеджеру. Пока вы ждёте, можно продолжить консультацию с AI.',
+      })
+    } catch (reason) {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : 'Не удалось сохранить контакт.',
+      )
+    } finally {
+      setContactSending(false)
     }
   }
 
@@ -273,9 +353,48 @@ export function LiveSupportWidget() {
             <div ref={bottomRef} />
           </div>
 
+          {conversion?.type === 'contact'
+            && !conversation?.visitorPhone ? (
+            <section className="live-support-contact-card">
+              <strong>{conversion.title}</strong>
+              <p>{conversion.text}</p>
+
+              <form onSubmit={submitContact}>
+                <input
+                  value={contactName}
+                  onChange={event => setContactName(event.target.value)}
+                  placeholder="Имя (необязательно)"
+                  maxLength={160}
+                />
+                <input
+                  value={contactPhone}
+                  onChange={event => setContactPhone(event.target.value)}
+                  placeholder="+7 999 000-00-00"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  maxLength={80}
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={!contactPhone.trim() || contactSending}
+                >
+                  {contactSending ? 'Сохраняем…' : 'Передать менеджеру'}
+                </button>
+              </form>
+            </section>
+          ) : null}
+
+          {conversion?.type === 'handoff' || contactSaved ? (
+            <div className="live-support-handoff">
+              {conversion?.message
+                || 'Менеджер увидит ваш запрос в этом чате.'}
+            </div>
+          ) : null}
+
           {error ? <div className="live-support-error">{error}</div> : null}
 
-          <form onSubmit={send}>
+          <form className="live-support-message-form" onSubmit={send}>
             <textarea
               value={draft}
               onChange={event => setDraft(event.target.value)}

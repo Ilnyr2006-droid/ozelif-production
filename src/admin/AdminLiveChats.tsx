@@ -16,6 +16,11 @@ type Conversation = {
   pagePath: string | null
   status: 'open' | 'human' | 'closed'
   aiEnabled: boolean
+  managerRequestedAt?: string | null
+  managerRequestReason?: string | null
+  leadIntent?: string | null
+  leadScore?: number
+  contactCapturedAt?: string | null
   lastMessageAt: string | null
   lastMessage?: string
   lastRole?: string
@@ -270,9 +275,17 @@ export function AdminLiveChats({
                       || `Клиент ${conversation.id.slice(0, 6)}`}
                   </strong>
 
-                  {Number(conversation.unreadCount ?? 0) > 0 ? (
-                    <span>{conversation.unreadCount}</span>
-                  ) : null}
+                  <div className="admin-live-chat-badges">
+                    {conversation.managerRequestedAt ? (
+                      <span className="is-lead">
+                        Нужен менеджер
+                      </span>
+                    ) : null}
+
+                    {Number(conversation.unreadCount ?? 0) > 0 ? (
+                      <span>{conversation.unreadCount}</span>
+                    ) : null}
+                  </div>
                 </div>
 
                 <p>{conversation.lastMessage || 'Новый диалог'}</p>
@@ -307,6 +320,18 @@ export function AdminLiveChats({
                     {' · '}
                     {selected.pagePath || '/'}
                   </span>
+
+                  {selected.managerRequestedAt ? (
+                    <span className="admin-live-chat-lead-status">
+                      Нужен менеджер
+                      {selected.leadIntent
+                        ? ` · ${selected.leadIntent}`
+                        : ''}
+                      {Number(selected.leadScore ?? 0) > 0
+                        ? ` · ${selected.leadScore}/100`
+                        : ''}
+                    </span>
+                  ) : null}
                 </div>
 
                 <div className="admin-live-chat-controls">

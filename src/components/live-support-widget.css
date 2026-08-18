@@ -191,3 +191,69 @@
     height: auto;
   }
 }
+
+/* OZELIF_AI_CONVERSION */
+.live-support-contact-card {
+  padding: 13px 14px;
+  border-top: 1px solid #ddcfc1;
+  background: #fff8f1;
+}
+
+.live-support-contact-card > strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #263f34;
+}
+
+.live-support-contact-card > p {
+  margin: 0 0 10px;
+  color: #685b51;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.live-support-contact-card form {
+  display: grid;
+  grid-template-columns: minmax(0, .75fr) minmax(0, 1fr) auto;
+  gap: 7px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.live-support-contact-card input {
+  min-width: 0;
+  border: 1px solid #d8cabe;
+  border-radius: 10px;
+  padding: 9px 10px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+}
+
+.live-support-contact-card form button {
+  min-height: 38px;
+  padding: 0 11px;
+  font-size: 11px;
+}
+
+.live-support-handoff {
+  border-top: 1px solid #cfe2d8;
+  padding: 10px 14px;
+  background: #edf8f2;
+  color: #245b43;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+@media (max-width: 560px) {
+  .live-support-contact-card form {
+    grid-template-columns: 1fr;
+  }
+
+  .live-support-contact-card form button {
+    min-height: 42px;
+  }
+}
