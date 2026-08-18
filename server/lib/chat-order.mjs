@@ -327,265 +327,392 @@ function normalizeReferenceText(value) {
     .trim()
 }
 
-function uniqueProductTokens(item, allItems) {
-  const own = normalizeReferenceText(item?.productName)
-    .split(' ')
-    .filter(token => token.length >= 4)
-
-  const otherTokens = new Set(
-    allItems
-      .filter(other => other !== item)
-      .flatMap(other => (
-        normalizeReferenceText(other?.productName)
-          .split(' ')
-          .filter(token => token.length >= 4)
-      )),
-  )
-
-  return own.filter(token => !otherTokens.has(token))
-}
-
-function transliterateLatinToken(value) {
-  const source = String(value ?? '')
-    .toLocaleLowerCase('ru')
-
-  if (!/[a-z]/u.test(source)) return source
-
-  const digraphs = [
-    ['shch', 'щ'], ['sch', 'щ'], ['yo', 'ё'],
-    ['yu', 'ю'], ['ya', 'я'], ['zh', 'ж'],
-    ['kh', 'х'], ['ts', 'ц'], ['ch', 'ч'],
-    ['sh', 'ш'],
-  ]
-
-  let text = source
-
-  for (const [latin, russian] of digraphs) {
-    text = text.replaceAll(latin, russian)
-  }
-
-  const letters = {
-    a: 'а', b: 'б', c: 'к', d: 'д', e: 'е',
-    f: 'ф', g: 'г', h: 'х', i: 'и', j: 'дж',
-    k: 'к', l: 'л', m: 'м', n: 'н', o: 'о',
-    p: 'п', q: 'к', r: 'р', s: 'с', t: 'т',
-    u: 'у', v: 'в', w: 'в', x: 'кс', y: 'и', z: 'з',
-  }
-
-  return [...text]
-    .map(char => letters[char] ?? char)
-    .join('')
-}
-
-function tokenMatchesAlias(messageToken, productToken) {
-  const message = normalizeReferenceText(messageToken)
-  const product = normalizeReferenceText(productToken)
-
-  if (!message || !product) return false
-
-  const candidates = [
-    product,
-    normalizeReferenceText(
-      transliterateLatinToken(product),
-    ),
-  ].filter(Boolean)
-
-  return candidates.some(candidate => (
-    message === candidate
-    || (
-      Math.min(message.length, candidate.length) >= 5
-      && message.slice(0, 5) === candidate.slice(0, 5)
-    )
-  ))
-}
-
-function parsedMessageTokens(value) {
-  const source = String(value ?? '')
+function normalizeEvidenceText(value) {
+  return String(value ?? '')
     .toLocaleLowerCase('ru')
     .replace(/ё/g, 'е')
-
-  return [...source.matchAll(
-    /\d+(?:[.,]\d+)?|[\p{L}]+/gu,
-  )].map(match => ({
-    value: match[0],
-    index: match.index ?? 0,
-    number: /^\d/u.test(match[0])
-      ? Number(match[0].replace(',', '.'))
-      : null,
-  }))
+    .replace(/[^\p{L}\p{N}.,]+/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
-function nearestQuantityForItem(message, item, allItems) {
-  const aliases = uniqueProductTokens(item, allItems)
-  const tokens = parsedMessageTokens(message)
+function evidenceExistsInMessage(
+  message,
+  evidence,
+) {
+  const source = normalizeEvidenceText(message)
+  const fragment = normalizeEvidenceText(evidence)
 
-  const refs = tokens.filter(token => (
-    token.number === null
-    && aliases.some(alias => (
-      tokenMatchesAlias(token.value, alias)
+  return (
+    fragment.length >= 2
+    && source.includes(fragment)
+  )
+}
+
+function evidenceNumbers(value) {
+  return [
+    ...String(value ?? '').matchAll(
+      /\d+(?:[.,]\d+)?/gu,
+    ),
+  ]
+    .map(match => Number(
+      match[0].replace(',', '.'),
     ))
-  ))
+    .filter(Number.isFinite)
+}
 
-  const numbers = tokens.filter(token => (
-    Number.isFinite(token.number)
-    && token.number > 0
-  ))
+function evidenceContainsQuantity(
+  evidence,
+  quantityValue,
+) {
+  const wanted = number(quantityValue)
 
-  if (!refs.length || !numbers.length) return null
-
-  let best = null
-
-  for (const ref of refs) {
-    for (const candidate of numbers) {
-      const distance = Math.abs(candidate.index - ref.index)
-
-      if (!best || distance < best.distance) {
-        best = {
-          quantity: candidate.number,
-          absoluteIndex: candidate.index,
-          distance,
-        }
-      }
-    }
+  if (!(wanted > 0)) {
+    return false
   }
 
-  return best && best.distance <= 34
-    ? best
-    : null
+  return evidenceNumbers(evidence).some(value => (
+    Math.abs(value - wanted) < 0.0005
+  ))
 }
 
-export function parseExplicitMultiItemQuantities(
-  draft,
-  message,
-) {
-  const items = Array.isArray(draft?.items)
-    ? draft.items
-    : []
+const GENERIC_QUANTITY_WORDS = new Set([
+  'и',
+  'или',
+  'по',
+  'для',
+  'на',
+  'в',
+  'во',
+  'из',
+  'фут',
+  'фута',
+  'футов',
+  'футы',
+  'дм',
+  'метр',
+  'метра',
+  'метров',
+  'м',
+  'шт',
+  'штук',
+  'ед',
+  'единиц',
+  'количество',
+])
 
-  const missing = items.filter(
-    item => !(number(item.quantity) > 0),
+function evidenceHasSemanticReference(evidence) {
+  const words = (
+    normalizeEvidenceText(evidence)
+      .match(/\p{L}+/gu)
+    ?? []
   )
 
-  if (missing.length < 2) return null
-
-  const matches = missing.flatMap(item => {
-    const found = nearestQuantityForItem(
-      message,
-      item,
-      items,
-    )
-
-    return found ? [{ item, found }] : []
-  })
-
-  if (matches.length < 2) return null
-
-  const used = new Set()
-
-  for (const match of matches) {
-    if (used.has(match.found.absoluteIndex)) {
-      return null
-    }
-    used.add(match.found.absoluteIndex)
-  }
-
-  return {
-    startNewOrder: false,
-    cancel: false,
-    confirm: false,
-    deliveryMethod: null,
-    deliveryCity: null,
-    deliveryAddress: null,
-    operations: matches.map(({ item, found }) => ({
-      operation: 'upsert',
-      productId: item.productId,
-      productName: item.productName,
-      variantId: item.variantId ?? null,
-      quantity: found.quantity,
-      unit: item.unit ?? null,
-    })),
-  }
+  return words.some(word => (
+    word.length >= 3
+    && !GENERIC_QUANTITY_WORDS.has(word)
+  ))
 }
 
-function operationDraftItem(operation, items) {
-  const productId = clean(operation?.productId)
-  const productName = normalizeReferenceText(operation?.productName)
+function draftItemByProductId(items, productId) {
+  const id = clean(productId)
+
+  if (!id) return null
 
   return items.find(item => (
-    (productId && String(item.productId) === productId)
-    || (
-      productName
-      && normalizeReferenceText(item.productName) === productName
-    )
+    String(item.productId ?? '') === id
   )) ?? null
 }
 
-function messageNamesItem(message, item, allItems) {
-  const normalized = normalizeReferenceText(message)
-  const fullName = normalizeReferenceText(item?.productName)
+function validDraftVariant(item, variantId) {
+  const id = clean(variantId)
 
-  if (fullName && normalized.includes(fullName)) {
+  if (!id) return true
+
+  if (
+    item?.variantId
+    && String(item.variantId) === id
+  ) {
     return true
   }
 
-  return uniqueProductTokens(item, allItems)
-    .some(token => normalized.includes(token))
+  return (
+    Array.isArray(item?.variantOptions)
+      ? item.variantOptions
+      : []
+  ).some(option => (
+    String(option?.id ?? '') === id
+    || String(option?.legacyId ?? '') === id
+  ))
 }
 
-export function guardAmbiguousMultiItemQuantities(
+function hasPositiveQuantity(operation) {
+  return number(operation?.quantity) > 0
+}
+
+function operationHasValidEvidence(
+  operation,
+  message,
+  {
+    requireSemanticReference,
+  },
+) {
+  if (!hasPositiveQuantity(operation)) {
+    return true
+  }
+
+  const evidence = clean(
+    operation?.quantityEvidence,
+    240,
+  )
+
+  if (
+    !evidence
+    || !evidenceExistsInMessage(
+      message,
+      evidence,
+    )
+    || !evidenceContainsQuantity(
+      evidence,
+      operation.quantity,
+    )
+  ) {
+    return false
+  }
+
+  if (
+    requireSemanticReference
+    && !evidenceHasSemanticReference(evidence)
+  ) {
+    return false
+  }
+
+  return true
+}
+
+export function validateModelOrderDraftUpdate({
   draft,
   update,
   message,
-) {
+  allowedCatalogProductIds = [],
+}) {
+  if (!update) {
+    return {
+      update: null,
+      ambiguous: false,
+      rejected: [],
+    }
+  }
+
   const items = Array.isArray(draft?.items)
     ? draft.items
     : []
-
-  const missingQuantity = items.filter(
-    item => !(number(item.quantity) > 0),
-  )
 
   const operations = Array.isArray(update?.operations)
     ? update.operations
     : []
 
-  const assigned = operations.filter(operation => (
-    operation?.operation !== 'remove'
-    && number(operation?.quantity) > 0
-    && operationDraftItem(operation, items)
-  ))
+  const allowedCatalog = new Set(
+    allowedCatalogProductIds
+      .map(value => String(value ?? '').trim())
+      .filter(Boolean),
+  )
 
-  if (
-    missingQuantity.length <= 1
-    || assigned.length <= 1
-  ) {
-    return { ambiguous: false, update }
+  const requestedQuantityOperations =
+    operations.filter(hasPositiveQuantity)
+
+  const requireSemanticReference = (
+    requestedQuantityOperations.length > 1
+  )
+
+  let ambiguous = (
+    update.quantityResolution === 'ambiguous'
+  )
+
+  const rejected = []
+  const accepted = []
+  const seenDraftQuantityTargets = new Set()
+
+  for (const operation of operations) {
+    const target = (
+      operation?.target === 'draft'
+      || operation?.target === 'catalog'
+        ? operation.target
+        : null
+    )
+
+    if (!target) {
+      rejected.push({
+        reason: 'missing_target',
+        productId: operation?.productId ?? null,
+      })
+
+      if (hasPositiveQuantity(operation)) {
+        ambiguous = true
+      }
+
+      continue
+    }
+
+    if (target === 'draft') {
+      const item = draftItemByProductId(
+        items,
+        operation.productId,
+      )
+
+      if (!item) {
+        rejected.push({
+          reason: 'unknown_draft_product',
+          productId: operation?.productId ?? null,
+        })
+
+        if (hasPositiveQuantity(operation)) {
+          ambiguous = true
+        }
+
+        continue
+      }
+
+      if (
+        !validDraftVariant(
+          item,
+          operation.variantId,
+        )
+      ) {
+        rejected.push({
+          reason: 'invalid_draft_variant',
+          productId: item.productId,
+          variantId: operation?.variantId ?? null,
+        })
+
+        if (hasPositiveQuantity(operation)) {
+          ambiguous = true
+        }
+
+        continue
+      }
+
+      if (hasPositiveQuantity(operation)) {
+        if (
+          update.quantityResolution !== 'resolved'
+          || !operationHasValidEvidence(
+            operation,
+            message,
+            {
+              requireSemanticReference,
+            },
+          )
+          || seenDraftQuantityTargets.has(
+            String(item.productId),
+          )
+        ) {
+          rejected.push({
+            reason: 'invalid_quantity_mapping',
+            productId: item.productId,
+          })
+          ambiguous = true
+          continue
+        }
+
+        seenDraftQuantityTargets.add(
+          String(item.productId),
+        )
+      }
+
+      accepted.push({
+        ...operation,
+        target: 'draft',
+        productId: item.productId,
+        productName: item.productName,
+        variantId:
+          operation.variantId
+          ?? item.variantId
+          ?? null,
+        unit:
+          operation.unit
+          ?? item.unit
+          ?? null,
+      })
+
+      continue
+    }
+
+    const productId = clean(operation.productId)
+
+    if (
+      !productId
+      || !allowedCatalog.has(productId)
+    ) {
+      rejected.push({
+        reason: 'catalog_product_not_allowed',
+        productId: productId ?? null,
+      })
+
+      if (hasPositiveQuantity(operation)) {
+        ambiguous = true
+      }
+
+      continue
+    }
+
+    if (
+      hasPositiveQuantity(operation)
+      && (
+        update.quantityResolution !== 'resolved'
+        || !operationHasValidEvidence(
+          operation,
+          message,
+          {
+            requireSemanticReference,
+          },
+        )
+      )
+    ) {
+      rejected.push({
+        reason: 'invalid_catalog_quantity_evidence',
+        productId,
+      })
+      ambiguous = true
+      continue
+    }
+
+    accepted.push({
+      ...operation,
+      target: 'catalog',
+      productId,
+    })
   }
 
-  const everyAssignedItemNamed = assigned.every(operation => {
-    const item = operationDraftItem(operation, items)
+  if (
+    update.quantityResolution === 'ambiguous'
+  ) {
+    ambiguous = true
+  }
 
-    return (
-      item
-      && messageNamesItem(message, item, items)
-    )
-  })
+  const safeOperations = ambiguous
+    ? accepted.map(operation => (
+        hasPositiveQuantity(operation)
+          ? {
+              ...operation,
+              quantity: null,
+              quantityEvidence: null,
+            }
+          : operation
+      ))
+    : accepted
 
-  if (everyAssignedItemNamed) {
-    return { ambiguous: false, update }
+  const safeUpdate = {
+    ...update,
+    confirm: ambiguous
+      ? false
+      : Boolean(update.confirm),
+    operations: safeOperations,
   }
 
   return {
-    ambiguous: true,
-    update: {
-      ...update,
-      confirm: false,
-      operations: operations.map(operation => (
-        number(operation?.quantity) > 0
-          ? { ...operation, quantity: null }
-          : operation
-      )),
-    },
+    update: safeUpdate,
+    ambiguous,
+    rejected,
   }
 }
 

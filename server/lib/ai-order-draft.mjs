@@ -9,10 +9,12 @@ export const ORDER_DRAFT_TOOL = {
     'Используй его, когда покупатель хочет заказать, добавить,',
     'убрать товар, изменить количество или подтвердить заказ.',
     'В одном вызове можно обновить несколько товаров.',
-    'Если в заказе несколько товаров, НЕ распределяй несколько неподписанных чисел по товарам по порядку.',
-    'Количество можно присвоить нескольким товарам за один вызов только когда покупатель явно связал каждое количество с названием товара.',
-    'productId/variantId бери только из служебного каталога',
-    'или уже существующего черновика. Никогда не придумывай ID.',
+    'Ты отвечаешь за понимание естественного языка: сокращений, опечаток, транслита, разговорных названий и ссылок вроде «первый/второй».',
+    'Для позиции, уже находящейся в черновике, используй target=draft и ТОЧНЫЙ productId из текущего черновика.',
+    'Для нового товара используй target=catalog и только productId из ПРОВЕРЕННЫХ ТОВАРОВ.',
+    'Если количество однозначно связано с товаром, quantityResolution=resolved и quantityEvidence должен быть ДОСЛОВНЫМ коротким фрагментом последнего сообщения покупателя, где видны ссылка на товар и число.',
+    'Если несколько количеств нельзя однозначно сопоставить товарам, quantityResolution=ambiguous и не устанавливай quantity ни для одной неоднозначной позиции.',
+    'Никогда не придумывай PRODUCT_ID, VARIANT_ID, количество или quantityEvidence.',
   ].join(' '),
   strict: true,
   parameters: {
@@ -33,6 +35,12 @@ export const ORDER_DRAFT_TOOL = {
         type: 'boolean',
         description:
           'true только если покупатель явно подтверждает/просит оформить текущий состав.',
+      },
+      quantityResolution: {
+        type: 'string',
+        enum: ['none', 'resolved', 'ambiguous'],
+        description:
+          'none = в этом сообщении нет сопоставления количества; resolved = модель уверенно сопоставила каждое переданное quantity конкретной позиции; ambiguous = сопоставление неоднозначно, quantity не устанавливать.',
       },
       deliveryMethod: {
         anyOf: [
@@ -72,6 +80,12 @@ export const ORDER_DRAFT_TOOL = {
               type: 'string',
               enum: ['upsert', 'remove'],
             },
+            target: {
+              type: 'string',
+              enum: ['draft', 'catalog'],
+              description:
+                'draft = существующая позиция текущего заказа; catalog = новый товар из ПРОВЕРЕННЫХ ТОВАРОВ.',
+            },
             productId: {
               anyOf: [
                 { type: 'string' },
@@ -105,14 +119,24 @@ export const ORDER_DRAFT_TOOL = {
                 { type: 'null' },
               ],
             },
+            quantityEvidence: {
+              anyOf: [
+                { type: 'string' },
+                { type: 'null' },
+              ],
+              description:
+                'Если quantity задан, скопируй сюда короткий ДОСЛОВНЫЙ фрагмент последнего сообщения покупателя, который связывает ссылку на эту позицию и это число. Не перефразируй.',
+            },
           },
           required: [
             'operation',
+            'target',
             'productId',
             'productName',
             'variantId',
             'quantity',
             'unit',
+            'quantityEvidence',
           ],
         },
       },
@@ -121,6 +145,7 @@ export const ORDER_DRAFT_TOOL = {
       'startNewOrder',
       'cancel',
       'confirm',
+      'quantityResolution',
       'deliveryMethod',
       'deliveryCity',
       'deliveryAddress',
@@ -176,11 +201,22 @@ export function normalizeOrderDraftUpdate(value) {
               : 'upsert'
           )
 
+          const target = (
+            item.target === 'draft'
+            || item.target === 'catalog'
+              ? item.target
+              : null
+          )
+
           const productId = clean(item.productId)
           const productName = clean(item.productName)
           const variantId = clean(item.variantId)
           const quantity = positiveNumber(item.quantity)
           const unit = clean(item.unit, 60)
+          const quantityEvidence = clean(
+            item.quantityEvidence,
+            240,
+          )
 
           if (!productId && !productName) {
             return []
@@ -188,11 +224,13 @@ export function normalizeOrderDraftUpdate(value) {
 
           return [{
             operation,
+            target,
             productId,
             productName,
             variantId,
             quantity,
             unit,
+            quantityEvidence,
           }]
         })
     : []
@@ -201,6 +239,12 @@ export function normalizeOrderDraftUpdate(value) {
     startNewOrder: value.startNewOrder === true,
     cancel: value.cancel === true,
     confirm: value.confirm === true,
+    quantityResolution: (
+      value.quantityResolution === 'resolved'
+      || value.quantityResolution === 'ambiguous'
+        ? value.quantityResolution
+        : 'none'
+    ),
     deliveryMethod:
       value.deliveryMethod === 'pickup'
       || value.deliveryMethod === 'courier'
@@ -215,6 +259,7 @@ export function normalizeOrderDraftUpdate(value) {
     !normalized.startNewOrder
     && !normalized.cancel
     && !normalized.confirm
+    && normalized.quantityResolution === 'none'
     && !normalized.deliveryMethod
     && !normalized.deliveryCity
     && !normalized.deliveryAddress
@@ -267,7 +312,7 @@ export function extractOrderDraftToolCalls(body) {
       output: JSON.stringify({
         ok: Boolean(candidate),
         note:
-          'Черновик будет проверен и сохранён сервером после ответа модели. Заказ ещё не создан.',
+          'Backend проверит target, PRODUCT_ID, VARIANT_ID, quantity и дословный quantityEvidence. Черновик будет сохранён только после этой проверки. Заказ ещё не создан.',
       }),
     })
   }

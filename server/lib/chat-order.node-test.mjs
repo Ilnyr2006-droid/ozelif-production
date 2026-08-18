@@ -4,9 +4,8 @@ import test from 'node:test'
 import {
   formatAmbiguousQuantityReply,
   formatChatOrderDraftReply,
-  guardAmbiguousMultiItemQuantities,
   orderDraftMissingFields,
-  parseExplicitMultiItemQuantities,
+  validateModelOrderDraftUpdate,
 } from './chat-order.mjs'
 
 const readyDraft = {
@@ -110,128 +109,6 @@ test('ready order summary shows selected pickup method', () => {
   assert.doesNotMatch(reply, /Оформить этот заказ\?/u)
 })
 
-test('blocks unlabeled quantities for several products', () => {
-  const draft = {
-    status: 'collecting',
-    revision: 1,
-    items: [
-      {
-        productId: 'vegetale',
-        productName: 'Vegetale Visky',
-        variantId: 'v1',
-        quantity: null,
-        unit: 'фут²',
-      },
-      {
-        productId: 'nappa',
-        productName: 'Nappa Visky',
-        variantId: 'v2',
-        quantity: null,
-        unit: 'фут²',
-      },
-    ],
-  }
-
-  const guarded = guardAmbiguousMultiItemQuantities(
-    draft,
-    {
-      startNewOrder: false,
-      cancel: false,
-      confirm: false,
-      deliveryMethod: null,
-      deliveryCity: null,
-      deliveryAddress: null,
-      operations: [
-        {
-          operation: 'upsert',
-          productId: 'vegetale',
-          productName: 'Vegetale Visky',
-          variantId: 'v1',
-          quantity: 80,
-          unit: 'фут²',
-        },
-        {
-          operation: 'upsert',
-          productId: 'nappa',
-          productName: 'Nappa Visky',
-          variantId: 'v2',
-          quantity: 20,
-          unit: 'фут²',
-        },
-      ],
-    },
-    '80 и 20 футов',
-  )
-
-  assert.equal(guarded.ambiguous, true)
-  assert.equal(guarded.update.operations[0].quantity, null)
-  assert.equal(guarded.update.operations[1].quantity, null)
-
-  const reply = formatAmbiguousQuantityReply(draft)
-
-  assert.match(reply, /Vegetale Visky/u)
-  assert.match(reply, /Nappa Visky/u)
-  assert.match(reply, /не буду угадывать/u)
-  assert.match(
-    reply,
-    /Напишите количество рядом с названием:/u,
-  )
-  assert.doesNotMatch(reply, /Vegetale Visky — 80 фут²/u)
-  assert.doesNotMatch(reply, /Nappa Visky — 20 фут²/u)
-})
-
-test('allows quantities explicitly attached to product names', () => {
-  const draft = {
-    status: 'collecting',
-    revision: 1,
-    items: [
-      {
-        productId: 'vegetale',
-        productName: 'Vegetale Visky',
-        quantity: null,
-      },
-      {
-        productId: 'nappa',
-        productName: 'Nappa Visky',
-        quantity: null,
-      },
-    ],
-  }
-
-  const update = {
-    startNewOrder: false,
-    cancel: false,
-    confirm: false,
-    deliveryMethod: null,
-    deliveryCity: null,
-    deliveryAddress: null,
-    operations: [
-      {
-        operation: 'upsert',
-        productId: 'vegetale',
-        productName: 'Vegetale Visky',
-        quantity: 80,
-      },
-      {
-        operation: 'upsert',
-        productId: 'nappa',
-        productName: 'Nappa Visky',
-        quantity: 20,
-      },
-    ],
-  }
-
-  const guarded = guardAmbiguousMultiItemQuantities(
-    draft,
-    update,
-    'Vegetale 80 футов, Nappa 20 футов',
-  )
-
-  assert.equal(guarded.ambiguous, false)
-  assert.equal(guarded.update.operations[0].quantity, 80)
-  assert.equal(guarded.update.operations[1].quantity, 20)
-})
-
 test('courier order requires both city and address', () => {
   const reply = formatChatOrderDraftReply({
     ...readyDraft,
@@ -290,54 +167,6 @@ test('order summary hides duplicated technical variant name', () => {
   assert.doesNotMatch(reply, /Nappa Visky - фут2 - Оттенок/u)
 })
 
-test('accepts shortened aliases with explicit quantities', () => {
-  const draft = {
-    status: 'collecting',
-    items: [
-      { productId: 'vegetale', productName: 'Full Vegetale Chestnut', variantId: 'v1', quantity: null, unit: 'фут²' },
-      { productId: 'napato', productName: 'Napato Black', variantId: 'v2', quantity: null, unit: 'фут²' },
-    ],
-  }
-
-  const update = parseExplicitMultiItemQuantities(
-    draft,
-    'вегетел 40 футов напато 50',
-  )
-
-  assert.ok(update)
-  const values = Object.fromEntries(
-    update.operations.map(item => [item.productName, item.quantity]),
-  )
-  assert.equal(values['Full Vegetale Chestnut'], 40)
-  assert.equal(values['Napato Black'], 50)
-})
-
-test('bare quantities remain ambiguous', () => {
-  const draft = {
-    items: [
-      { productId: 'vegetale', productName: 'Full Vegetale Chestnut', variantId: 'v1', quantity: null, unit: 'фут²' },
-      { productId: 'napato', productName: 'Napato Black', variantId: 'v2', quantity: null, unit: 'фут²' },
-    ],
-  }
-  assert.equal(
-    parseExplicitMultiItemQuantities(draft, '40 и 50 футов'),
-    null,
-  )
-})
-
-test('names followed by ambiguous number tail are not guessed', () => {
-  const draft = {
-    items: [
-      { productId: 'vegetale', productName: 'Full Vegetale Chestnut', variantId: 'v1', quantity: null, unit: 'фут²' },
-      { productId: 'napato', productName: 'Napato Black', variantId: 'v2', quantity: null, unit: 'фут²' },
-    ],
-  }
-  assert.equal(
-    parseExplicitMultiItemQuantities(draft, 'Vegetale и Napato 40 и 50'),
-    null,
-  )
-})
-
 test('complete order asks user to review instead of formal confirmation', () => {
   const reply = formatChatOrderDraftReply({
     ...readyDraft,
@@ -358,4 +187,221 @@ test('ambiguous quantity prompt does not invent example values', () => {
   })
   assert.match(reply, /не буду угадывать/u)
   assert.doesNotMatch(reply, /80|20/u)
+})
+
+test('accepts model semantic mapping to exact draft ids with verbatim evidence', () => {
+  const draft = {
+    items: [
+      { productId: 'vegetale-id', productName: 'Full Vegetale Chestnut', variantId: 'v1', quantity: null, unit: 'фут²' },
+      { productId: 'napato-id', productName: 'Napato Black', variantId: 'v2', quantity: null, unit: 'фут²' },
+    ],
+  }
+
+  const validation = validateModelOrderDraftUpdate({
+    draft,
+    message: 'вегетел 40 футов напато 50',
+    update: {
+      startNewOrder: false,
+      cancel: false,
+      confirm: false,
+      quantityResolution: 'resolved',
+      deliveryMethod: null,
+      deliveryCity: null,
+      deliveryAddress: null,
+      operations: [
+        { operation: 'upsert', target: 'draft', productId: 'vegetale-id', productName: 'Full Vegetale Chestnut', variantId: 'v1', quantity: 40, unit: 'фут²', quantityEvidence: 'вегетел 40 футов' },
+        { operation: 'upsert', target: 'draft', productId: 'napato-id', productName: 'Napato Black', variantId: 'v2', quantity: 50, unit: 'фут²', quantityEvidence: 'напато 50' },
+      ],
+    },
+  })
+
+  assert.equal(validation.ambiguous, false)
+  assert.equal(validation.rejected.length, 0)
+
+  const byId = Object.fromEntries(
+    validation.update.operations.map(item => [item.productId, item.quantity]),
+  )
+  assert.equal(byId['vegetale-id'], 40)
+  assert.equal(byId['napato-id'], 50)
+})
+
+test('accepts completely different product names without backend aliases', () => {
+  const draft = {
+    items: [
+      { productId: 'chelsea-id', productName: 'Chelsea Grey', variantId: 'v1', quantity: null, unit: 'фут²' },
+      { productId: 'amazon-id', productName: 'Amazon Black', variantId: 'v2', quantity: null, unit: 'фут²' },
+    ],
+  }
+
+  const validation = validateModelOrderDraftUpdate({
+    draft,
+    message: 'челси 15 футов амазон 30',
+    update: {
+      startNewOrder: false,
+      cancel: false,
+      confirm: false,
+      quantityResolution: 'resolved',
+      deliveryMethod: null,
+      deliveryCity: null,
+      deliveryAddress: null,
+      operations: [
+        { operation: 'upsert', target: 'draft', productId: 'chelsea-id', productName: 'Chelsea Grey', variantId: 'v1', quantity: 15, unit: 'фут²', quantityEvidence: 'челси 15 футов' },
+        { operation: 'upsert', target: 'draft', productId: 'amazon-id', productName: 'Amazon Black', variantId: 'v2', quantity: 30, unit: 'фут²', quantityEvidence: 'амазон 30' },
+      ],
+    },
+  })
+
+  assert.equal(validation.ambiguous, false)
+  assert.equal(validation.rejected.length, 0)
+  assert.deepEqual(
+    validation.update.operations.map(item => item.quantity),
+    [15, 30],
+  )
+})
+
+test('rejects hallucinated draft product id', () => {
+  const validation = validateModelOrderDraftUpdate({
+    draft: {
+      items: [
+        { productId: 'real-id', productName: 'Chelsea Grey', variantId: 'v1', quantity: null, unit: 'фут²' },
+      ],
+    },
+    message: 'челси 20',
+    update: {
+      startNewOrder: false,
+      cancel: false,
+      confirm: false,
+      quantityResolution: 'resolved',
+      deliveryMethod: null,
+      deliveryCity: null,
+      deliveryAddress: null,
+      operations: [
+        { operation: 'upsert', target: 'draft', productId: 'invented-id', productName: 'Chelsea Grey', variantId: 'v1', quantity: 20, unit: 'фут²', quantityEvidence: 'челси 20' },
+      ],
+    },
+  })
+
+  assert.equal(validation.ambiguous, true)
+  assert.equal(validation.update.operations.length, 0)
+  assert.equal(validation.rejected[0].reason, 'unknown_draft_product')
+})
+
+test('rejects quantity evidence invented by model', () => {
+  const validation = validateModelOrderDraftUpdate({
+    draft: {
+      items: [
+        { productId: 'chelsea-id', productName: 'Chelsea Grey', variantId: 'v1', quantity: null, unit: 'фут²' },
+      ],
+    },
+    message: 'челси 20',
+    update: {
+      startNewOrder: false,
+      cancel: false,
+      confirm: false,
+      quantityResolution: 'resolved',
+      deliveryMethod: null,
+      deliveryCity: null,
+      deliveryAddress: null,
+      operations: [
+        { operation: 'upsert', target: 'draft', productId: 'chelsea-id', productName: 'Chelsea Grey', variantId: 'v1', quantity: 20, unit: 'фут²', quantityEvidence: 'Chelsea Grey 20 футов' },
+      ],
+    },
+  })
+
+  assert.equal(validation.ambiguous, true)
+  assert.equal(validation.update.operations.length, 0)
+})
+
+test('rejects bare multi-item numbers even if model tries to assign them', () => {
+  const validation = validateModelOrderDraftUpdate({
+    draft: {
+      items: [
+        { productId: 'a', productName: 'Chelsea Grey', variantId: 'v1', quantity: null, unit: 'фут²' },
+        { productId: 'b', productName: 'Amazon Black', variantId: 'v2', quantity: null, unit: 'фут²' },
+      ],
+    },
+    message: '20 и 40 футов',
+    update: {
+      startNewOrder: false,
+      cancel: false,
+      confirm: false,
+      quantityResolution: 'resolved',
+      deliveryMethod: null,
+      deliveryCity: null,
+      deliveryAddress: null,
+      operations: [
+        { operation: 'upsert', target: 'draft', productId: 'a', productName: 'Chelsea Grey', variantId: 'v1', quantity: 20, unit: 'фут²', quantityEvidence: '20' },
+        { operation: 'upsert', target: 'draft', productId: 'b', productName: 'Amazon Black', variantId: 'v2', quantity: 40, unit: 'фут²', quantityEvidence: '40 футов' },
+      ],
+    },
+  })
+
+  assert.equal(validation.ambiguous, true)
+  assert.equal(
+    validation.update.operations.filter(item => Number(item.quantity) > 0).length,
+    0,
+  )
+})
+
+test('allows a new product only from server-approved catalog ids', () => {
+  const baseUpdate = {
+    startNewOrder: false,
+    cancel: false,
+    confirm: false,
+    quantityResolution: 'none',
+    deliveryMethod: null,
+    deliveryCity: null,
+    deliveryAddress: null,
+    operations: [
+      { operation: 'upsert', target: 'catalog', productId: 'catalog-ok', productName: 'Amazon Black', variantId: null, quantity: null, unit: null, quantityEvidence: null },
+    ],
+  }
+
+  const accepted = validateModelOrderDraftUpdate({
+    draft: { items: [] },
+    update: baseUpdate,
+    message: 'добавь Amazon Black',
+    allowedCatalogProductIds: ['catalog-ok'],
+  })
+  assert.equal(accepted.ambiguous, false)
+  assert.equal(accepted.update.operations.length, 1)
+
+  const rejected = validateModelOrderDraftUpdate({
+    draft: { items: [] },
+    update: {
+      ...baseUpdate,
+      operations: [
+        { ...baseUpdate.operations[0], productId: 'invented-catalog-id' },
+      ],
+    },
+    message: 'добавь Amazon Black',
+    allowedCatalogProductIds: ['catalog-ok'],
+  })
+  assert.equal(rejected.update.operations.length, 0)
+  assert.equal(rejected.rejected[0].reason, 'catalog_product_not_allowed')
+})
+
+test('model can explicitly mark a quantity message ambiguous', () => {
+  const validation = validateModelOrderDraftUpdate({
+    draft: {
+      items: [
+        { productId: 'a', productName: 'Chelsea Grey', quantity: null },
+        { productId: 'b', productName: 'Amazon Black', quantity: null },
+      ],
+    },
+    message: '20 и 40',
+    update: {
+      startNewOrder: false,
+      cancel: false,
+      confirm: false,
+      quantityResolution: 'ambiguous',
+      deliveryMethod: null,
+      deliveryCity: null,
+      deliveryAddress: null,
+      operations: [],
+    },
+  })
+
+  assert.equal(validation.ambiguous, true)
+  assert.equal(validation.update.operations.length, 0)
 })

@@ -141,3 +141,46 @@ test('draft context exposes missing delivery address fields', () => {
   assert.match(text, /Город доставки=Москва/u)
   assert.match(text, /Адрес доставки=НЕ УКАЗАН/u)
 })
+
+test('preserves semantic resolution metadata from tool update', () => {
+  const result = normalizeOrderDraftUpdate({
+    startNewOrder: false,
+    cancel: false,
+    confirm: false,
+    quantityResolution: 'resolved',
+    deliveryMethod: null,
+    deliveryCity: null,
+    deliveryAddress: null,
+    operations: [{
+      operation: 'upsert',
+      target: 'draft',
+      productId: 'draft-product-id',
+      productName: 'Chelsea Grey',
+      variantId: 'variant-id',
+      quantity: 12,
+      unit: 'фут²',
+      quantityEvidence: 'челси 12 футов',
+    }],
+  })
+
+  assert.equal(result.quantityResolution, 'resolved')
+  assert.equal(result.operations[0].target, 'draft')
+  assert.equal(result.operations[0].quantityEvidence, 'челси 12 футов')
+})
+
+test('ambiguous semantic resolution survives with zero operations', () => {
+  const result = normalizeOrderDraftUpdate({
+    startNewOrder: false,
+    cancel: false,
+    confirm: false,
+    quantityResolution: 'ambiguous',
+    deliveryMethod: null,
+    deliveryCity: null,
+    deliveryAddress: null,
+    operations: [],
+  })
+
+  assert.ok(result)
+  assert.equal(result.quantityResolution, 'ambiguous')
+  assert.equal(result.operations.length, 0)
+})

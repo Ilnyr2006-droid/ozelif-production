@@ -17,9 +17,8 @@ import {
   createChatOrderIfReady,
   formatAmbiguousQuantityReply,
   formatChatOrderDraftReply,
-  guardAmbiguousMultiItemQuantities,
   loadChatOrderDraft,
-  parseExplicitMultiItemQuantities,
+  validateModelOrderDraftUpdate,
 } from '../lib/chat-order.mjs'
 
 function asyncRoute(handler) {
@@ -854,36 +853,40 @@ export function createLiveChatRouter() {
           let draftResult = null
           let quantityAmbiguity = false
 
-          const explicitQuantityUpdate =
-            parseExplicitMultiItemQuantities(
-              currentOrderDraft,
-              content,
-            )
-
-          if (explicitQuantityUpdate) {
-            draftResult = await applyChatOrderDraftUpdate(
-              conversation.id,
-              explicitQuantityUpdate,
-            )
-
-            currentOrderDraft = draftResult.draft
-          } else if (generated.orderDraftUpdate) {
-            const guardedOrderUpdate =
-              guardAmbiguousMultiItemQuantities(
-                currentOrderDraft,
-                generated.orderDraftUpdate,
-                content,
-              )
+          if (generated.orderDraftUpdate) {
+            const validation =
+              validateModelOrderDraftUpdate({
+                draft: currentOrderDraft,
+                update:
+                  generated.orderDraftUpdate,
+                message: content,
+                allowedCatalogProductIds: (
+                  generated.products ?? []
+                ).map(product => product?.id),
+              })
 
             quantityAmbiguity =
-              guardedOrderUpdate.ambiguous
+              validation.ambiguous
 
-            draftResult = await applyChatOrderDraftUpdate(
-              conversation.id,
-              guardedOrderUpdate.update,
-            )
+            if (validation.rejected.length) {
+              console.warn(
+                '[chat-order validation]',
+                JSON.stringify(
+                  validation.rejected,
+                ),
+              )
+            }
 
-            currentOrderDraft = draftResult.draft
+            if (validation.update) {
+              draftResult =
+                await applyChatOrderDraftUpdate(
+                  conversation.id,
+                  validation.update,
+                )
+
+              currentOrderDraft =
+                draftResult.draft
+            }
           } else {
             const implicit = await applyImplicitChatOrderSignals(
               conversation.id,
