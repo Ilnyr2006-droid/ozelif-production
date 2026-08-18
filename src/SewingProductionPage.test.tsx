@@ -9,7 +9,7 @@ beforeAll(() => vi.stubGlobal('IntersectionObserver', class { observe() {} unobs
 describe('sewing production page', () => {
   it('renders verified conditions, active navigation and form validation', () => {
     render(<SewingProductionPage/>)
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('От первого образца')
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Швейное производство в Москве')
     expect(screen.getByText(/Минимальный объём — 10 изделий/i)).toBeInTheDocument()
     expect(screen.getByText(/индивидуальные заказы и единичные изделия/i)).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: 'Швейное производство' })[0]).toHaveAttribute('aria-current', 'page')

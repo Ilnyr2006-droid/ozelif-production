@@ -21,6 +21,10 @@ describe('HomeMainTail', () => {
     ).toHaveAttribute('href', '/odejnayakozha/krs')
 
     expect(
+      screen.getByRole('link', { name: 'Швейное производство в Москве' }),
+    ).toHaveAttribute('href', '/production')
+
+    expect(
       screen.getByRole('link', { name: 'Шоурум в Москве' }),
     ).toHaveAttribute('href', '/contacts')
 

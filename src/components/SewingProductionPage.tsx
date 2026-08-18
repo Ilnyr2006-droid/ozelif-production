@@ -70,10 +70,10 @@ function setMeta(selector: string, attribute: 'name' | 'property', key: string, 
 
 export function SewingProductionPage() {
   useEffect(() => {
-    document.title = 'Швейное производство изделий из кожи в Москве — OZELIF'
-    setMeta('meta[name="description"]', 'name', 'description', 'Швейное производство OZELIF в Москве: образец и серийный пошив изделий из натуральной кожи для брендов. Партии от 10 изделий одной модели.')
-    setMeta('meta[property="og:title"]', 'property', 'og:title', 'Швейное производство OZELIF в Москве')
-    setMeta('meta[property="og:description"]', 'property', 'og:description', 'Первый образец и серийное производство изделий из натуральной кожи для брендов.')
+    document.title = 'Швейное производство в Москве — пошив одежды | OZELIF'
+    setMeta('meta[name="description"]', 'name', 'description', 'Швейное производство OZELIF в Москве: серийный пошив одежды и изделий из натуральной кожи для брендов. От 10 изделий одной модели, первый образец, лекала, подбор кожи и фурнитуры.')
+    setMeta('meta[property="og:title"]', 'property', 'og:title', 'Швейное производство в Москве — OZELIF')
+    setMeta('meta[property="og:description"]', 'property', 'og:description', 'Серийный пошив одежды и изделий из натуральной кожи для брендов в Москве: первый образец, лекала и партии от 10 изделий одной модели.')
     setMeta('meta[property="og:url"]', 'property', 'og:url', 'https://ozelifkoja.ru/production')
     setMeta('meta[property="og:image"]', 'property', 'og:image', 'https://ozelifkoja.ru/images/production-workshop.webp')
     const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]') ?? document.head.appendChild(document.createElement('link'))
@@ -88,13 +88,38 @@ export function SewingProductionPage() {
     return () => observer.disconnect()
   }, [])
 
-  const schema = { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map(([name, text]) => ({ '@type': 'Question', name, acceptedAnswer: { '@type': 'Answer', text } })) }
+  const schema = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Service',
+        '@id': 'https://ozelifkoja.ru/production#service',
+        name: 'Швейное производство в Москве — OZELIF',
+        serviceType: 'Серийный пошив одежды и изделий из натуральной кожи для брендов',
+        url: 'https://ozelifkoja.ru/production',
+        provider: { '@id': 'https://ozelifkoja.ru/#store' },
+        areaServed: [
+          { '@type': 'City', name: 'Москва' },
+          { '@type': 'Country', name: 'Россия' },
+        ],
+      },
+      {
+        '@type': 'FAQPage',
+        '@id': 'https://ozelifkoja.ru/production#faq',
+        mainEntity: faq.map(([name, text]) => ({
+          '@type': 'Question',
+          name,
+          acceptedAnswer: { '@type': 'Answer', text },
+        })),
+      },
+    ],
+  }
 
   return <><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}/><Header active="production"/><main className="sewing-page">
     <section className="about-hero sewing-hero" id="top">
       <picture className="sewing-hero-media"><source srcSet="/images/production-workshop.avif" type="image/avif"/><img className="about-hero-image" src="/images/production-workshop.webp" alt="Рабочий стол швейного производства с кожей, лекалами и инструментами" width="1672" height="941" fetchPriority="high"/></picture>
       <div className="about-hero-shade sewing-hero-shade"/>
-      <div className="about-hero-content sewing-hero-content"><p className="eyebrow hero-in hero-in--1">Швейное производство</p><h1 className="hero-in hero-in--2">Изделия из кожи.<br/><em>От первого образца</em><br/>до серии.</h1><p className="hero-in hero-in--3">Производство полного цикла в Москве для брендов: работа по готовым лекалам, подбор материала, первый образец и серийный пошив.</p><div className="about-hero-actions hero-in hero-in--4"><a className="btn btn--accent" href="#production-form">Обсудить заказ</a><a className="text-link text-link--light" href="#production-materials">Посмотреть материалы <ArrowUpRight size={17}/></a></div></div>
+      <div className="about-hero-content sewing-hero-content"><p className="eyebrow hero-in hero-in--1">Серийный пошив • Москва</p><h1 className="hero-in hero-in--2">Швейное производство{' '}<br/><em>в Москве</em></h1><p className="hero-in hero-in--3">Серийный пошив одежды и изделий из натуральной кожи для брендов: работа по готовым лекалам, подбор материала и фурнитуры, обязательный первый образец и партии от 10 изделий одной модели.</p><div className="about-hero-actions hero-in hero-in--4"><a className="btn btn--accent" href="#production-form">Обсудить заказ</a><a className="text-link text-link--light" href="#production-materials">Посмотреть материалы <ArrowUpRight size={17}/></a></div></div>
       <a className="about-scroll" href="#production-directions" aria-label="Перейти к направлениям производства"><ArrowDown size={17}/></a>
     </section>
 

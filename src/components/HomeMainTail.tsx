@@ -37,6 +37,7 @@ export function HomeMainTail() {
               <a href="/dublyonka">Дублёночный материал</a>
               <a href="/obuvnayakozha">Обувная кожа</a>
               <a href="/kozhaoptom">Кожа оптом</a>
+              <a href="/production">Швейное производство в Москве</a>
               <a href="/contacts">Шоурум в Москве</a>
             </nav>
           </div>
