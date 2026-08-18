@@ -1,0 +1,12 @@
+[Unit]
+Description=Run OZELIF product Vector Store sync periodically
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+RandomizedDelaySec=30s
+Persistent=true
+Unit=ozelif-product-vector-sync.service
+
+[Install]
+WantedBy=timers.target

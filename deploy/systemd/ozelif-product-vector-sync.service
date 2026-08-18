@@ -1,0 +1,14 @@
+[Unit]
+Description=OZELIF product Vector Store sync
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/ozelif-website
+Environment=DOTENV_CONFIG_PATH=/opt/ozelif-website/.env.admin
+ExecStart=/usr/bin/node /opt/ozelif-website/server/scripts/product-vector-sync.mjs --drain --max=200 --concurrency=3
+Nice=10
+
+[Install]
+WantedBy=multi-user.target
