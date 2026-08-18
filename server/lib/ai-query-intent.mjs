@@ -31,7 +31,7 @@ const STRONG_PRODUCT_PHRASES = [
 ]
 
 const PRODUCT_FRAGMENTS = [
-  'кожа',
+  'кож',
   'замша',
   'дублен',
   'овчин',

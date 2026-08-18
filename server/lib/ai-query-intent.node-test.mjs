@@ -108,3 +108,14 @@ test('delivery price question remains delivery, not product', () => {
   assert.equal(result.type, 'delivery')
   assert.equal(result.needsProducts, false)
 })
+
+test('routes short inflected leather browsing request as product', () => {
+  const result = classifyAssistantIntent(
+    'Покажи черную кожу',
+  )
+
+  assert.equal(result.type, 'product')
+  assert.equal(result.needsProducts, true)
+  assert.equal(result.isInformation, false)
+  assert.equal(result.productSignal, true)
+})

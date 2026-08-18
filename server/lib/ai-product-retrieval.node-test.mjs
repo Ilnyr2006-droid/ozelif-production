@@ -18,6 +18,7 @@ const {
   mergeCandidateProducts,
   parseVectorSearchMatches,
   rankProductRecommendations,
+  selectExactProductScope,
 } = await import('./ai-product-retrieval.mjs')
 
 test('parses product ids from vector search attributes', () => {
@@ -279,5 +280,37 @@ test('asks one useful question only for an under-specified selection', () => {
       [{ name: 'Amazon Black' }],
     ),
     null,
+  )
+})
+
+test('exact product scope removes unsolicited analogs', () => {
+  const products = [
+    { name: 'Amazon Black' },
+    { name: 'Vip Black' },
+    { name: 'Soft Black' },
+  ]
+
+  assert.deepEqual(
+    selectExactProductScope(
+      products,
+      'Сколько стоит Amazon Black?',
+    ).map(item => item.name),
+    ['Amazon Black'],
+  )
+})
+
+test('exact product scope keeps alternatives when explicitly requested', () => {
+  const products = [
+    { name: 'Amazon Black' },
+    { name: 'Vip Black' },
+    { name: 'Soft Black' },
+  ]
+
+  assert.deepEqual(
+    selectExactProductScope(
+      products,
+      'Amazon Black и похожие аналоги',
+    ).map(item => item.name),
+    ['Amazon Black', 'Vip Black', 'Soft Black'],
   )
 })

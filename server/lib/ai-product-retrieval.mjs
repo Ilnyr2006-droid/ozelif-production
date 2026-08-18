@@ -466,6 +466,37 @@ function exactProductNameMatch(product, searchText) {
   )
 }
 
+function asksForProductAlternatives(value) {
+  const text = String(value ?? '').trim()
+
+  return (
+    /(?:аналог\p{L}*|альтернатив\p{L}*|похож\p{L}*|замен\p{L}*|сравн\p{L}*)/iu
+  ).test(text)
+}
+
+export function selectExactProductScope(
+  products,
+  searchText,
+) {
+  const rows = Array.isArray(products) ? products : []
+
+  if (
+    !rows.length
+    || asksForProductAlternatives(searchText)
+  ) {
+    return rows
+  }
+
+  const exact = rows.find(
+    product => exactProductNameMatch(
+      product,
+      searchText,
+    ),
+  )
+
+  return exact ? [exact] : rows
+}
+
 export function buildRecommendationReason(
   product,
   searchText,
@@ -1028,7 +1059,12 @@ export async function findLiveProductCandidates(
     semantic.matches,
   )
 
-  const products = ranked.slice(
+  const scoped = selectExactProductScope(
+    ranked,
+    searchText,
+  )
+
+  const products = scoped.slice(
     0,
     Math.min(limit, 3),
   )

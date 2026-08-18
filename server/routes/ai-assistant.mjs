@@ -13,6 +13,9 @@ import {
   sanitizeUnverifiedStockClaims,
 } from '../lib/ai-assistant-format.mjs'
 import {
+  sanitizeSalesReply,
+} from '../lib/ai-sales-quality.mjs'
+import {
   CUSTOMER_PROFILE_TOOL,
   extractCustomerProfileToolCalls,
 } from '../lib/ai-customer-profile.mjs'
@@ -349,12 +352,14 @@ export function createAiAssistantRouter() {
         currentProfile,
       })
 
-      const reply = sanitizeUnverifiedStockClaims(
-        enforceCriticalIntentFacts(
-          generated.text,
-          intent.type,
+      const reply = sanitizeSalesReply(
+        sanitizeUnverifiedStockClaims(
+          enforceCriticalIntentFacts(
+            generated.text,
+            intent.type,
+          ),
+          products,
         ),
-        products,
       )
 
       response.setHeader('Cache-Control', 'no-store')
@@ -384,17 +389,19 @@ export function createAiAssistantRouter() {
         error instanceof Error ? error.message : error,
       )
 
-      const fallbackReply = sanitizeUnverifiedStockClaims(
-        enforceCriticalIntentFacts(
-          intent.needsProducts
-            ? deterministicCatalogReply(
-                products,
-                retrieval.clarificationQuestion ?? null,
-              )
-            : buildInformationFallback(intent),
-          intent.type,
+      const fallbackReply = sanitizeSalesReply(
+        sanitizeUnverifiedStockClaims(
+          enforceCriticalIntentFacts(
+            intent.needsProducts
+              ? deterministicCatalogReply(
+                  products,
+                  retrieval.clarificationQuestion ?? null,
+                )
+              : buildInformationFallback(intent),
+            intent.type,
+          ),
+          products,
         ),
-        products,
       )
 
       response.setHeader('Cache-Control', 'no-store')
