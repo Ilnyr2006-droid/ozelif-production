@@ -72,3 +72,39 @@ test('provides safe informational fallback', () => {
     /Краснобогатырская улица, 24/,
   )
 })
+
+test('treats exact product price and characteristics as product retrieval', () => {
+  const result = classifyAssistantIntent(
+    'Сколько стоит Amazon Black и какие у него характеристики?',
+  )
+
+  assert.equal(result.type, 'product')
+  assert.equal(result.needsProducts, true)
+})
+
+test('treats product stock question as product retrieval', () => {
+  const result = classifyAssistantIntent(
+    'Amazon Black точно сейчас есть в наличии? Сколько шкур осталось?',
+  )
+
+  assert.equal(result.type, 'product')
+  assert.equal(result.needsProducts, true)
+})
+
+test('keeps wholesale intent when leather is needed for production', () => {
+  const result = classifyAssistantIntent(
+    'Мне нужно 1500 дм² кожи для производства. Какие условия опта?',
+  )
+
+  assert.equal(result.type, 'wholesale')
+  assert.equal(result.needsProducts, false)
+})
+
+test('delivery price question remains delivery, not product', () => {
+  const result = classifyAssistantIntent(
+    'Сколько стоит доставка в Санкт-Петербург?',
+  )
+
+  assert.equal(result.type, 'delivery')
+  assert.equal(result.needsProducts, false)
+})

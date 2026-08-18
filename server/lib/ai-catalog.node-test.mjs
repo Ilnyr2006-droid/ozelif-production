@@ -99,3 +99,10 @@ test('adds useful catalog synonyms', () => {
   assert.ok(terms.includes('сумки'))
   assert.ok(terms.includes('галантерея'))
 })
+
+test('normalizes decimal comma in thickness queries', () => {
+  assert.equal(
+    normalizeCatalogQuery('кожа 0,8 мм'),
+    'кожа 0.8 мм',
+  )
+})

@@ -3,9 +3,10 @@ import { buildOzelifAssistantInstructions } from '../lib/ai-system-prompt.mjs'
 import express from 'express'
 import { findLiveProductCandidates } from '../lib/ai-product-retrieval.mjs'
 import {
+  assistantProductContext,
   cleanAssistantMessages,
-  compactProductContext,
   deterministicCatalogReply,
+  enforceCriticalIntentFacts,
   extractResponseText,
   latestUserText,
   productActions,
@@ -124,6 +125,7 @@ async function createAssistantReply({
   messages,
   pathname,
   products,
+  needsProducts = false,
   intentType = null,
   allowProfileCapture = false,
   currentProfile = {},
@@ -185,8 +187,13 @@ async function createAssistantReply({
               'ИСТОРИЯ ДИАЛОГА:',
               conversationText(messages),
               '',
-              'ПРОВЕРЕННЫЕ ТОВАРЫ:',
-              compactProductContext(products),
+              needsProducts
+                ? 'ПРОВЕРЕННЫЕ ТОВАРЫ:'
+                : 'КОНТЕКСТ ТОВАРОВ:',
+              assistantProductContext(
+                products,
+                needsProducts,
+              ),
               '',
               'Ответь на последнее сообщение покупателя.',
             ].join('\n'),
@@ -317,14 +324,20 @@ export function createAiAssistantRouter() {
           : [{ role: 'user', content: message }],
         pathname,
         products,
+        needsProducts: intent.needsProducts,
         intentType: intent.type,
         allowProfileCapture,
         currentProfile,
       })
 
+      const reply = enforceCriticalIntentFacts(
+        generated.text,
+        intent.type,
+      )
+
       response.setHeader('Cache-Control', 'no-store')
       response.json({
-        reply: generated.text,
+        reply,
         profileUpdate: generated.profileUpdate ?? null,
         actions,
         products: products.slice(0, 5),
@@ -346,11 +359,16 @@ export function createAiAssistantRouter() {
         error instanceof Error ? error.message : error,
       )
 
-      response.setHeader('Cache-Control', 'no-store')
-      response.json({
-        reply: intent.needsProducts
+      const fallbackReply = enforceCriticalIntentFacts(
+        intent.needsProducts
           ? deterministicCatalogReply(products)
           : buildInformationFallback(intent),
+        intent.type,
+      )
+
+      response.setHeader('Cache-Control', 'no-store')
+      response.json({
+        reply: fallbackReply,
         profileUpdate: null,
         actions,
         products: products.slice(0, 5),

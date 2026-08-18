@@ -14,6 +14,48 @@ const CATEGORY_PATHS = {
   furnitura: '/furnitura',
 }
 
+const EXPLICIT_CATEGORY_SIGNALS = [
+  {
+    slug: 'zamsha',
+    patterns: [/замш\p{L}*/iu, /suede/iu],
+  },
+  {
+    slug: 'dublyonka',
+    patterns: [/дубл[её]н\p{L}*/iu, /shearling/iu],
+  },
+  {
+    slug: 'obuvnayakozha',
+    patterns: [/обувн\p{L}*\s+кож\p{L}*/iu],
+  },
+  {
+    slug: 'furnitura',
+    patterns: [
+      /фурнитур\p{L}*/iu,
+      /молни\p{L}*/iu,
+      /пряжк\p{L}*/iu,
+      /люверс\p{L}*/iu,
+    ],
+  },
+  {
+    slug: 'odejnayakozha',
+    patterns: [/одежн\p{L}*\s+кож\p{L}*/iu],
+  },
+]
+
+export function inferExplicitCategorySlug(value) {
+  const text = String(value ?? '').trim()
+  if (!text) return null
+
+  const matches = EXPLICIT_CATEGORY_SIGNALS
+    .filter(group => (
+      group.patterns.some(pattern => pattern.test(text))
+    ))
+    .map(group => group.slug)
+
+  const unique = [...new Set(matches)]
+  return unique.length === 1 ? unique[0] : null
+}
+
 function uniqueStrings(values) {
   return [...new Set(
     (values ?? [])
@@ -288,15 +330,28 @@ export async function findLiveProductCandidates(
   options = {},
 ) {
   const limit = safeLimit(options.limit)
+  const categorySlug = (
+    String(options.categorySlug ?? '').trim()
+    || inferExplicitCategorySlug(searchText)
+  )
 
   const [semantic, lexical] = await Promise.all([
     searchProductIndex(searchText, { limit }),
-    searchPublishedProducts(searchText, { limit }),
+    searchPublishedProducts(searchText, {
+      limit,
+      categorySlug,
+    }),
   ])
 
-  const semanticProducts = await getPublishedProductsByIds(
+  const semanticProductsRaw = await getPublishedProductsByIds(
     semantic.matches.map(match => match.productId),
   )
+
+  const semanticProducts = categorySlug
+    ? semanticProductsRaw.filter(
+        product => product.categorySlug === categorySlug,
+      )
+    : semanticProductsRaw
 
   const products = mergeCandidateProducts(
     semanticProducts,
@@ -321,6 +376,7 @@ export async function findLiveProductCandidates(
       query: lexical.query,
       terms: lexical.terms,
       count: lexical.items.length,
+      categorySlug: categorySlug || null,
     },
   }
 }

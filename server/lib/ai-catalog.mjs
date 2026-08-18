@@ -40,6 +40,18 @@ const STOP_WORDS = new Set([
   'какие',
   'товар',
   'товары',
+  'сколько',
+  'стоит',
+  'какие',
+  'какой',
+  'характеристика',
+  'характеристики',
+  'характеристик',
+  'точно',
+  'сейчас',
+  'осталось',
+  'наличие',
+  'наличии',
   'кожа',
   'кожи',
   'кожу',
@@ -58,6 +70,7 @@ export function normalizeCatalogQuery(value) {
     .toLocaleLowerCase('ru')
     .replace(/ё/g, 'е')
     .replace(/[^\p{L}\p{N}.,-]+/gu, ' ')
+    .replace(/(\d),(\d)/g, '$1.$2')
     .replace(/\s+/g, ' ')
     .trim()
 }
@@ -173,6 +186,9 @@ export async function searchPublishedProducts(searchText, options = {}) {
   const normalizedQuery = normalizeCatalogQuery(searchText)
   const terms = expandCatalogSearchTerms(normalizedQuery)
   const limit = safeLimit(options.limit)
+  const categorySlug = String(
+    options.categorySlug ?? '',
+  ).trim()
 
   const result = await query(
     `
@@ -228,6 +244,10 @@ export async function searchPublishedProducts(searchText, options = {}) {
         FROM products p
         JOIN categories c ON c.id = p.category_id
         WHERE p.is_published = true
+          AND (
+            $4::text = ''
+            OR c.slug = $4::text
+          )
       ),
       ranked AS (
         SELECT
@@ -268,7 +288,7 @@ export async function searchPublishedProducts(searchText, options = {}) {
         name ASC
       LIMIT $3
     `,
-    [normalizedQuery, terms, limit],
+    [normalizedQuery, terms, limit, categorySlug],
   )
 
   return {

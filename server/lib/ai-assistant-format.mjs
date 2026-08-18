@@ -147,6 +147,49 @@ export function deterministicCatalogReply(products) {
   ].join('\n')
 }
 
+export function assistantProductContext(products, needsProducts) {
+  if (!needsProducts) {
+    return 'Для этого запроса товарный поиск не требуется.'
+  }
+
+  return compactProductContext(products)
+}
+
+export function enforceCriticalIntentFacts(value, intentType) {
+  const text = String(value ?? '').trim()
+  if (!text) return ''
+
+  if (intentType !== 'production') {
+    return text
+  }
+
+  const additions = []
+
+  const hasMinimumBatch = (
+    /(?:минимальн\p{L}*\s+(?:заказ|объ[её]м)|от)\D{0,45}10\s+издел/iu
+  ).test(text)
+
+  if (!hasMinimumBatch) {
+    additions.push(
+      'Минимальный заказ — 10 изделий одной модели.',
+    )
+  }
+
+  const hasFirstSample = (
+    /перв\p{L}*\s+образ/iu
+  ).test(text)
+
+  if (!hasFirstSample) {
+    additions.push(
+      'Для новой модели перед запуском серии обязательно изготавливается первый образец.',
+    )
+  }
+
+  return [text, ...additions]
+    .filter(Boolean)
+    .join(' ')
+}
+
 export function extractResponseText(body) {
   if (typeof body?.output_text === 'string' && body.output_text.trim()) {
     return body.output_text.trim()

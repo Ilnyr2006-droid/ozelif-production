@@ -8,6 +8,7 @@ process.env.ADMIN_SESSION_SECRET ??=
   'ozelif-test-secret-0123456789-abcdefghijklmnopqrstuvwxyz'
 
 const {
+  inferExplicitCategorySlug,
   mergeCandidateProducts,
   parseVectorSearchMatches,
 } = await import('./ai-product-retrieval.mjs')
@@ -51,4 +52,27 @@ test('merges semantic candidates before lexical fallback', () => {
     { id: '1', name: 'Semantic' },
     { id: '2', name: 'Lexical' },
   ])
+})
+
+test('detects one explicit catalog category', () => {
+  assert.equal(
+    inferExplicitCategorySlug(
+      'Покажи натуральную замшу коричневого цвета',
+    ),
+    'zamsha',
+  )
+
+  assert.equal(
+    inferExplicitCategorySlug(
+      'Нужна обувная кожа черного цвета',
+    ),
+    'obuvnayakozha',
+  )
+
+  assert.equal(
+    inferExplicitCategorySlug(
+      'Сравни замшу и одежную кожу',
+    ),
+    null,
+  )
 })
