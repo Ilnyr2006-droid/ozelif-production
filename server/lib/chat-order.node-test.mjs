@@ -2,7 +2,9 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import {
+  formatAmbiguousQuantityReply,
   formatChatOrderDraftReply,
+  guardAmbiguousMultiItemQuantities,
   orderDraftMissingFields,
 } from './chat-order.mjs'
 
@@ -100,4 +102,174 @@ test('ready order summary shows selected pickup method', () => {
 
   assert.match(reply, /Получение: Самовывоз\./u)
   assert.match(reply, /Оформить этот заказ\?/u)
+})
+
+test('blocks unlabeled quantities for several products', () => {
+  const draft = {
+    status: 'collecting',
+    revision: 1,
+    items: [
+      {
+        productId: 'vegetale',
+        productName: 'Vegetale Visky',
+        variantId: 'v1',
+        quantity: null,
+        unit: 'фут²',
+      },
+      {
+        productId: 'nappa',
+        productName: 'Nappa Visky',
+        variantId: 'v2',
+        quantity: null,
+        unit: 'фут²',
+      },
+    ],
+  }
+
+  const guarded = guardAmbiguousMultiItemQuantities(
+    draft,
+    {
+      startNewOrder: false,
+      cancel: false,
+      confirm: false,
+      deliveryMethod: null,
+      deliveryCity: null,
+      deliveryAddress: null,
+      operations: [
+        {
+          operation: 'upsert',
+          productId: 'vegetale',
+          productName: 'Vegetale Visky',
+          variantId: 'v1',
+          quantity: 80,
+          unit: 'фут²',
+        },
+        {
+          operation: 'upsert',
+          productId: 'nappa',
+          productName: 'Nappa Visky',
+          variantId: 'v2',
+          quantity: 20,
+          unit: 'фут²',
+        },
+      ],
+    },
+    '80 и 20 футов',
+  )
+
+  assert.equal(guarded.ambiguous, true)
+  assert.equal(guarded.update.operations[0].quantity, null)
+  assert.equal(guarded.update.operations[1].quantity, null)
+
+  const reply = formatAmbiguousQuantityReply(draft)
+
+  assert.match(reply, /Vegetale Visky/u)
+  assert.match(reply, /Nappa Visky/u)
+  assert.match(reply, /Vegetale Visky — 80 фут²/u)
+  assert.match(reply, /Nappa Visky — 20 фут²/u)
+})
+
+test('allows quantities explicitly attached to product names', () => {
+  const draft = {
+    status: 'collecting',
+    revision: 1,
+    items: [
+      {
+        productId: 'vegetale',
+        productName: 'Vegetale Visky',
+        quantity: null,
+      },
+      {
+        productId: 'nappa',
+        productName: 'Nappa Visky',
+        quantity: null,
+      },
+    ],
+  }
+
+  const update = {
+    startNewOrder: false,
+    cancel: false,
+    confirm: false,
+    deliveryMethod: null,
+    deliveryCity: null,
+    deliveryAddress: null,
+    operations: [
+      {
+        operation: 'upsert',
+        productId: 'vegetale',
+        productName: 'Vegetale Visky',
+        quantity: 80,
+      },
+      {
+        operation: 'upsert',
+        productId: 'nappa',
+        productName: 'Nappa Visky',
+        quantity: 20,
+      },
+    ],
+  }
+
+  const guarded = guardAmbiguousMultiItemQuantities(
+    draft,
+    update,
+    'Vegetale 80 футов, Nappa 20 футов',
+  )
+
+  assert.equal(guarded.ambiguous, false)
+  assert.equal(guarded.update.operations[0].quantity, 80)
+  assert.equal(guarded.update.operations[1].quantity, 20)
+})
+
+test('courier order requires both city and address', () => {
+  const reply = formatChatOrderDraftReply({
+    ...readyDraft,
+    deliveryMethod: 'courier',
+    deliveryCity: null,
+    deliveryAddress: null,
+    status: 'collecting',
+  })
+
+  assert.match(reply, /Для доставки укажите город и адрес\./u)
+  assert.doesNotMatch(reply, /Оформить этот заказ\?/u)
+})
+
+test('courier order asks only address when city is known', () => {
+  const reply = formatChatOrderDraftReply({
+    ...readyDraft,
+    deliveryMethod: 'courier',
+    deliveryCity: 'Москва',
+    deliveryAddress: null,
+    status: 'collecting',
+  })
+
+  assert.match(reply, /Укажите адрес доставки\./u)
+})
+
+test('courier summary shows city and address when complete', () => {
+  const reply = formatChatOrderDraftReply({
+    ...readyDraft,
+    deliveryMethod: 'courier',
+    deliveryCity: 'Москва',
+    deliveryAddress: 'ул. Тверская, 10',
+    status: 'awaiting_confirmation',
+  })
+
+  assert.match(reply, /Доставка: Москва, ул\. Тверская, 10\./u)
+  assert.match(reply, /Оформить этот заказ\?/u)
+})
+
+test('order summary hides duplicated technical variant name', () => {
+  const reply = formatChatOrderDraftReply({
+    ...readyDraft,
+    items: [{
+      ...readyDraft.items[0],
+      productName: 'Nappa Visky',
+      variantName:
+        'Nappa Visky - фут2 - Оттенок коричневого',
+    }],
+  })
+
+  assert.match(reply, /• Nappa Visky — 8 фут²/u)
+  assert.doesNotMatch(reply, /Nappa Visky - фут2 - Оттенок/u)
 })

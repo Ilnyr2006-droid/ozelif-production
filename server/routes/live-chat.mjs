@@ -15,7 +15,9 @@ import {
   applyChatOrderDraftUpdate,
   applyImplicitChatOrderSignals,
   createChatOrderIfReady,
+  formatAmbiguousQuantityReply,
   formatChatOrderDraftReply,
+  guardAmbiguousMultiItemQuantities,
   loadChatOrderDraft,
 } from '../lib/chat-order.mjs'
 
@@ -849,11 +851,22 @@ export function createLiveChatRouter() {
           }
 
           let draftResult = null
+          let quantityAmbiguity = false
 
           if (generated.orderDraftUpdate) {
+            const guardedOrderUpdate =
+              guardAmbiguousMultiItemQuantities(
+                currentOrderDraft,
+                generated.orderDraftUpdate,
+                content,
+              )
+
+            quantityAmbiguity =
+              guardedOrderUpdate.ambiguous
+
             draftResult = await applyChatOrderDraftUpdate(
               conversation.id,
-              generated.orderDraftUpdate,
+              guardedOrderUpdate.update,
             )
 
             currentOrderDraft = draftResult.draft
@@ -918,18 +931,22 @@ export function createLiveChatRouter() {
               created: false,
             }
 
-            generated.reply = formatChatOrderDraftReply(
-              currentOrderDraft,
-              {
-                needsContact:
-                  confirmed
-                  && !responseConversation?.visitorPhone,
-                needsNewOrderCommand:
-                  Boolean(
-                    draftResult?.needsNewOrderCommand,
-                  ),
-              },
-            )
+            generated.reply = quantityAmbiguity
+              ? formatAmbiguousQuantityReply(
+                  currentOrderDraft,
+                )
+              : formatChatOrderDraftReply(
+                  currentOrderDraft,
+                  {
+                    needsContact:
+                      confirmed
+                      && !responseConversation?.visitorPhone,
+                    needsNewOrderCommand:
+                      Boolean(
+                        draftResult?.needsNewOrderCommand,
+                      ),
+                  },
+                )
           } else if (
             currentOrderDraft?.status === 'awaiting_contact'
             && profileUpdate?.phone

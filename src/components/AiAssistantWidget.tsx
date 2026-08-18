@@ -132,12 +132,49 @@ function liveChatMessageActions(
   })
 }
 
+function InlineMessageText({
+  text,
+  keyPrefix,
+}: {
+  text: string
+  keyPrefix: string
+}) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g)
+
+  return <>{parts.map((part, index) => {
+    const key = `${keyPrefix}-${index}`
+
+    if (
+      part.startsWith('**')
+      && part.endsWith('**')
+      && part.length > 4
+    ) {
+      return <strong key={key}>{part.slice(2, -2)}</strong>
+    }
+
+    return <span key={key}>{part}</span>
+  })}</>
+}
+
 function MessageContent({ content }: { content: string }) {
   const parts = content.split(/(https?:\/\/[^\s]+|\/(?:odejnayakozha|dublyonka|zamsha|obuvnayakozha|furnitura|delivery|contacts|production|kozhaoptom)\b[^\s]*)/g)
+
   return <>{parts.map((part, index) => {
-    if (/^https?:\/\//.test(part)) return <a href={part} target="_blank" rel="noreferrer" key={`${part}-${index}`}>{part}</a>
-    if (/^\/(odejnayakozha|dublyonka|zamsha|obuvnayakozha|furnitura|delivery|contacts|production|kozhaoptom)\b/.test(part)) return <a href={part} key={`${part}-${index}`}>{part}</a>
-    return <span key={`${part}-${index}`}>{part}</span>
+    if (/^https?:\/\//.test(part)) {
+      return <a href={part} target="_blank" rel="noreferrer" key={`${part}-${index}`}>{part}</a>
+    }
+
+    if (/^\/(odejnayakozha|dublyonka|zamsha|obuvnayakozha|furnitura|delivery|contacts|production|kozhaoptom)\b/.test(part)) {
+      return <a href={part} key={`${part}-${index}`}>{part}</a>
+    }
+
+    return (
+      <InlineMessageText
+        text={part}
+        keyPrefix={`text-${index}`}
+        key={`text-${index}`}
+      />
+    )
   })}</>
 }
 

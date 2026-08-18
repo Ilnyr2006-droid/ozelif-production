@@ -131,6 +131,10 @@ function mapDraft(row) {
       || row.delivery_method === 'courier'
         ? row.delivery_method
         : null,
+    deliveryCity:
+      clean(row.delivery_city, 160),
+    deliveryAddress:
+      clean(row.delivery_address, 1000),
     revision: Number(row.revision ?? 0),
     confirmedRevision:
       row.confirmed_revision === null
@@ -310,10 +314,173 @@ function selectVariant(product, operation, previous) {
 }
 
 function stableItems(items) {
-  return [...items].sort((left, right) => (
-    String(left.productName)
-      .localeCompare(String(right.productName), 'ru')
+  // Preserve insertion order; never remap quantities because of sorting.
+  return [...items]
+}
+
+function normalizeReferenceText(value) {
+  return String(value ?? '')
+    .toLocaleLowerCase('ru')
+    .replace(/ё/g, 'е')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function uniqueProductTokens(item, allItems) {
+  const own = normalizeReferenceText(item?.productName)
+    .split(' ')
+    .filter(token => token.length >= 4)
+
+  const otherTokens = new Set(
+    allItems
+      .filter(other => other !== item)
+      .flatMap(other => (
+        normalizeReferenceText(other?.productName)
+          .split(' ')
+          .filter(token => token.length >= 4)
+      )),
+  )
+
+  return own.filter(token => !otherTokens.has(token))
+}
+
+function operationDraftItem(operation, items) {
+  const productId = clean(operation?.productId)
+  const productName = normalizeReferenceText(operation?.productName)
+
+  return items.find(item => (
+    (productId && String(item.productId) === productId)
+    || (
+      productName
+      && normalizeReferenceText(item.productName) === productName
+    )
+  )) ?? null
+}
+
+function messageNamesItem(message, item, allItems) {
+  const normalized = normalizeReferenceText(message)
+  const fullName = normalizeReferenceText(item?.productName)
+
+  if (fullName && normalized.includes(fullName)) {
+    return true
+  }
+
+  return uniqueProductTokens(item, allItems)
+    .some(token => normalized.includes(token))
+}
+
+export function guardAmbiguousMultiItemQuantities(
+  draft,
+  update,
+  message,
+) {
+  const items = Array.isArray(draft?.items)
+    ? draft.items
+    : []
+
+  const missingQuantity = items.filter(
+    item => !(number(item.quantity) > 0),
+  )
+
+  const operations = Array.isArray(update?.operations)
+    ? update.operations
+    : []
+
+  const assigned = operations.filter(operation => (
+    operation?.operation !== 'remove'
+    && number(operation?.quantity) > 0
+    && operationDraftItem(operation, items)
   ))
+
+  if (
+    missingQuantity.length <= 1
+    || assigned.length <= 1
+  ) {
+    return { ambiguous: false, update }
+  }
+
+  const everyAssignedItemNamed = assigned.every(operation => {
+    const item = operationDraftItem(operation, items)
+
+    return (
+      item
+      && messageNamesItem(message, item, items)
+    )
+  })
+
+  if (everyAssignedItemNamed) {
+    return { ambiguous: false, update }
+  }
+
+  return {
+    ambiguous: true,
+    update: {
+      ...update,
+      confirm: false,
+      operations: operations.map(operation => (
+        number(operation?.quantity) > 0
+          ? { ...operation, quantity: null }
+          : operation
+      )),
+    },
+  }
+}
+
+export function formatAmbiguousQuantityReply(draft) {
+  const items = (
+    Array.isArray(draft?.items)
+      ? draft.items
+      : []
+  ).filter(
+    item => !(number(item.quantity) > 0),
+  )
+
+  const sharedUnit = (
+    items.length
+    && items.every(item => item.unit === items[0]?.unit)
+  )
+    ? items[0]?.unit
+    : null
+
+  const unitSuffix = sharedUnit
+    ? ` ${sharedUnit}`
+    : ''
+
+  return [
+    'Чтобы не перепутать количество между товарами, подпишите каждое число названием товара.',
+    '',
+    ...items.map(item => (
+      `• ${item.productName} — сколько${unitSuffix}?`
+    )),
+    '',
+    'Например:',
+    ...items.slice(0, 3).map((item, index) => (
+      `${item.productName} — ${
+        index === 0 ? '80' : index === 1 ? '20' : '10'
+      }${unitSuffix}`
+    )),
+  ].join('\n')
+}
+
+function compactVariantSuffix(productName, variantName) {
+  const variant = clean(variantName, 240)
+  if (!variant) return ''
+
+  const normalizedProduct =
+    normalizeReferenceText(productName)
+
+  const normalizedVariant =
+    normalizeReferenceText(variant)
+
+  if (
+    normalizedProduct
+    && normalizedVariant.startsWith(normalizedProduct)
+  ) {
+    return ''
+  }
+
+  return `, ${variant}`
 }
 
 export async function applyChatOrderDraftUpdate(
@@ -358,14 +525,48 @@ export async function applyChatOrderDraftUpdate(
         : current.deliveryMethod
     )
 
+    let deliveryCity = (
+      update?.startNewOrder
+        ? null
+        : current.deliveryCity
+    )
+
+    let deliveryAddress = (
+      update?.startNewOrder
+        ? null
+        : current.deliveryAddress
+    )
+
     if (
       update?.deliveryMethod === 'pickup'
       || update?.deliveryMethod === 'courier'
     ) {
       if (deliveryMethod !== update.deliveryMethod) {
         deliveryMethod = update.deliveryMethod
+
+        if (deliveryMethod === 'pickup') {
+          deliveryCity = null
+          deliveryAddress = null
+        }
+
         changed = true
       }
+    }
+
+    if (
+      update?.deliveryCity
+      && deliveryCity !== update.deliveryCity
+    ) {
+      deliveryCity = clean(update.deliveryCity, 160)
+      changed = true
+    }
+
+    if (
+      update?.deliveryAddress
+      && deliveryAddress !== update.deliveryAddress
+    ) {
+      deliveryAddress = clean(update.deliveryAddress, 1000)
+      changed = true
     }
 
     if (update?.cancel) {
@@ -500,7 +701,11 @@ export async function applyChatOrderDraftUpdate(
 
     const fulfillmentComplete = (
       deliveryMethod === 'pickup'
-      || deliveryMethod === 'courier'
+      || (
+        deliveryMethod === 'courier'
+        && Boolean(deliveryCity)
+        && Boolean(deliveryAddress)
+      )
     )
 
     const complete = (
@@ -539,11 +744,13 @@ export async function applyChatOrderDraftUpdate(
          status = $2,
          items = $3::jsonb,
          delivery_method = $4,
-         revision = $5,
-         confirmed_revision = $6,
-         confirmed_at = $7,
+         delivery_city = $5,
+         delivery_address = $6,
+         revision = $7,
+         confirmed_revision = $8,
+         confirmed_at = $9,
          order_id = CASE
-           WHEN $8::boolean THEN NULL
+           WHEN $10::boolean THEN NULL
            ELSE order_id
          END,
          updated_at = now()
@@ -554,6 +761,8 @@ export async function applyChatOrderDraftUpdate(
         status,
         JSON.stringify(items),
         deliveryMethod,
+        deliveryCity,
+        deliveryAddress,
         nextRevision,
         confirmedRevision,
         confirmedAt,
@@ -751,9 +960,10 @@ export function formatChatOrderDraftReply(
       ? `${quantity(item.quantity)} ${item.unit || 'ед.'}`
       : 'количество не указано'
 
-    const variant = item.variantName
-      ? `, ${item.variantName}`
-      : ''
+    const variant = compactVariantSuffix(
+      item.productName,
+      item.variantName,
+    )
 
     const total = item.lineTotal !== null
       && item.lineTotal !== undefined
@@ -774,42 +984,57 @@ export function formatChatOrderDraftReply(
 
   if (missing.length) {
     const questions = missing.map(item => {
+      const units = [
+        ...new Set(
+          (item.variantOptions ?? [])
+            .map(option => displayUnit(option.unit))
+            .filter(Boolean),
+        ),
+      ]
+
       if (
         item.problems.includes('variant')
-        && item.variantOptions.length
+        && item.problems.includes('quantity')
       ) {
-        const options = item.variantOptions
-          .slice(0, 5)
-          .map(option => (
-            `${option.name || 'вариант'}`
-            + (
-              option.unit
-                ? ` (${displayUnit(option.unit)})`
-                : ''
-            )
-          ))
-          .join(', ')
-
         return (
-          `Для ${item.productName} уточните вариант/единицу: `
-          + options
-          + '.'
+          `• ${item.productName} — выберите единицу`
+          + (
+            units.length
+              ? ` (${units.join(' или ')})`
+              : ''
+          )
+          + ' и укажите количество.'
         )
       }
 
+      if (item.problems.includes('variant')) {
+        return (
+          `• ${item.productName} — выберите единицу`
+          + (
+            units.length
+              ? `: ${units.join(' или ')}`
+              : '.'
+          )
+        )
+      }
+
+      const row = items.find(value => (
+        value.productId === item.productId
+      ))
+
       return (
-        `Для ${item.productName} укажите количество`
-        + (item.problems.includes('variant')
-          ? ' и единицу измерения'
-          : '')
+        `• ${item.productName} — укажите количество`
+        + (row?.unit ? ` в ${row.unit}` : '')
         + '.'
       )
     })
 
     return [
       'Состав заказа:',
+      '',
       ...lines,
       '',
+      'Нужно уточнить:',
       ...questions,
     ].join('\n')
   }
@@ -825,17 +1050,70 @@ export function formatChatOrderDraftReply(
     ].join('\n')
   }
 
+  if (
+    draft.deliveryMethod === 'courier'
+    && !draft.deliveryCity
+    && !draft.deliveryAddress
+  ) {
+    return [
+      'Состав заказа:',
+      '',
+      ...lines,
+      '',
+      `Предварительная сумма: ${money(total)}.`,
+      '',
+      'Для доставки укажите город и адрес.',
+    ].join('\n')
+  }
+
+  if (
+    draft.deliveryMethod === 'courier'
+    && !draft.deliveryCity
+  ) {
+    return [
+      'Состав заказа:',
+      '',
+      ...lines,
+      '',
+      `Предварительная сумма: ${money(total)}.`,
+      '',
+      'Укажите город доставки.',
+    ].join('\n')
+  }
+
+  if (
+    draft.deliveryMethod === 'courier'
+    && !draft.deliveryAddress
+  ) {
+    return [
+      'Состав заказа:',
+      '',
+      ...lines,
+      '',
+      `Предварительная сумма: ${money(total)}.`,
+      '',
+      'Укажите адрес доставки.',
+    ].join('\n')
+  }
+
   const fulfillmentLabel = (
     draft.deliveryMethod === 'pickup'
       ? 'Самовывоз'
       : 'Доставка'
   )
 
+  const fulfillmentLine = (
+    draft.deliveryMethod === 'courier'
+      ? `Доставка: ${draft.deliveryCity}, ${draft.deliveryAddress}.`
+      : 'Получение: Самовывоз.'
+  )
+
   const summary = [
     'Состав заказа:',
+    '',
     ...lines,
     '',
-    `Получение: ${fulfillmentLabel}.`,
+    fulfillmentLine,
     `Предварительная сумма: ${money(total)}.`,
   ]
 
@@ -845,7 +1123,7 @@ export function formatChatOrderDraftReply(
       '',
       ...lines,
       '',
-      `Получение: ${fulfillmentLabel}.`,
+      fulfillmentLine,
       `Предварительная сумма: ${money(total)}.`,
       'Менеджер подтвердит наличие и финальную стоимость.',
     ].join('\n')
@@ -879,7 +1157,11 @@ export async function createChatOrderIfReady({
     || draft.confirmedRevision !== draft.revision
     || !(
       draft.deliveryMethod === 'pickup'
-      || draft.deliveryMethod === 'courier'
+      || (
+        draft.deliveryMethod === 'courier'
+        && Boolean(draft.deliveryCity)
+        && Boolean(draft.deliveryAddress)
+      )
     )
     || !name
     || !phone
@@ -905,6 +1187,14 @@ export async function createChatOrderIfReady({
     phone,
     privacyConsent: true,
     deliveryMethod: draft.deliveryMethod,
+    city:
+      draft.deliveryMethod === 'courier'
+        ? draft.deliveryCity
+        : null,
+    deliveryAddress:
+      draft.deliveryMethod === 'courier'
+        ? draft.deliveryAddress
+        : null,
     idempotencyKey:
       `ai-chat:${conversationId}:${draft.revision}`,
     comment: 'Заказ создан покупателем через AI-чат.',

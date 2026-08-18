@@ -9,6 +9,8 @@ export const ORDER_DRAFT_TOOL = {
     'Используй его, когда покупатель хочет заказать, добавить,',
     'убрать товар, изменить количество или подтвердить заказ.',
     'В одном вызове можно обновить несколько товаров.',
+    'Если в заказе несколько товаров, НЕ распределяй несколько неподписанных чисел по товарам по порядку.',
+    'Количество можно присвоить нескольким товарам за один вызов только когда покупатель явно связал каждое количество с названием товара.',
     'productId/variantId бери только из служебного каталога',
     'или уже существующего черновика. Никогда не придумывай ID.',
   ].join(' '),
@@ -42,6 +44,22 @@ export const ORDER_DRAFT_TOOL = {
         ],
         description:
           'Способ получения: pickup = самовывоз, courier = доставка. До выбора способа заказ нельзя оформлять.',
+      },
+      deliveryCity: {
+        anyOf: [
+          { type: 'string' },
+          { type: 'null' },
+        ],
+        description:
+          'Город доставки. Заполняй только для courier. Не придумывай город.',
+      },
+      deliveryAddress: {
+        anyOf: [
+          { type: 'string' },
+          { type: 'null' },
+        ],
+        description:
+          'Адрес доставки. Заполняй только для courier. Не придумывай адрес.',
       },
       operations: {
         type: 'array',
@@ -104,6 +122,8 @@ export const ORDER_DRAFT_TOOL = {
       'cancel',
       'confirm',
       'deliveryMethod',
+      'deliveryCity',
+      'deliveryAddress',
       'operations',
     ],
   },
@@ -186,6 +206,8 @@ export function normalizeOrderDraftUpdate(value) {
       || value.deliveryMethod === 'courier'
         ? value.deliveryMethod
         : null,
+    deliveryCity: clean(value.deliveryCity, 160),
+    deliveryAddress: clean(value.deliveryAddress, 1000),
     operations,
   }
 
@@ -194,6 +216,8 @@ export function normalizeOrderDraftUpdate(value) {
     && !normalized.cancel
     && !normalized.confirm
     && !normalized.deliveryMethod
+    && !normalized.deliveryCity
+    && !normalized.deliveryAddress
     && !normalized.operations.length
   ) {
     return null
@@ -319,6 +343,8 @@ export function formatOrderDraftContext(draft) {
           ? 'ДОСТАВКА'
           : 'НЕ ВЫБРАНО'
     }`,
+    `Город доставки=${draft.deliveryCity || 'НЕ УКАЗАН'}`,
+    `Адрес доставки=${draft.deliveryAddress || 'НЕ УКАЗАН'}`,
     ...lines,
     'Служебные PRODUCT_ID/VARIANT_ID нельзя показывать покупателю.',
   ].join('\n')

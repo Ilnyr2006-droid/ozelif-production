@@ -12,6 +12,8 @@ test('normalizes several products in one draft update', () => {
     cancel: false,
     confirm: false,
     deliveryMethod: null,
+    deliveryCity: null,
+    deliveryAddress: null,
     operations: [
       {
         operation: 'upsert',
@@ -102,4 +104,40 @@ test('draft context exposes fulfillment choice to model', () => {
   })
 
   assert.match(text, /Получение=ДОСТАВКА/u)
+})
+
+test('normalizes delivery city and address', () => {
+  const result = normalizeOrderDraftUpdate({
+    startNewOrder: false,
+    cancel: false,
+    confirm: false,
+    deliveryMethod: 'courier',
+    deliveryCity: 'Москва',
+    deliveryAddress: 'ул. Тверская, 10',
+    operations: [],
+  })
+
+  assert.equal(result.deliveryMethod, 'courier')
+  assert.equal(result.deliveryCity, 'Москва')
+  assert.equal(result.deliveryAddress, 'ул. Тверская, 10')
+})
+
+test('draft context exposes missing delivery address fields', () => {
+  const text = formatOrderDraftContext({
+    status: 'collecting',
+    revision: 2,
+    deliveryMethod: 'courier',
+    deliveryCity: 'Москва',
+    deliveryAddress: null,
+    items: [{
+      productId: 'p1',
+      productName: 'Chelsea Grey',
+      variantId: 'v1',
+      quantity: 2,
+      unit: 'фут²',
+    }],
+  })
+
+  assert.match(text, /Город доставки=Москва/u)
+  assert.match(text, /Адрес доставки=НЕ УКАЗАН/u)
 })
