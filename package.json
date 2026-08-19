@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && node scripts/prerender-static-seo.mjs && node scripts/build-home-cwv.mjs",
+    "build": "tsc -b && npm run llms:generate && vite build && node scripts/prerender-static-seo.mjs && node scripts/build-home-cwv.mjs",
     "lint": "eslint .",
     "typecheck": "tsc -b --pretty false",
     "test": "vitest run --exclude '**/.backup-*/**' --exclude '_ozelif-local-backups/**'",
@@ -25,7 +25,9 @@
     "db:migrate": "node server/scripts/migrate.mjs",
     "admin:create-user": "node server/scripts/create-admin.mjs",
     "admin:check": "node --check server/index.mjs && node --check server/scripts/migrate.mjs && node --check server/scripts/create-admin.mjs",
-    "admin:export-seed": "node scripts/export-admin-seed.mjs"
+    "admin:export-seed": "node scripts/export-admin-seed.mjs",
+    "llms:generate": "node scripts/generate-llms.mjs",
+    "llms:check": "node scripts/generate-llms.mjs --check"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
