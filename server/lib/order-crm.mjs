@@ -1,6 +1,7 @@
 import crypto from 'node:crypto'
 import { transaction } from './db.mjs'
 import { normalizePhone } from './phone.mjs'
+import { enqueueAdminNotification } from './admin-notifications.mjs'
 
 export const ORDER_STATUSES = Object.freeze(['new', 'confirmed', 'awaiting_payment', 'paid', 'assembling', 'handed_to_delivery', 'in_transit', 'ready_for_pickup', 'completed', 'cancelled'])
 export const ORDER_STATUS_LABELS = Object.freeze({ new: 'Новый', confirmed: 'Подтверждён', awaiting_payment: 'Ожидает оплаты', paid: 'Оплачен', assembling: 'Собирается', handed_to_delivery: 'Передан в доставку', in_transit: 'В пути', ready_for_pickup: 'Готов к выдаче', completed: 'Завершён', cancelled: 'Отменён' })
@@ -90,7 +91,27 @@ export async function createOrderWithClient(
        VALUES ($1, 'new', $2)`,
       [order.id, source],
     )
-    await client.query(`INSERT INTO notification_outbox (event_type, aggregate_type, aggregate_id, channel, recipient, payload) VALUES ('order.created','order',$1,'admin','crm',$2) ON CONFLICT DO NOTHING`, [order.id, JSON.stringify({ publicNumber: order.public_number, source })])
+    await enqueueAdminNotification(
+      client,
+      {
+        eventType: 'order.created',
+        aggregateType: 'order',
+        aggregateId: order.id,
+        payload: {
+          name,
+          phone: clean(input?.phone, 80) ?? phone,
+          total,
+          source,
+          deliveryMethod: clean(input?.deliveryMethod, 120),
+          city: clean(input?.city, 160),
+          items: lines.map(line => ({
+            name: line.productName,
+            quantity: line.quantity,
+            unit: line.unit,
+          })),
+        },
+      },
+    )
     let deepLink = null
     if (telegramEnabled && telegramUsername) {
       const token = createLinkToken()

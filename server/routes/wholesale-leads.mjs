@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { query } from '../lib/db.mjs'
 import { normalizePhone } from '../lib/phone.mjs'
+import { safeEnqueueAdminNotification } from '../lib/admin-notifications.mjs'
 
 const attempts = new Map()
 
@@ -99,6 +100,7 @@ export function createWholesaleLeadsRouter() {
             $11
           )
           RETURNING
+            id,
             public_number,
             status,
             created_at
@@ -116,6 +118,24 @@ export function createWholesaleLeadsRouter() {
           text(request.headers['user-agent'], 1_000),
           text(request.body?.pagePath, 500),
         ],
+      )
+
+      await safeEnqueueAdminNotification(
+        query,
+        {
+          eventType: 'wholesale.created',
+          aggregateType: 'wholesale_lead',
+          aggregateId: result.rows[0].id,
+          payload: {
+            name,
+            phone,
+            company: text(request.body?.company, 240),
+            city: text(request.body?.city, 160),
+            category: text(request.body?.category, 160),
+            volume: text(request.body?.volume, 240),
+            comment: text(request.body?.comment, 4_000),
+          },
+        },
       )
 
       return response.status(201).json({

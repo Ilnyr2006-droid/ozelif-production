@@ -1,0 +1,14 @@
+[Unit]
+Description=OZELIF Telegram bot polling
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/ozelif-website
+ExecStart=/usr/bin/node /opt/ozelif-website/server/scripts/telegram-polling.mjs
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

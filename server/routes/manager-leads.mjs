@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { query } from '../lib/db.mjs'
 import { normalizePhone } from '../lib/phone.mjs'
+import { safeEnqueueAdminNotification } from '../lib/admin-notifications.mjs'
 
 const attempts = new Map()
 
@@ -116,6 +117,7 @@ export function createManagerLeadsRouter() {
             $7
           )
           RETURNING
+            id,
             status,
             created_at
         `,
@@ -137,6 +139,20 @@ export function createManagerLeadsRouter() {
             500,
           ),
         ],
+      )
+
+      await safeEnqueueAdminNotification(
+        query,
+        {
+          eventType: 'manager_lead.created',
+          aggregateType: 'manager_lead',
+          aggregateId: result.rows[0].id,
+          payload: {
+            name,
+            phone,
+            comment: text(request.body?.comment, 4_000),
+          },
+        },
       )
 
       return response.status(201).json({

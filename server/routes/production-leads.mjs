@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { query } from '../lib/db.mjs'
 import { normalizePhone } from '../lib/phone.mjs'
+import { safeEnqueueAdminNotification } from '../lib/admin-notifications.mjs'
 
 const attempts = new Map()
 
@@ -118,6 +119,7 @@ export function createProductionLeadsRouter() {
             $9
           )
           RETURNING
+            id,
             status,
             created_at
         `,
@@ -135,6 +137,22 @@ export function createProductionLeadsRouter() {
           ),
           text(request.body?.pagePath, 500),
         ],
+      )
+
+      await safeEnqueueAdminNotification(
+        query,
+        {
+          eventType: 'production.created',
+          aggregateType: 'production_lead',
+          aggregateId: result.rows[0].id,
+          payload: {
+            name,
+            phone,
+            productType: text(request.body?.productType, 300),
+            quantity: text(request.body?.quantity, 240),
+            comment: text(request.body?.comment, 4_000),
+          },
+        },
       )
 
       return response.status(201).json({

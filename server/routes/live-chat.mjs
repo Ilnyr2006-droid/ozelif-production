@@ -11,6 +11,7 @@ import { normalizeCustomerProfileUpdate } from '../lib/ai-customer-profile.mjs'
 import { syncCustomerFromLiveChatContact } from '../lib/customer-contact.mjs'
 import { classifyAssistantIntent } from '../lib/ai-query-intent.mjs'
 import { buildConversionDecision } from '../lib/ai-conversion.mjs'
+import { safeEnqueueAdminNotification } from '../lib/admin-notifications.mjs'
 import {
   applyChatOrderDraftUpdate,
   applyImplicitChatOrderSignals,
@@ -749,6 +750,21 @@ export function createLiveChatRouter() {
             score: initialConversion.score,
             reason: 'explicit_customer_request',
             disableAi: true,
+          },
+        )
+
+        await safeEnqueueAdminNotification(
+          query,
+          {
+            eventType: 'chat.manager_requested',
+            aggregateType: 'live_chat',
+            aggregateId: conversation.id,
+            payload: {
+              name: freshConversation?.visitorName ?? conversation?.visitorName ?? null,
+              phone: freshConversation?.visitorPhone ?? conversation?.visitorPhone ?? null,
+              pagePath: freshConversation?.pagePath ?? safePath(request.body?.path),
+              message: content,
+            },
           },
         )
 
