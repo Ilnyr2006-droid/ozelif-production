@@ -18,17 +18,41 @@ for (const setting of [
 ]) assert.match(systemd, new RegExp(setting.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
 
 for (const setting of [
-  'listen 8091;',
+  'listen 127.0.0.1:8091;',
+  'listen [::1]:8091;',
   'root /var/www/ozelif-8091;',
-  'allow 127.0.0.1;',
-  'deny all;',
   'proxy_pass http://127.0.0.1:8093;',
-  'try_files $uri $uri/ /index.html;',
   'location = /info {',
   'location = /info/ {',
   'return 301 https://ozelifkoja.ru/delivery;',
   'location ~ ^/[a-z0-9-]+/tproduct/[^/]+/?$',
+  'fakturnaya',
+  'vintazhnaya',
+  'gladkaya',
+  'nappa',
+  'merinos',
+  'tigrado',
+  'zamsha/gladkaya',
+  'furnitura/ykk',
 ]) assert.match(nginx, new RegExp(setting.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+
+assert.doesNotMatch(
+  nginx,
+  /(?:^|\n)\s*listen\s+8091;/,
+  'OZELIF frontend must remain loopback-only',
+)
+
+for (const obsoleteRedirect of [
+  'location = /odejnayakozha/gladkaya/',
+  'location = /odejnayakozha/vintazhnaya',
+  'location = /odejnayakozha/fakturnaya',
+]) {
+  assert.doesNotMatch(
+    nginx,
+    new RegExp(obsoleteRedirect.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+    `Obsolete SEO redirect must not return: ${obsoleteRedirect}`,
+  )
+}
 
 assert.doesNotMatch(envExample, /(PASSWORD|SECRET|API_KEY)\s*=/)
 assert.match(compose, /127\.0\.0\.1:\$\{POSTGRES_PORT:-54329\}:5432/)

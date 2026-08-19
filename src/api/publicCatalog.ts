@@ -186,7 +186,12 @@ export async function fetchPublicCatalogProducts(categorySlug: string, options: 
 let publicCatalogCategoriesCache: PublicCatalogCategory[] | null = null
 let publicCatalogCategoriesRequest: Promise<PublicCatalogCategory[]> | null = null
 
-export async function fetchPublicCatalogCategories(_signal?: AbortSignal): Promise<PublicCatalogCategory[]> {
+export async function fetchPublicCatalogCategories(signal?: AbortSignal): Promise<PublicCatalogCategory[]> {
+  // Categories use one shared cached request. Do not bind that shared request
+  // to one caller's AbortSignal, otherwise one unmount could cancel it for
+  // every consumer.
+  void signal
+
   if (publicCatalogCategoriesCache) {
     return publicCatalogCategoriesCache
   }
