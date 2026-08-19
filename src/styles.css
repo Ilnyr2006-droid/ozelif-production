@@ -2543,3 +2543,66 @@ footer{border-radius:var(--radius-xl) var(--radius-xl) 0 0;padding-top:64px}
     min-height: 132px !important;
   }
 }
+
+/* OZELIF cart single scroll at every viewport width */
+
+/*
+ * The drawer itself is only 458px wide even on desktop.
+ * Therefore its layout must not depend on viewport width.
+ *
+ * One scroll container:
+ * header -> complete product list -> dark total -> checkout.
+ */
+.cart-drawer {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cart-drawer > header {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 5 !important;
+  flex: 0 0 auto !important;
+  background: var(--paper) !important;
+}
+
+.cart-drawer-items {
+  display: block !important;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.cart-item {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.cart-item-body {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.cart-summary,
+.cart-checkout {
+  flex: 0 0 auto !important;
+}
+
+.cart-summary {
+  position: relative !important;
+  margin-top: 18px !important;
+}
+
+.cart-checkout {
+  position: relative !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
