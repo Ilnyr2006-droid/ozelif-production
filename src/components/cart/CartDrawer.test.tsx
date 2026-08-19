@@ -46,6 +46,19 @@ describe('Cart drawer UI', () => {
     expect(screen.getByRole('dialog', { name: 'Корзина' })).toBeInTheDocument()
   })
 
+  it('does not render the cart total as the website footer', () => {
+    renderCartUi()
+    fireEvent.click(screen.getByText('Добавить тестовый товар'))
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть корзину, товаров: 1' }))
+
+    const dialog = screen.getByRole('dialog', { name: 'Корзина' })
+    const summary = screen.getByRole('region', { name: 'Итог по корзине' })
+
+    expect(summary).toHaveClass('cart-summary')
+    expect(summary.tagName).toBe('SECTION')
+    expect(dialog.querySelector('footer.cart-summary')).toBeNull()
+  })
+
   it('closes on Escape and restores focus to the opener', () => {
     renderCartUi()
     const cartButton = screen.getByRole('button', { name: 'Открыть корзину, товаров: 0' })
