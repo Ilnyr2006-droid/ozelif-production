@@ -1,6 +1,7 @@
 import { query, transaction } from './db.mjs'
 import { env } from './env.mjs'
 import { hashLinkToken, ORDER_STATUS_LABELS } from './order-crm.mjs'
+import { adminTelegramRecipients } from './admin-telegram-recipients.mjs'
 
 const telegramApi = () => `https://api.telegram.org/bot${env.telegramBotToken}`
 export const telegramEnabled = () => Boolean(env.telegramBotToken && env.telegramBotUsername)
@@ -271,11 +272,16 @@ export async function handleTelegramUpdate(update) {
 }
 
 async function pendingAdminSubscriptions() {
-  return (await query(
+  const subscriptions = (await query(
     `SELECT telegram_chat_id::text AS chat_id
      FROM telegram_admin_subscriptions
      WHERE is_active=true AND revoked_at IS NULL ORDER BY verified_at`,
   )).rows
+
+  return adminTelegramRecipients(
+    subscriptions,
+    env.telegramAdminChatId,
+  )
 }
 
 async function claimOutbox(id) {

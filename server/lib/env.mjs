@@ -22,5 +22,6 @@ export const env = {
   yandexReviewsSourceUrl: String(process.env.YANDEX_REVIEWS_SOURCE_URL ?? '').trim(),
   telegramBotToken: String(process.env.TELEGRAM_BOT_TOKEN ?? '').trim(),
   telegramBotUsername: String(process.env.TELEGRAM_BOT_USERNAME ?? '').replace(/^@/, '').trim(),
+  telegramAdminChatId: String(process.env.TELEGRAM_ADMIN_CHAT_ID ?? '').trim(),
   telegramWebhookSecret: String(process.env.TELEGRAM_WEBHOOK_SECRET ?? '').trim(),
 }
