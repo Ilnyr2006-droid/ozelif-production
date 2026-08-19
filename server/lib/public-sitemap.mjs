@@ -5,6 +5,7 @@ export const BASE_STATIC_PATHS = Object.freeze([
   '/production',
   '/delivery',
   '/contacts',
+  '/sale',
 ])
 
 function escapeXml(value) {

@@ -53,3 +53,31 @@ test('does not render unpublished or unknown products', async () => {
     assert.equal(response.status, 404)
   })
 })
+
+test('redirects slug-only product routes to the canonical id-slug URL', async () => {
+  await withSeoServer({
+    getProductByRoute: async () => ({
+      name: 'Vegetale Visky',
+      url: '/novaya-kategoriya/tproduct/814535079882-vegetale-visky',
+      category: {
+        slug: 'novaya-kategoriya',
+        name: 'Новая категория',
+      },
+      price: 431,
+      currency: 'RUB',
+      variants: [],
+      images: [],
+    }),
+  }, async baseUrl => {
+    const response = await fetch(
+      `${baseUrl}/novaya-kategoriya/tproduct/vegetale-visky?utm_source=test`,
+      { redirect: 'manual' },
+    )
+
+    assert.equal(response.status, 301)
+    assert.equal(
+      response.headers.get('location'),
+      '/novaya-kategoriya/tproduct/814535079882-vegetale-visky?utm_source=test',
+    )
+  })
+})

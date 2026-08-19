@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import express from 'express'
-import { renderSitemapXml } from './public-sitemap.mjs'
+import { BASE_STATIC_PATHS, renderSitemapXml } from './public-sitemap.mjs'
 import { createPublicSitemapRouter } from '../routes/public-sitemap.mjs'
 
 test('renders published category and product URLs using their current slugs', () => {
@@ -16,7 +16,7 @@ test('renders published category and product URLs using their current slugs', ()
   assert.match(xml, /<lastmod>2026-08-01<\/lastmod>/)
 })
 
-test('serves published empty categories in the dynamic sitemap', async () => {
+test('omits published empty categories from the dynamic sitemap', async () => {
   const app = express()
   app.use(createPublicSitemapRouter({
     siteUrl: 'https://example.test',
@@ -34,8 +34,12 @@ test('serves published empty categories in the dynamic sitemap', async () => {
     const response = await fetch(`http://127.0.0.1:${port}/sitemap.xml`)
     const xml = await response.text()
     assert.equal(response.status, 200)
-    assert.match(xml, /https:\/\/example\.test\/galantereynayakozha/)
+    assert.doesNotMatch(xml, /https:\/\/example\.test\/galantereynayakozha/)
   } finally {
     await new Promise(resolve => server.close(resolve))
   }
+})
+
+test('includes the sale page in the base sitemap paths', () => {
+  assert.ok(BASE_STATIC_PATHS.includes('/sale'))
 })

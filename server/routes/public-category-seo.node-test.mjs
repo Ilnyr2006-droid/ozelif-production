@@ -16,7 +16,27 @@ async function withServer(payloads, verify) {
     repository: {
       listProducts: async (slug, query) => {
         calls.push({ slug, query })
-        return payloads[slug] ?? null
+
+        const payload = payloads[slug] ?? null
+        if (!payload) return null
+
+        if (payload.pagination) {
+          return payload
+        }
+
+        const items = Array.isArray(payload.items)
+          ? payload.items
+          : []
+
+        return {
+          ...payload,
+          pagination: {
+            limit: query.limit,
+            offset: query.offset,
+            total: items.length,
+            hasMore: false,
+          },
+        }
       },
     },
     frontendRoot,
@@ -53,7 +73,7 @@ test('renders a published database category and its products without a frontend 
     assert.match(html, /rel="canonical" href="https:\/\/ozelifkoja\.ru\/new-category"/)
     assert.match(html, /<h1>Новая категория<\/h1>/)
     assert.match(html, /Новый материал/)
-    assert.match(html, /от 950 ₽ \/ фут²/)
+    assert.match(html, /950 ₽ \/ фут²/)
     assert.match(html, /"@type":"ItemList"/)
     assert.match(html, /"@type":"Store"/)
     assert.doesNotMatch(html, /<div id="root"><\/div>/)
@@ -96,12 +116,31 @@ test('renders clothing leather search intent and keeps a multi-unit price paired
     const response = await fetch(`${baseUrl}/odejnayakozha`)
     const html = await response.text()
     assert.equal(response.status, 200)
-    assert.match(html, /<title>Одежная кожа — купить натуральную кожу в Москве \| OZELIF<\/title>/)
-    assert.match(html, /Краснобогатырской улице, 24/)
-    assert.match(html, /OZELIF поставляет натуральную одежную кожу/)
-    assert.match(html, /Сырьё в каталоге/)
+    assert.match(html, /<title>Одежная кожа купить в Москве — натуральная кожа для пошива \| OZELIF<\/title>/)
+    assert.match(
+      html,
+      /rel="canonical" href="https:\/\/ozelifkoja\.ru\/odejnayakozha"/,
+    )
+    assert.match(
+      html,
+      /"streetAddress":"Краснобогатырская улица, 24"/,
+    )
+    assert.match(
+      html,
+      /<h1>Натуральная кожа для пошива одежды<\/h1>/,
+    )
+    assert.match(html, /Виды одежной кожи/)
+    assert.match(html, /href="\/odejnayakozha\/gladkaya"/)
+    assert.match(html, /href="\/odejnayakozha\/fakturnaya"/)
+    assert.match(
+      html,
+      /Купить натуральную кожу для пошива одежды в Москве/,
+    )
+    assert.match(html, /href="\/contacts"/)
+    assert.match(html, /href="\/kozhaoptom"/)
+    assert.match(html, /href="\/delivery"/)
     assert.match(html, /Овчина/)
-    assert.match(html, /От 0,5 до 0,6 мм по данным карточек каталога/)
+    assert.match(html, /0\.5-0\.6 мм/)
     assert.doesNotMatch(html, /Мы производим кожу/)
     assert.doesNotMatch(html, /шкур коз/)
     assert.match(html, /от 46,33 ₽ \/ дм²/)

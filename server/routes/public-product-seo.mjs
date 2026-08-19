@@ -46,6 +46,23 @@ export function createPublicProductSeoRouter({ repository, frontendRoot }) {
       return
     }
 
+    const canonicalRouteIdentifier = String(product.url ?? '')
+      .split('/tproduct/')
+      .at(1)
+
+    if (
+      canonicalRouteIdentifier
+      && request.params.routeIdentifier !== canonicalRouteIdentifier
+    ) {
+      const queryIndex = request.originalUrl.indexOf('?')
+      const query = queryIndex >= 0
+        ? request.originalUrl.slice(queryIndex)
+        : ''
+
+      response.redirect(301, `${product.url}${query}`)
+      return
+    }
+
     const [template, modulePreloadHref] = await Promise.all([
       fs.readFile(indexPath, 'utf8'),
       productModulePreload(frontendRoot, request.params.categorySlug),
