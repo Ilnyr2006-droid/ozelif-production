@@ -2407,3 +2407,139 @@ footer{border-radius:var(--radius-xl) var(--radius-xl) 0 0;padding-top:64px}
     grid-template-columns:1fr;
   }
 }
+
+/* OZELIF cart final flow + dark total card */
+
+/*
+ * The total is intentionally a dark card, but it must remain a
+ * normal-flow sibling AFTER the complete product list.
+ */
+.cart-summary {
+  position: relative !important;
+  inset: auto !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  z-index: 1 !important;
+  display: grid !important;
+  flex: 0 0 auto !important;
+  align-self: auto !important;
+  width: auto !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 18px 28px 0 !important;
+  padding: 20px 22px 22px !important;
+  overflow: visible !important;
+  clear: both !important;
+  transform: none !important;
+  border: 0 !important;
+  border-radius: 24px !important;
+  background: var(--ink) !important;
+  color: var(--white) !important;
+  box-shadow: none !important;
+}
+
+.cart-summary p,
+.cart-summary small {
+  color: rgba(255, 250, 242, .62) !important;
+}
+
+.cart-summary strong {
+  color: var(--white) !important;
+  font-family: var(--serif) !important;
+  font-size: clamp(30px, 4vw, 42px) !important;
+  font-weight: 400 !important;
+  line-height: 1.1 !important;
+}
+
+/*
+ * Mobile/tablet: one vertical flow.
+ * Product articles must size from their actual content before the
+ * total card is allowed to start.
+ */
+@media (max-width: 1024px) {
+  .cart-drawer {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
+
+  .cart-drawer > header {
+    order: 1;
+    flex: 0 0 auto !important;
+  }
+
+  .cart-drawer-items {
+    order: 2;
+    display: block !important;
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    contain: none !important;
+  }
+
+  .cart-item {
+    position: relative !important;
+    float: none !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 148px !important;
+    max-height: none !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    clear: both !important;
+    transform: none !important;
+    contain: none !important;
+  }
+
+  .cart-item-body {
+    position: relative !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    contain: none !important;
+  }
+
+  .cart-item-head,
+  .cart-item-title,
+  .cart-item-variant,
+  .cart-item-price,
+  .cart-item-controls {
+    max-height: none !important;
+  }
+
+  .cart-summary {
+    order: 3;
+    flex: 0 0 auto !important;
+    margin-top: 18px !important;
+  }
+
+  .cart-checkout {
+    order: 4;
+    position: relative !important;
+    flex: 0 0 auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    transform: none !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .cart-summary {
+    margin: 16px 18px 0 !important;
+    padding: 18px 18px 20px !important;
+    border-radius: 20px !important;
+  }
+
+  .cart-item {
+    min-height: 132px !important;
+  }
+}
