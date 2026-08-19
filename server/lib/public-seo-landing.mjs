@@ -207,6 +207,18 @@ function renderFallbackLandingBody(landing, section) {
   ].join('\n')
 }
 
+function hasRouteSpecificLandingTemplate(template, canonical) {
+  const source = String(template)
+  const links = source.match(/<link\b[^>]*>/gi) ?? []
+  const hasCanonical = links.some(tag => {
+    if (!/\brel\s*=\s*(?:"canonical"|'canonical')/i.test(tag)) return false
+    const href = tag.match(/\bhref\s*=\s*(?:"([^"]*)"|'([^']*)')/i)
+    return (href?.[1] ?? href?.[2] ?? '') === canonical
+  })
+
+  return hasCanonical && /<h1\b[^>]*>/i.test(source)
+}
+
 function replaceCanonical(html, canonical) {
   const tag = `<link rel="canonical" href="${escapeHtml(canonical)}" />`
   if (/<link\s+rel="canonical"[^>]*>/i.test(html)) {
@@ -278,6 +290,11 @@ export function renderCatalogSeoLandingPage(template, landing, products, { origi
     })),
   }
 
+  const hasRouteSpecificPrerender = hasRouteSpecificLandingTemplate(
+    template,
+    canonical,
+  )
+
   let html = stripHomeHeroPreloads(template)
   html = replaceCanonical(html, canonical)
   html = setRobots(html, productItems.length === 0)
@@ -290,7 +307,7 @@ export function renderCatalogSeoLandingPage(template, landing, products, { origi
 
   const section = [renderProductsSection(landing, productItems), commercialSection(landing)].join('\n')
 
-  if (!/<h1\b[^>]*>/i.test(html)) {
+  if (!hasRouteSpecificPrerender) {
     html = replaceFallbackLandingMetadata(html, landing, canonical)
     return replaceRootWithSeoContent(
       html,
