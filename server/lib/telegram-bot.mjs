@@ -149,7 +149,15 @@ async function activeAdminSubscription(userId, chatId) {
 async function handleAdminStart(message, rawToken) {
   const userId = message?.from?.id
   const chatId = message?.chat?.id
+  const chatType = String(message?.chat?.type ?? '')
   if (!userId || !chatId || !rawToken) return { linked: false }
+  if (chatType !== 'private') {
+    await send(
+      chatId,
+      'Доступ к служебным уведомлениям OZELIF можно подключить только в личном чате с ботом.',
+    )
+    return { linked: false, privateChatRequired: true }
+  }
   const tokenHash = hashLinkToken(rawToken)
   const linked = await transaction(async client => {
     const found = await client.query(
