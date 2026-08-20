@@ -105,6 +105,7 @@ export async function createOrderWithClient(
           deliveryMethod: clean(input?.deliveryMethod, 120),
           city: clean(input?.city, 160),
           deliveryAddress: clean(input?.deliveryAddress, 1000),
+          comment: clean(input?.comment, 2000),
           items: lines.map(line => ({
             name: line.productName,
             quantity: line.quantity,

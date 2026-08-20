@@ -94,6 +94,7 @@ export function formatAdminNotificationText(item, { siteUrl = env.siteUrl } = {}
       addLine(lines, 'Получение', fulfillment(payload.deliveryMethod))
       addLine(lines, 'Город', payload.city)
       addLine(lines, 'Адрес', payload.deliveryAddress)
+      addLine(lines, 'Комментарий', payload.comment)
       break
     }
     case 'wholesale.created':
