@@ -431,3 +431,70 @@
     flex-direction: column;
   }
 }
+
+/* OZELIF_ADMIN_TELEGRAM_REPLY_PHOTO_V2 */
+.admin-live-chat-image {
+  display: block;
+  width: min(320px, 100%);
+  margin-top: 8px;
+}
+
+.admin-live-chat-image img {
+  display: block;
+  width: 100%;
+  max-height: 360px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.admin-live-chat-telegram-composer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: 8px;
+}
+
+.admin-live-chat-telegram-composer > label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  border: 1px solid #9fd5eb;
+  border-radius: 10px;
+  padding: 7px 11px;
+  background: #edf8fd;
+  color: #1479aa;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-live-chat-telegram-composer > label input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.admin-live-chat-photo-selected {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: #6f6259;
+  font-size: 12px;
+}
+
+.admin-live-chat-photo-selected span {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-live-chat-photo-selected button {
+  min-height: 30px;
+  padding: 5px 9px;
+}

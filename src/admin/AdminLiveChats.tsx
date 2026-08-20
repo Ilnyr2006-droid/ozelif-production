@@ -38,6 +38,11 @@ type Message = {
   id: string
   role: 'user' | 'assistant' | 'manager' | 'system'
   content: string
+  metadata?: {
+    type?: string
+    imageUrl?: string
+    channel?: string
+  } | null
   createdAt: string
 }
 
@@ -84,6 +89,7 @@ export function AdminLiveChats({
   const [selected, setSelected] = useState<Conversation | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [draft, setDraft] = useState('')
+  const [telegramPhoto, setTelegramPhoto] = useState<File | null>(null)
   const [filter, setFilter] = useState<'active' | 'closed' | 'all'>('active')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -175,28 +181,93 @@ export function AdminLiveChats({
     event.preventDefault()
 
     const content = draft.trim()
-    if (!selectedId || !content || loading) return
+    const photo = telegramPhoto
+
+    if (
+      !selectedId
+      || loading
+      || (
+        !content
+        && !(
+          selected?.channel === 'telegram'
+          && photo
+        )
+      )
+    ) {
+      return
+    }
 
     setLoading(true)
     setError('')
-    setDraft('')
 
     try {
-      await requestJson(
-        `/api/admin/live-chats/${selectedId}/messages`,
-        {
-          method: 'POST',
-          body: JSON.stringify({ content }),
-        },
-      )
+      if (
+        selected?.channel === 'telegram'
+        && photo
+      ) {
+        const form =
+          new FormData()
+
+        form.append(
+          'photo',
+          photo,
+        )
+
+        if (content) {
+          form.append(
+            'caption',
+            content,
+          )
+        }
+
+        const response =
+          await fetch(
+            `/api/admin/live-chats/${selectedId}/telegram-photo`,
+            {
+              method: 'POST',
+              credentials:
+                'same-origin',
+              body: form,
+            },
+          )
+
+        const body =
+          await response
+            .json()
+            .catch(() => null)
+
+        if (!response.ok) {
+          throw new Error(
+            body?.error
+            ?? `HTTP ${response.status}`,
+          )
+        }
+      } else {
+        await requestJson(
+          `/api/admin/live-chats/${selectedId}/messages`,
+          {
+            method: 'POST',
+            body:
+              JSON.stringify({
+                content,
+              }),
+          },
+        )
+      }
+
+      setDraft('')
+      setTelegramPhoto(null)
 
       await Promise.all([
         loadConversation(selectedId),
         loadList(),
       ])
     } catch (reason) {
-      setDraft(content)
-      setError(reason instanceof Error ? reason.message : 'Ошибка отправки')
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : 'Ошибка отправки',
+      )
     } finally {
       setLoading(false)
     }
@@ -421,6 +492,19 @@ export function AdminLiveChats({
                           ? 'Менеджер'
                           : 'AI OZELIF'}
                     </span>
+                    {message.metadata?.imageUrl ? (
+                      <a
+                        className="admin-live-chat-image"
+                        href={message.metadata.imageUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <img
+                          src={message.metadata.imageUrl}
+                          alt={message.content || 'Фото'}
+                        />
+                      </a>
+                    ) : null}
                     <p>{message.content}</p>
                     <small>{time(message.createdAt)}</small>
                   </article>
@@ -428,44 +512,93 @@ export function AdminLiveChats({
                 <div ref={bottomRef} />
               </div>
 
-              {selected.channel === 'telegram' ? (
-                <div className="admin-live-chat-telegram-readonly">
-                  <strong>Telegram-диалог</strong>
-                  <span>
-                    История синхронизируется автоматически. Ответ из админки подключим следующим этапом.
-                  </span>
-                  {selected.telegramUrl ? (
-                    <a href={selected.telegramUrl} target="_blank" rel="noreferrer">
-                      Ответить в Telegram
-                    </a>
-                  ) : null}
-                </div>
-              ) : (
               <form onSubmit={send}>
                 <textarea
                   value={draft}
                   onChange={event => setDraft(event.target.value)}
                   placeholder={
-                    selected.aiEnabled
-                      ? 'При отправке сообщения AI отключится автоматически…'
-                      : 'Ответить клиенту…'
+                    selected.channel === 'telegram'
+                      ? telegramPhoto
+                        ? 'Подпись к фотографии (необязательно)…'
+                        : selected.aiEnabled
+                          ? 'Ответить в Telegram — AI отключится автоматически…'
+                          : 'Ответить клиенту в Telegram…'
+                      : selected.aiEnabled
+                        ? 'При отправке сообщения AI отключится автоматически…'
+                        : 'Ответить клиенту…'
                   }
                   rows={3}
-                  maxLength={4_000}
+                  maxLength={
+                    selected.channel === 'telegram'
+                    && telegramPhoto
+                      ? 1_024
+                      : 4_000
+                  }
                   disabled={selected.status === 'closed'}
                 />
+
+                {selected.channel === 'telegram' ? (
+                  <div className="admin-live-chat-telegram-composer">
+                    <label>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png"
+                        onChange={event => {
+                          setTelegramPhoto(
+                            event.target.files?.[0]
+                            ?? null,
+                          )
+                          event.currentTarget.value = ''
+                        }}
+                        disabled={
+                          loading
+                          || selected.status === 'closed'
+                        }
+                      />
+                      <span>
+                        {telegramPhoto
+                          ? 'Заменить фото'
+                          : 'Прикрепить фото'}
+                      </span>
+                    </label>
+
+                    {telegramPhoto ? (
+                      <div className="admin-live-chat-photo-selected">
+                        <span>
+                          {telegramPhoto.name}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setTelegramPhoto(null)}
+                          disabled={loading}
+                        >
+                          Убрать
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+
                 <button
                   type="submit"
                   disabled={
-                    !draft.trim()
-                    || loading
+                    loading
                     || selected.status === 'closed'
+                    || (
+                      !draft.trim()
+                      && !(
+                        selected.channel === 'telegram'
+                        && telegramPhoto
+                      )
+                    )
                   }
                 >
-                  Отправить
+                  {selected.channel === 'telegram'
+                    && telegramPhoto
+                    ? 'Отправить фото'
+                    : 'Отправить'}
                 </button>
               </form>
-              )}
             </>
           ) : (
             <div className="admin-live-chat-placeholder">

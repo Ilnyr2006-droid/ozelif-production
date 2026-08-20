@@ -1,11 +1,63 @@
+import crypto from 'node:crypto'
+import fs from 'node:fs/promises'
+import path from 'node:path'
 import express from 'express'
+import multer from 'multer'
 import { query } from '../lib/db.mjs'
+import { env } from '../lib/env.mjs'
 import { requireAdmin, requirePermission } from '../lib/admin-auth.mjs'
 import { normalizeChatContent } from '../lib/live-chat-utils.mjs'
+import { validateCatalogImage } from '../lib/upload-image-validation.mjs'
+import { telegramCustomerChat } from '../lib/telegram-customer-chat.mjs'
 
 function asyncRoute(handler) {
   return (request, response, next) => {
     Promise.resolve(handler(request, response, next)).catch(next)
+  }
+}
+
+const telegramPhotoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize:
+      9 * 1024 * 1024,
+    files: 1,
+  },
+})
+
+function telegramChatId(conversation) {
+  return String(
+    conversation?.telegramChatId
+    ?? conversation?.externalChatId
+    ?? '',
+  ).trim()
+}
+
+async function saveTelegramChatPhoto(
+  file,
+  validation,
+) {
+  const filename =
+    `telegram-chat-${
+      Date.now()
+    }-${
+      crypto.randomUUID()
+    }${
+      validation.extension
+    }`
+
+  await fs.writeFile(
+    path.join(
+      env.uploadDir,
+      filename,
+    ),
+    file.buffer,
+  )
+
+  return {
+    filename,
+    url:
+      `/uploads/${filename}`,
   }
 }
 
@@ -238,14 +290,55 @@ export function createAdminLiveChatsRouter() {
       return
     }
 
+    let metadata = null
+
+    if (conversation.channel === 'telegram') {
+      const chatId =
+        telegramChatId(
+          conversation,
+        )
+
+      if (!chatId) {
+        response.status(409).json({
+          error:
+            'telegram_chat_id_missing',
+        })
+        return
+      }
+
+      const telegram =
+        await telegramCustomerChat
+          .sendText(
+            chatId,
+            content,
+          )
+
+      metadata = {
+        channel: 'telegram',
+        direction: 'outbound',
+        type: 'text',
+        telegramChatId:
+          chatId,
+        telegramMessageId:
+          telegram.messageId,
+      }
+    }
+
     const result = await query(
       `INSERT INTO live_chat_messages (
          conversation_id,
          role,
          content,
+         metadata,
          created_by_admin_id
        )
-       VALUES ($1, 'manager', $2, $3)
+       VALUES (
+         $1,
+         'manager',
+         $2,
+         $3::jsonb,
+         $4
+       )
        RETURNING
          id::text,
          role,
@@ -253,7 +346,14 @@ export function createAdminLiveChatsRouter() {
          metadata,
          created_by_admin_id AS "createdByAdminId",
          created_at AS "createdAt"`,
-      [conversation.id, content, request.admin.id],
+      [
+        conversation.id,
+        content,
+        metadata
+          ? JSON.stringify(metadata)
+          : null,
+        request.admin.id,
+      ],
     )
 
     await query(
@@ -269,11 +369,224 @@ export function createAdminLiveChatsRouter() {
          last_message_at = now(),
          updated_at = now()
        WHERE id = $1`,
-      [conversation.id, request.admin.id],
+      [
+        conversation.id,
+        request.admin.id,
+      ],
     )
 
-    response.status(201).json({ ok: true, message: result.rows[0] })
+    response.status(201).json({
+      ok: true,
+      message: result.rows[0],
+    })
   }))
+
+  router.post(
+    '/:id/telegram-photo',
+    requirePermission('chat:write'),
+    telegramPhotoUpload.single('photo'),
+    asyncRoute(async (request, response) => {
+      const conversation =
+        await ensureConversation(
+          request.params.id,
+        )
+
+      if (!conversation) {
+        response.status(404).json({
+          error:
+            'conversation_not_found',
+        })
+        return
+      }
+
+      if (
+        conversation.channel
+        !== 'telegram'
+      ) {
+        response.status(409).json({
+          error:
+            'telegram_chat_required',
+        })
+        return
+      }
+
+      if (!request.file) {
+        response.status(400).json({
+          error:
+            'photo_required',
+        })
+        return
+      }
+
+      const validation =
+        validateCatalogImage({
+          buffer:
+            request.file.buffer,
+          originalname:
+            request.file.originalname,
+          mimetype:
+            request.file.mimetype,
+        })
+
+      if (!validation.valid) {
+        response.status(400).json({
+          error:
+            validation.error,
+        })
+        return
+      }
+
+      if (
+        ![
+          'jpeg',
+          'png',
+        ].includes(
+          validation.format,
+        )
+      ) {
+        response.status(400).json({
+          error:
+            'Для Telegram-фото используйте JPG или PNG',
+        })
+        return
+      }
+
+      const caption =
+        normalizeChatContent(
+          request.body?.caption,
+        ).slice(
+          0,
+          1_024,
+        )
+
+      const chatId =
+        telegramChatId(
+          conversation,
+        )
+
+      if (!chatId) {
+        response.status(409).json({
+          error:
+            'telegram_chat_id_missing',
+        })
+        return
+      }
+
+      const stored =
+        await saveTelegramChatPhoto(
+          request.file,
+          validation,
+        )
+
+      let telegram
+
+      try {
+        telegram =
+          await telegramCustomerChat
+            .sendPhoto(
+              chatId,
+              {
+                buffer:
+                  request.file.buffer,
+                mimeType:
+                  validation.mimeType,
+                filename:
+                  `photo${
+                    validation.extension
+                  }`,
+                caption,
+              },
+            )
+      } catch (error) {
+        await fs
+          .unlink(
+            path.join(
+              env.uploadDir,
+              stored.filename,
+            ),
+          )
+          .catch(() => undefined)
+
+        throw error
+      }
+
+      const content =
+        caption
+        || '📷 Фото'
+
+      const metadata = {
+        channel: 'telegram',
+        direction: 'outbound',
+        type: 'photo',
+        imageUrl:
+          stored.url,
+        telegramChatId:
+          chatId,
+        telegramMessageId:
+          telegram.messageId,
+      }
+
+      const result =
+        await query(
+          `INSERT INTO live_chat_messages (
+             conversation_id,
+             role,
+             content,
+             metadata,
+             created_by_admin_id
+           )
+           VALUES (
+             $1,
+             'manager',
+             $2,
+             $3::jsonb,
+             $4
+           )
+           RETURNING
+             id::text,
+             role,
+             content,
+             metadata,
+             created_by_admin_id AS "createdByAdminId",
+             created_at AS "createdAt"`,
+          [
+            conversation.id,
+            content,
+            JSON.stringify(
+              metadata,
+            ),
+            request.admin.id,
+          ],
+        )
+
+      await query(
+        `UPDATE live_chat_conversations
+         SET
+           status = 'human',
+           ai_enabled = false,
+           assigned_admin_id = $2,
+           manager_takeover_at = COALESCE(
+             manager_takeover_at,
+             now()
+           ),
+           last_message_at = now(),
+           updated_at = now()
+         WHERE id = $1`,
+        [
+          conversation.id,
+          request.admin.id,
+        ],
+      )
+
+      response
+        .status(201)
+        .json({
+          ok: true,
+          message:
+            result.rows[0],
+        })
+    }),
+  )
 
   router.post('/:id/close', requirePermission('chat:write'), asyncRoute(async (request, response) => {
     const result = await query(

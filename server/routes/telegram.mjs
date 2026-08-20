@@ -255,6 +255,58 @@ export function createTelegramRouter({
     response.json({ found: Boolean(order), order })
   }))
 
+  router.post('/chat-state', asyncRoute(async (request, response) => {
+    if (!allowed(request)) {
+      response.status(401).json({ error: 'unauthorized' })
+      return
+    }
+
+    const chatId =
+      clean(
+        request.body?.telegramChatId,
+        128,
+      )
+
+    if (!chatId) {
+      response.status(400).json({
+        error:
+          'telegram_chat_id_required',
+      })
+      return
+    }
+
+    const result =
+      await queryFn(
+        `SELECT
+           ai_enabled AS "aiEnabled",
+           status
+         FROM live_chat_conversations
+         WHERE channel = 'telegram'
+           AND external_chat_id = $1
+         LIMIT 1`,
+        [chatId],
+      )
+
+    if (!result.rowCount) {
+      response.json({
+        found: false,
+        aiEnabled: true,
+        status: 'open',
+      })
+      return
+    }
+
+    response.json({
+      found: true,
+      aiEnabled:
+        Boolean(
+          result.rows[0].aiEnabled,
+        ),
+      status:
+        result.rows[0].status,
+    })
+  }))
+
   router.post('/chat-sync', asyncRoute(async (request, response) => {
     if (!allowed(request)) {
       response.status(401).json({ error: 'unauthorized' })
