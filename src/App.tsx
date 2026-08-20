@@ -251,7 +251,79 @@ function AppRoutes() {
   const isPrivacyPage = ['/privacy', '/privacy/'].includes(pathname)
   const genericProductMatch = pathname.match(/^\/([a-z0-9-]+)\/tproduct\/[^/]+\/?$/)
   const genericCategoryMatch = pathname.match(/^\/([a-z0-9-]+)\/?$/)
-  useEffect(() => { const nodes = document.querySelectorAll('.reveal'); const observer = new IntersectionObserver(entries => entries.forEach(entry => entry.isIntersecting && entry.target.classList.add('is-visible')), { threshold: .12 }); nodes.forEach(n => observer.observe(n)); return () => observer.disconnect() }, [pathname])
+  useEffect(() => {
+    const revealNode = (
+      node: Element,
+      observer: IntersectionObserver | null,
+    ) => {
+      if (
+        !node.classList.contains('reveal')
+        || node.classList.contains('is-visible')
+      ) {
+        return
+      }
+
+      if (!observer) {
+        node.classList.add('is-visible')
+        return
+      }
+
+      observer.observe(node)
+    }
+
+    const observer = typeof IntersectionObserver === 'function'
+      ? new IntersectionObserver(
+        entries => {
+          entries.forEach(entry => {
+            if (!entry.isIntersecting) return
+
+            entry.target.classList.add('is-visible')
+            observer?.unobserve(entry.target)
+          })
+        },
+        { threshold: 0.12 },
+      )
+      : null
+
+    const observeRevealTree = (root: ParentNode) => {
+      if (root instanceof Element) {
+        revealNode(root, observer)
+      }
+
+      root
+        .querySelectorAll('.reveal')
+        .forEach(node => revealNode(node, observer))
+    }
+
+    /*
+     * Homepage sections can be mounted later through React.lazy.
+     * Observe newly inserted .reveal nodes as well as the initial DOM,
+     * otherwise their content can remain permanently transparent.
+     */
+    observeRevealTree(document)
+
+    const mutationObserver = new MutationObserver(records => {
+      records.forEach(record => {
+        record.addedNodes.forEach(node => {
+          if (!(node instanceof Element)) return
+          observeRevealTree(node)
+        })
+      })
+    })
+
+    mutationObserver.observe(
+      document.body,
+      {
+        childList: true,
+        subtree: true,
+      },
+    )
+
+    return () => {
+      mutationObserver.disconnect()
+      observer?.disconnect()
+    }
+  }, [pathname])
   if (isAboutPage) return <AboutPage/>
   if (isWholesalePage) return <WholesalePage/>
   if (isSewingProductionPage) return <SewingProductionPage/>
