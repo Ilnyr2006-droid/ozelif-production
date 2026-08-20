@@ -93,6 +93,7 @@ export function formatAdminNotificationText(item, { siteUrl = env.siteUrl } = {}
       if (total) lines.push('', `Сумма: ${total}`)
       addLine(lines, 'Получение', fulfillment(payload.deliveryMethod))
       addLine(lines, 'Город', payload.city)
+      addLine(lines, 'Адрес', payload.deliveryAddress)
       break
     }
     case 'wholesale.created':

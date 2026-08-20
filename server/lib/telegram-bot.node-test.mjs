@@ -12,6 +12,7 @@ test('formats a new order for manager without order number', () => {
         total: 43705,
         deliveryMethod: 'courier',
         city: 'Казань',
+        deliveryAddress: 'ул. Баумана, д. 15, кв. 24',
         items: [{ name: 'Napato Black', quantity: 20, unit: 'фут²' }],
       },
     },
@@ -22,6 +23,8 @@ test('formats a new order for manager without order number', () => {
   assert.match(text, /Napato Black/u)
   assert.match(text, /43.?705 ₽/u)
   assert.match(text, /Доставка/u)
+  assert.match(text, /Город: Казань/u)
+  assert.match(text, /Адрес: ул\. Баумана, д\. 15, кв\. 24/u)
   assert.doesNotMatch(text, /Заказ №/u)
 })
 
