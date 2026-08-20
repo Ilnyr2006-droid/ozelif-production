@@ -14,6 +14,12 @@ type Conversation = {
   visitorName: string | null
   visitorPhone: string | null
   pagePath: string | null
+  channel?: 'web' | 'telegram'
+  externalChatId?: string | null
+  telegramUserId?: string | null
+  telegramChatId?: string | null
+  telegramUsername?: string | null
+  telegramUrl?: string | null
   status: 'open' | 'human' | 'closed'
   aiEnabled: boolean
   managerRequestedAt?: string | null
@@ -276,6 +282,10 @@ export function AdminLiveChats({
                   </strong>
 
                   <div className="admin-live-chat-badges">
+                    {conversation.channel === 'telegram' ? (
+                      <span className="is-telegram">Telegram</span>
+                    ) : null}
+
                     {conversation.managerRequestedAt ? (
                       <span className="is-lead">
                         Нужен менеджер
@@ -291,7 +301,11 @@ export function AdminLiveChats({
                 <p>{conversation.lastMessage || 'Новый диалог'}</p>
 
                 <small>
-                  {conversation.aiEnabled ? 'AI' : 'Менеджер'}
+                  {conversation.channel === 'telegram'
+                    ? 'Telegram'
+                    : conversation.aiEnabled
+                      ? 'AI'
+                      : 'Менеджер'}
                   {' · '}
                   {time(conversation.lastMessageAt ?? conversation.createdAt)}
                 </small>
@@ -317,9 +331,28 @@ export function AdminLiveChats({
                   </strong>
                   <span>
                     {selected.visitorPhone || 'Телефон не указан'}
-                    {' · '}
-                    {selected.pagePath || '/'}
+                    {selected.channel === 'telegram'
+                      ? ''
+                      : ` · ${selected.pagePath || '/'}`}
                   </span>
+
+                  {selected.channel === 'telegram' ? (
+                    <div className="admin-live-chat-telegram-meta">
+                      <span>
+                        {selected.telegramUsername
+                          ? `@${selected.telegramUsername}`
+                          : '@username не указан'}
+                      </span>
+                      {selected.telegramUserId ? (
+                        <span>Telegram ID: {selected.telegramUserId}</span>
+                      ) : null}
+                      {selected.telegramUrl ? (
+                        <a href={selected.telegramUrl} target="_blank" rel="noreferrer">
+                          Открыть в Telegram
+                        </a>
+                      ) : null}
+                    </div>
+                  ) : null}
 
                   {selected.managerRequestedAt ? (
                     <span className="admin-live-chat-lead-status">
@@ -395,6 +428,19 @@ export function AdminLiveChats({
                 <div ref={bottomRef} />
               </div>
 
+              {selected.channel === 'telegram' ? (
+                <div className="admin-live-chat-telegram-readonly">
+                  <strong>Telegram-диалог</strong>
+                  <span>
+                    История синхронизируется автоматически. Ответ из админки подключим следующим этапом.
+                  </span>
+                  {selected.telegramUrl ? (
+                    <a href={selected.telegramUrl} target="_blank" rel="noreferrer">
+                      Ответить в Telegram
+                    </a>
+                  ) : null}
+                </div>
+              ) : (
               <form onSubmit={send}>
                 <textarea
                   value={draft}
@@ -419,6 +465,7 @@ export function AdminLiveChats({
                   Отправить
                 </button>
               </form>
+              )}
             </>
           ) : (
             <div className="admin-live-chat-placeholder">

@@ -387,3 +387,47 @@
   color: #195940 !important;
   font-weight: 750;
 }
+
+/* OZELIF_TELEGRAM_ADMIN_CHATS */
+.admin-live-chat-item > div .admin-live-chat-badges .is-telegram {
+  min-width: 0;
+  background: #229ed9;
+  white-space: nowrap;
+}
+
+.admin-live-chat-telegram-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-top: 4px;
+}
+
+.admin-live-chat-telegram-meta a,
+.admin-live-chat-telegram-readonly a {
+  color: #1479aa;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.admin-live-chat-telegram-readonly {
+  display: flex;
+  align-items: center;
+  gap: 12px 18px;
+  padding: 16px 20px;
+  border-top: 1px solid #ddd4c9;
+  background: #fffdf9;
+}
+
+.admin-live-chat-telegram-readonly span {
+  flex: 1;
+  color: #74685f;
+  font-size: 12px;
+}
+
+@media (max-width: 700px) {
+  .admin-live-chat-telegram-readonly {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
