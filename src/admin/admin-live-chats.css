@@ -214,8 +214,9 @@
 }
 
 .admin-live-chat-messages article.role-user {
-  margin-left: auto;
-  background: #163126;
+  margin-left: 0;
+  margin-right: auto;
+background: #163126;
   color: #fff;
 }
 
@@ -497,4 +498,19 @@
 .admin-live-chat-photo-selected button {
   min-height: 30px;
   padding: 5px 9px;
+}
+
+/* OZELIF_CHAT_MESSAGE_ALIGNMENT_V1 */
+
+/* Customer messages stay on the left. */
+.admin-live-chat-messages article.role-user {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+/* AI and manager replies stay on the right. */
+.admin-live-chat-messages article.role-assistant,
+.admin-live-chat-messages article.role-manager {
+  margin-left: auto;
+  margin-right: 0;
 }
