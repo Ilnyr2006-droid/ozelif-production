@@ -584,7 +584,7 @@ test(
       /Товаров: 2 позиции/u,
     )
 
-    assert.match(
+    assert.doesNotMatch(
       text,
       /Выберите действие/u,
     )
@@ -592,7 +592,7 @@ test(
 )
 
 test(
-  'shows only add action for an empty Telegram cart',
+  'does not attach action buttons to an empty Telegram cart',
   () => {
     assert.match(
       formatTelegramCart({
@@ -605,46 +605,22 @@ test(
       telegramCartInlineKeyboard({
         items: [],
       }),
-      [[
-        {
-          text:
-            '➕ Добавить товар',
-          callbackData:
-            'oz:add_more',
-        },
-      ]],
+      [],
     )
   },
 )
 
 test(
-  'builds four compact actions for a non-empty Telegram cart',
+  'does not attach action buttons to a non-empty Telegram cart',
   () => {
-    const keyboard =
+    assert.deepEqual(
       telegramCartInlineKeyboard({
         items: [{
           productName:
             'Napato Black',
         }],
-      })
-
-    assert.equal(
-      keyboard.length,
-      2,
-    )
-
-    assert.deepEqual(
-      keyboard
-        .flat()
-        .map(button => (
-          button.callbackData
-        )),
-      [
-        'oz:add_more',
-        'oz:change',
-        'oz:remove',
-        'oz:checkout',
-      ],
+      }),
+      [],
     )
   },
 )
@@ -844,10 +820,45 @@ test(
     )
 
     assert.equal(
-      payload.inlineKeyboard
-        .flat()
-        .length,
-      4,
+      payload.inlineKeyboard,
+      undefined,
+    )
+  },
+)
+
+
+test(
+  'does not render a missing quantity as zero',
+  () => {
+    const text =
+      formatTelegramCart({
+        items: [{
+          productName:
+            'Full Vegetale Dark Brown',
+          quantity:
+            null,
+          unit:
+            'фут²',
+          price:
+            437.05,
+          lineTotal:
+            null,
+        }],
+      })
+
+    assert.match(
+      text,
+      /Количество: не указано/u,
+    )
+
+    assert.doesNotMatch(
+      text,
+      /0 фут²/u,
+    )
+
+    assert.doesNotMatch(
+      text,
+      /Выберите действие/u,
     )
   },
 )

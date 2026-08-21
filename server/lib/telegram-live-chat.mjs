@@ -69,6 +69,17 @@ const TELEGRAM_CART_QUANTITY =
   )
 
 function telegramCartNumber(value) {
+  if (
+    value === null
+    || value === undefined
+    || (
+      typeof value === 'string'
+      && !value.trim()
+    )
+  ) {
+    return null
+  }
+
   const number = Number(value)
 
   return Number.isFinite(number)
@@ -348,60 +359,16 @@ export function formatTelegramCart(draft) {
         items.length,
       )
     }`,
-    '',
-    'Выберите действие:',
   ].join('\n')
 }
 
-export function telegramCartInlineKeyboard(
-  draft,
-) {
-  const items =
-    Array.isArray(draft?.items)
-      ? draft.items
-      : []
-
-  if (!items.length) {
-    return [[
-      {
-        text:
-          '➕ Добавить товар',
-        callbackData:
-          'oz:add_more',
-      },
-    ]]
-  }
-
-  return [
-    [
-      {
-        text:
-          '➕ Добавить товар',
-        callbackData:
-          'oz:add_more',
-      },
-      {
-        text:
-          '✏️ Изменить количество',
-        callbackData:
-          'oz:change',
-      },
-    ],
-    [
-      {
-        text:
-          '❌ Удалить товар',
-        callbackData:
-          'oz:remove',
-      },
-      {
-        text:
-          '✅ Оформить заказ',
-        callbackData:
-          'oz:checkout',
-      },
-    ],
-  ]
+export function telegramCartInlineKeyboard() {
+  /*
+   * The cart itself is intentionally read-only in Telegram.
+   * Quantity changes, removals, additions and checkout are handled
+   * conversationally by the shared OZELIF assistant.
+   */
+  return []
 }
 
 function productAttribute(product, ...keys) {
