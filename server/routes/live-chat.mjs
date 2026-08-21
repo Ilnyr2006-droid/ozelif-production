@@ -53,6 +53,74 @@ export function telegramSelectedProductOrderRequest(value) {
     .test(String(value ?? ''))
 }
 
+export function telegramExplicitOrderQuantity(value) {
+  const text =
+    String(value ?? '')
+
+  const matches = [
+    ...text.matchAll(
+      /(?:^|[\s,;:()])(\d+(?:[.,]\d+)?)\s*(штук(?:а|и)?|шт\.?|фут(?:²|2|ов|а|ы)?|дм(?:²|2)|м(?:²|2))(?:$|[\s,;.!?])/giu,
+    ),
+  ]
+    .map(match => {
+      const quantity =
+        Number(
+          String(match[1])
+            .replace(',', '.'),
+        )
+
+      if (!(quantity > 0)) {
+        return null
+      }
+
+      const rawUnit =
+        String(
+          match[2] ?? '',
+        )
+          .toLocaleLowerCase('ru')
+          .replace(/ё/gu, 'е')
+
+      const unit = (
+        rawUnit.startsWith('шт')
+          ? 'PCS'
+          : rawUnit.startsWith('фут')
+            ? 'FOT'
+            : rawUnit.startsWith('дм')
+              ? 'DM2'
+              : /^м(?:²|2)$/u.test(rawUnit)
+                ? 'M2'
+                : null
+      )
+
+      if (!unit) return null
+
+      return {
+        quantity,
+        unit,
+        evidence:
+          String(match[0])
+            .trim()
+            .replace(
+              /^[,;:()\s]+|[,;:.!?\s]+$/gu,
+              '',
+            ),
+      }
+    })
+    .filter(Boolean)
+
+  /*
+   * Product names may contain dimensions such as "18 см" or "75 см".
+   * Those are NOT order quantities. We only accept a number followed by
+   * an actual sales unit: шт., фут², дм² or м².
+   *
+   * If the customer explicitly supplies more than one sales quantity,
+   * keep the existing ambiguity flow instead of guessing.
+   */
+  return matches.length === 1
+    ? matches[0]
+    : null
+}
+
 function normalizedCatalogName(value) {
   return String(value ?? '')
     .toLocaleLowerCase('ru')
@@ -1073,6 +1141,11 @@ export function createLiveChatRouter() {
           )
 
           if (namedTelegramProduct) {
+            const namedTelegramQuantity =
+              telegramExplicitOrderQuantity(
+                content,
+              )
+
             // Exact product-name mentions are resolved from the published
             // catalog, so the user does not have to reply to a card.
             draftResult = await applyChatOrderDraftUpdate(
@@ -1085,10 +1158,33 @@ export function createLiveChatRouter() {
                   operation: 'upsert',
                   productId: namedTelegramProduct.id,
                   productName: namedTelegramProduct.name,
+                  ...(
+                    namedTelegramQuantity
+                      ? {
+                          quantity:
+                            namedTelegramQuantity.quantity,
+                          unit:
+                            namedTelegramQuantity.unit,
+                        }
+                      : {}
+                  ),
                 }],
               },
             )
             currentOrderDraft = draftResult.draft
+
+            if (
+              namedTelegramQuantity
+              && draftResult?.changed
+            ) {
+              /*
+               * The exact product name plus one explicit sales quantity
+               * deterministically resolves this turn. Ignore an AI-side
+               * ambiguity caused by numbers embedded in the product name,
+               * e.g. "Молния Inox 18 см ... 50 штук".
+               */
+              quantityAmbiguity = false
+            }
           } else if (
             !draftResult?.changed
             && telegramSelection

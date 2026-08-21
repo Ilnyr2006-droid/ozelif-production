@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { normalizeClientMessageId, readPublicToken } from '../lib/live-chat-auth.mjs'
 import {
+  telegramExplicitOrderQuantity,
   telegramNamedProductOrderRequest,
   telegramRecommendedProductsOrderRequest,
   telegramSelectedProductOrderRequest,
@@ -88,3 +89,60 @@ test('resolves Telegram ordinal order requests from the preceding recommendation
     [],
   )
 })
+
+
+test(
+  'does not confuse product dimensions with order quantity',
+  () => {
+    assert.deepEqual(
+      telegramExplicitOrderQuantity(
+        'добавь еще Молния Inox 18 см,тёмный никель 50 штук',
+      ),
+      {
+        quantity: 50,
+        unit: 'PCS',
+        evidence: '50 штук',
+      },
+    )
+  },
+)
+
+test(
+  'recognizes leather quantity with a sales unit',
+  () => {
+    assert.deepEqual(
+      telegramExplicitOrderQuantity(
+        'добавь Full Vegetale Dark Brown 80 футов',
+      ),
+      {
+        quantity: 80,
+        unit: 'FOT',
+        evidence: '80 футов',
+      },
+    )
+  },
+)
+
+test(
+  'does not treat a zipper length as an order quantity',
+  () => {
+    assert.equal(
+      telegramExplicitOrderQuantity(
+        'добавь Молния Inox 18 см,тёмный никель',
+      ),
+      null,
+    )
+  },
+)
+
+test(
+  'keeps truly multiple sales quantities ambiguous',
+  () => {
+    assert.equal(
+      telegramExplicitOrderQuantity(
+        'добавь 10 шт и еще 20 шт',
+      ),
+      null,
+    )
+  },
+)
