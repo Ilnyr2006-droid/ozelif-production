@@ -42,8 +42,8 @@ const readyDraft = {
 test('multi-item order keeps quantity per product', () => {
   const reply = formatChatOrderDraftReply(readyDraft)
 
-  assert.match(reply, /Chelsea Grey — 8 фут²/)
-  assert.match(reply, /Amazon Black — 5 фут²/)
+  assert.match(reply, /1\. Chelsea Grey\n   8 фут² · 3 496,8 ₽/u)
+  assert.match(reply, /2\. Amazon Black\n   5 фут² · 2 185,5 ₽/u)
   assert.match(reply, /5 682,3 ₽/)
 })
 
@@ -56,7 +56,7 @@ test('created reply never exposes order number', () => {
     { created: true },
   )
 
-  assert.match(reply, /^Заказ создан\./u)
+  assert.match(reply, /^✅ Заявка создана\./u)
   assert.doesNotMatch(reply, /номер заказ/iu)
   assert.doesNotMatch(reply, /№/u)
 })
@@ -92,7 +92,7 @@ test('ready items without fulfillment ask delivery or pickup', () => {
 
   assert.match(
     reply,
-    /Как вы хотите получить заказ: доставка или самовывоз\?/u,
+    /Как получить заказ: доставка или самовывоз\?/u,
   )
   assert.doesNotMatch(reply, /Оформить этот заказ\?/u)
 })
@@ -100,7 +100,7 @@ test('ready items without fulfillment ask delivery or pickup', () => {
 test('ready order summary shows selected pickup method', () => {
   const reply = formatChatOrderDraftReply(readyDraft)
 
-  assert.match(reply, /^Проверьте заказ:/u)
+  assert.match(reply, /^🧾 Проверьте заявку/u)
   assert.match(reply, /Получение: Самовывоз\./u)
   assert.match(
     reply,
@@ -143,7 +143,7 @@ test('courier summary shows city and address when complete', () => {
     status: 'awaiting_confirmation',
   })
 
-  assert.match(reply, /^Проверьте заказ:/u)
+  assert.match(reply, /^🧾 Проверьте заявку/u)
   assert.match(reply, /Доставка: Москва, ул\. Тверская, 10\./u)
   assert.match(
     reply,
@@ -163,7 +163,7 @@ test('order summary hides duplicated technical variant name', () => {
     }],
   })
 
-  assert.match(reply, /• Nappa Visky — 8 фут²/u)
+  assert.match(reply, /1\. Nappa Visky\n   8 фут² · 3 496,8 ₽/u)
   assert.doesNotMatch(reply, /Nappa Visky - фут2 - Оттенок/u)
 })
 
@@ -173,7 +173,7 @@ test('complete order asks user to review instead of formal confirmation', () => 
     deliveryMethod: 'pickup',
     status: 'awaiting_confirmation',
   })
-  assert.match(reply, /^Проверьте заказ:/u)
+  assert.match(reply, /^🧾 Проверьте заявку/u)
   assert.match(reply, /Если всё верно — напишите «всё верно»\./u)
   assert.doesNotMatch(reply, /Оформить этот заказ\?/u)
 })

@@ -1240,10 +1240,10 @@ export function formatChatOrderDraftReply(
     )
   }
 
-  const lines = items.map(item => {
+  const lines = items.map((item, index) => {
     const qty = item.quantity
       ? `${quantity(item.quantity)} ${item.unit || 'ед.'}`
-      : 'количество не указано'
+      : null
 
     const variant = compactVariantSuffix(
       item.productName,
@@ -1252,10 +1252,13 @@ export function formatChatOrderDraftReply(
 
     const total = item.lineTotal !== null
       && item.lineTotal !== undefined
-      ? ` — ${money(item.lineTotal)}`
+      ? money(item.lineTotal)
       : ''
 
-    return `• ${item.productName}${variant} — ${qty}${total}`
+    return [
+      `${index + 1}. ${item.productName}${variant}`,
+      qty ? `   ${qty}${total ? ` · ${total}` : ''}` : '   Количество: не указано',
+    ].join('\n')
   })
 
   const total = items.reduce(
@@ -1282,7 +1285,7 @@ export function formatChatOrderDraftReply(
         && item.problems.includes('quantity')
       ) {
         return (
-          `• ${item.productName} — выберите единицу`
+          `• ${item.productName}: выберите единицу`
           + (
             units.length
               ? ` (${units.join(' или ')})`
@@ -1294,7 +1297,7 @@ export function formatChatOrderDraftReply(
 
       if (item.problems.includes('variant')) {
         return (
-          `• ${item.productName} — выберите единицу`
+          `• ${item.productName}: выберите единицу`
           + (
             units.length
               ? `: ${units.join(' или ')}`
@@ -1308,30 +1311,31 @@ export function formatChatOrderDraftReply(
       ))
 
       return (
-        `• ${item.productName} — укажите количество`
+        `• ${item.productName}: укажите количество`
         + (row?.unit ? ` в ${row.unit}` : '')
         + '.'
       )
     })
 
     return [
-      'Состав заказа:',
+      '🧾 Заявка',
       '',
       ...lines,
       '',
-      'Нужно уточнить:',
+      'Чтобы продолжить:',
       ...questions,
     ].join('\n')
   }
 
   if (!draft.deliveryMethod) {
     return [
-      'Состав заказа:',
+      '🧾 Заявка',
+      '',
       ...lines,
       '',
       `Предварительная сумма: ${money(total)}.`,
       '',
-      'Как вы хотите получить заказ: доставка или самовывоз?',
+      'Как получить заказ: доставка или самовывоз?',
     ].join('\n')
   }
 
@@ -1341,7 +1345,7 @@ export function formatChatOrderDraftReply(
     && !draft.deliveryAddress
   ) {
     return [
-      'Состав заказа:',
+      '🧾 Заявка',
       '',
       ...lines,
       '',
@@ -1356,7 +1360,7 @@ export function formatChatOrderDraftReply(
     && !draft.deliveryCity
   ) {
     return [
-      'Состав заказа:',
+      '🧾 Заявка',
       '',
       ...lines,
       '',
@@ -1371,7 +1375,7 @@ export function formatChatOrderDraftReply(
     && !draft.deliveryAddress
   ) {
     return [
-      'Состав заказа:',
+      '🧾 Заявка',
       '',
       ...lines,
       '',
@@ -1394,7 +1398,7 @@ export function formatChatOrderDraftReply(
   )
 
   const summary = [
-    'Состав заказа:',
+    '🧾 Заявка',
     '',
     ...lines,
     '',
@@ -1404,7 +1408,7 @@ export function formatChatOrderDraftReply(
 
   if (created) {
     return [
-      'Заказ создан.',
+      '✅ Заявка создана.',
       '',
       ...lines,
       '',
@@ -1422,8 +1426,8 @@ export function formatChatOrderDraftReply(
     ].join('\n')
   }
 
-  return [
-    'Проверьте заказ:',
+    return [
+      '🧾 Проверьте заявку',
     '',
     ...lines,
     '',
