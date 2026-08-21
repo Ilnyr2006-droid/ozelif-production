@@ -18,6 +18,22 @@ export function normalizeChatContent(value) {
     .slice(0, 4_000)
 }
 
+export function messagesAfterContextReset(messages) {
+  const list = Array.isArray(messages) ? messages : []
+  let resetIndex = -1
+
+  for (let index = 0; index < list.length; index += 1) {
+    if (
+      list[index]?.role === 'system'
+      && list[index]?.metadata?.type === 'context_reset'
+    ) {
+      resetIndex = index
+    }
+  }
+
+  return list.slice(resetIndex + 1)
+}
+
 export function assistantHistory(messages) {
   return messages
     .filter(message => (

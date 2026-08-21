@@ -4,6 +4,7 @@ import {
   assistantHistory,
   createPublicChatToken,
   hashPublicChatToken,
+  messagesAfterContextReset,
   normalizeChatContent,
 } from '../lib/live-chat-utils.mjs'
 import { normalizeClientMessageId, readPublicToken } from '../lib/live-chat-auth.mjs'
@@ -806,7 +807,7 @@ export function createLiveChatRouter() {
 
       if (freshConversation?.aiEnabled) {
         const historyResult = await query(
-          `SELECT role, content
+          `SELECT role, content, metadata
            FROM live_chat_messages
            WHERE conversation_id = $1
            ORDER BY id DESC
@@ -815,7 +816,9 @@ export function createLiveChatRouter() {
         )
 
         const history = assistantHistory(
-          [...historyResult.rows].reverse(),
+          messagesAfterContextReset(
+            [...historyResult.rows].reverse(),
+          ),
         )
 
         try {

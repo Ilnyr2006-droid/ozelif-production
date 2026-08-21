@@ -167,6 +167,54 @@ async function activeAdminSubscription(userId, chatId) {
   return result.rows[0] ?? null
 }
 
+export function isTelegramResetCommand(value) {
+  return /^\/reset(?:@\w+)?$/iu.test(String(value ?? '').trim())
+}
+
+async function resetTelegramConversation(userId, chatId) {
+  return transaction(async client => {
+    const found = await client.query(
+      `SELECT id
+       FROM live_chat_conversations
+       WHERE channel='telegram'
+         AND telegram_user_id=$1
+         AND telegram_chat_id=$2
+       LIMIT 1
+       FOR UPDATE`,
+      [String(userId), String(chatId)],
+    )
+    const conversationId = found.rows[0]?.id
+    if (!conversationId) return false
+
+    await client.query(
+      `INSERT INTO live_chat_messages (
+         conversation_id, role, content, metadata
+       ) VALUES ($1,'system',$2,$3::jsonb)`,
+      [
+        conversationId,
+        'Контекст AI очищен пользователем Telegram.',
+        JSON.stringify({ type: 'context_reset', channel: 'telegram' }),
+      ],
+    )
+    await client.query(
+      `DELETE FROM live_chat_order_drafts
+       WHERE conversation_id=$1 AND status<>'created'`,
+      [conversationId],
+    )
+    await client.query(
+      `UPDATE notification_outbox
+       SET status='skipped',processed_at=now(),last_error='context_reset'
+       WHERE aggregate_type='live_chat'
+         AND aggregate_id=$1
+         AND channel='telegram'
+         AND status='pending'
+         AND event_type LIKE 'chat.ai_%'`,
+      [conversationId],
+    )
+    return true
+  })
+}
+
 async function handleAdminStart(message, rawToken) {
   const userId = message?.from?.id
   const chatId = message?.chat?.id
@@ -223,6 +271,17 @@ export async function handleTelegramUpdate(update) {
 
   const adminStart = text.match(/^\/start(?:@\w+)?\s+admin_([A-Za-z0-9_-]+)$/u)
   if (adminStart?.[1]) return handleAdminStart(message, adminStart[1])
+
+  if (isTelegramResetCommand(text)) {
+    const reset = await resetTelegramConversation(userId, chatId)
+    await send(
+      chatId,
+      reset
+        ? '✅ Диалог сброшен. История сохранена в CRM, но AI больше не использует её как контекст. Можете начать новый разговор.'
+        : 'Диалог уже пуст. Можете начать новый разговор.',
+    )
+    return { reset: true, hadConversation: reset }
+  }
 
   const adminSubscription = await activeAdminSubscription(userId, chatId)
   if (adminSubscription && /^(\/notifications|уведомления)$/iu.test(text)) {

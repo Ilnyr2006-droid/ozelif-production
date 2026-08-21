@@ -3,6 +3,7 @@ import test from 'node:test'
 import {
   formatAdminNotificationText,
   formatTelegramCustomerNotificationText,
+  isTelegramResetCommand,
   unlinkedTelegramMessageMode,
 } from './telegram-bot.mjs'
 
@@ -20,6 +21,12 @@ test('keeps a dedicated start greeting for a manager subscriber', () => {
     unlinkedTelegramMessageMode('/start', { adminSubscription: true }),
     'manager_greeting',
   )
+})
+
+test('recognizes reset as a server command instead of an AI message', () => {
+  assert.equal(isTelegramResetCommand('/reset'), true)
+  assert.equal(isTelegramResetCommand('/reset@Ozelif_bot'), true)
+  assert.equal(isTelegramResetCommand('помоги сбросить заказ'), false)
 })
 
 test('formats a new order for manager without order number', () => {

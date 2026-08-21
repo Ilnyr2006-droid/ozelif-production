@@ -4,6 +4,7 @@ import {
   assistantHistory,
   createPublicChatToken,
   hashPublicChatToken,
+  messagesAfterContextReset,
   normalizeChatContent,
 } from './live-chat-utils.mjs'
 
@@ -14,6 +15,17 @@ test('creates non-reversible public conversation token', () => {
   assert.ok(token.length >= 32)
   assert.equal(hash.length, 64)
   assert.notEqual(hash, token)
+})
+
+test('keeps only messages written after the latest context reset', () => {
+  assert.deepEqual(messagesAfterContextReset([
+    { role: 'user', content: 'Старый вопрос' },
+    { role: 'assistant', content: 'Старый ответ' },
+    { role: 'system', content: 'Сброс', metadata: { type: 'context_reset' } },
+    { role: 'user', content: 'Новый вопрос' },
+  ]), [
+    { role: 'user', content: 'Новый вопрос' },
+  ])
 })
 
 test('normalizes and limits chat content', () => {
