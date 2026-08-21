@@ -295,6 +295,53 @@ test('queues product photos separately from the idempotent text reply', async ()
   })
 })
 
+test('queues a separate catalog card for every recommended material', async () => {
+  const calls = []
+  const bridge = createTelegramLiveChatBridge({
+    queryFn: queryMock(calls),
+    sessionSecret: 'test-secret',
+    siteUrl: 'https://ozelifkoja.ru',
+    fetchImpl: async () => new Response(JSON.stringify({
+      ok: true,
+      assistant: {
+        message: {
+          id: 'recommendation-cards',
+          content: 'Вот несколько подходящих вариантов.',
+        },
+        products: [
+          {
+            name: 'Full Vegetale G.Black',
+            image: '/images/catalog/full-vegetale-black.webp',
+            productUrl: '/odejnayakozha/tproduct/1-full-vegetale-gblack',
+            variants: [{ unit: 'фут²', priceRub: 437.1 }],
+          },
+          {
+            name: 'Soft White-Black',
+            image: '/images/catalog/soft-white-black.webp',
+            productUrl: '/odejnayakozha/tproduct/2-soft-white-black',
+            variants: [{ unit: 'фут²', priceRub: 480.8 }],
+          },
+        ],
+      },
+    }), {
+      status: 201,
+      headers: { 'Content-Type': 'application/json' },
+    }),
+  })
+
+  await bridge({ message, text: 'Подбери кожу для юбки' })
+  const outbox = calls.filter(call => (
+    call.sql.includes('INSERT INTO notification_outbox')
+  ))
+
+  assert.equal(outbox.length, 3)
+  assert.equal(outbox[0].params[0], 'chat.ai_reply.recommendation-cards')
+  assert.equal(outbox[1].params[0], 'chat.ai_photo.recommendation-cards.1')
+  assert.equal(outbox[2].params[0], 'chat.ai_photo.recommendation-cards.2')
+  assert.match(JSON.parse(outbox[1].params[3]).caption, /Full Vegetale/u)
+  assert.match(JSON.parse(outbox[2].params[3]).caption, /Soft White-Black/u)
+})
+
 test('uses the previous recommendation for a follow-up photo request', async () => {
   const outbox = []
   const previousProduct = {

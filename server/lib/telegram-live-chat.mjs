@@ -480,9 +480,11 @@ export function createTelegramLiveChatBridge({
 
     const photoRequested = telegramPhotoRequested(content)
     let assistantForTelegram = body?.assistant
-    let photos = photoRequested
-      ? telegramProductPhotos(assistantForTelegram, { siteUrl })
-      : []
+    // Product recommendations must be useful without an additional turn:
+    // after the AI's summary, Telegram receives one visual catalog card per
+    // recommended material. An explicit photo request keeps the same behavior
+    // and can additionally fall back to the previous recommendation.
+    let photos = telegramProductPhotos(assistantForTelegram, { siteUrl })
 
     if (photoRequested && !photos.length && !assistantError) {
       const products = await latestRecommendedProducts(
