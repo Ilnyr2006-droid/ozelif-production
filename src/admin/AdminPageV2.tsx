@@ -605,6 +605,23 @@ export function AdminPageV2() {
   }, [selectedCatalogId, section])
   useEffect(() => { if (user && (section === 'orders' || section === 'customers')) void loadCrm() }, [user, section, crmStatus])
 
+  useEffect(() => {
+    if (!mobileMenu) return
+
+    const previousOverflow = document.body.style.overflow
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileMenu(false)
+    }
+
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', closeOnEscape)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [mobileMenu])
+
   const selectedCatalog = catalogs.find(catalog => catalog.id === selectedCatalogId)
   const visibleProducts = useMemo(() => products, [products])
 
@@ -662,14 +679,39 @@ export function AdminPageV2() {
   return (
     <div className="admin-app">
       <aside className={`admin-sidebar ${mobileMenu ? 'is-open' : ''}`}>
-        <div className="admin-sidebar-brand">OZELIF<span>admin panel</span></div>
+        <div className="admin-sidebar-head">
+          <div className="admin-sidebar-brand">OZELIF<span>admin panel</span></div>
+          <button
+            type="button"
+            className="admin-sidebar-close"
+            aria-label="Закрыть меню"
+            onClick={() => setMobileMenu(false)}
+          >
+            <X size={21} />
+          </button>
+        </div>
         <nav>{nav.map(item => <button className={section === item.id ? 'is-active' : ''} key={item.id} onClick={() => { setSection(item.id); setMobileMenu(false) }}>{item.icon}<span>{item.label}</span></button>)}</nav>
         <div className="admin-sidebar-user"><span>{user.name[0]?.toUpperCase()}</span><div><b>{user.name}</b><small>{user.email}</small></div><button onClick={() => void adminApiV2.logout().then(() => setUser(null))}><LogOut size={18} /></button></div>
       </aside>
 
+      {mobileMenu && (
+        <button
+          type="button"
+          className="admin-sidebar-backdrop"
+          aria-label="Закрыть меню вне панели"
+          onClick={() => setMobileMenu(false)}
+        />
+      )}
+
       <main className="admin-main">
         <header className="admin-topbar">
-          <button className="admin-menu-button" onClick={() => setMobileMenu(true)}><Menu size={22} /></button>
+          <button
+            type="button"
+            className="admin-menu-button"
+            aria-label="Открыть меню"
+            aria-expanded={mobileMenu}
+            onClick={() => setMobileMenu(true)}
+          ><Menu size={22} /></button>
           <div><p className="admin-eyebrow">OZELIF Admin</p><h1>{titles[section]}</h1></div>
           <a href="/" target="_blank" rel="noreferrer">Открыть сайт <ChevronRight size={16} /></a>
         </header>
@@ -693,9 +735,9 @@ export function AdminPageV2() {
                 <div className="admin-table-row admin-table-header"><span>Каталог</span><span>Адрес</span><span>Товары</span><span>Действия</span></div>
                 {catalogs.map(catalog => (
                   <div className="admin-table-row admin-v2-clickable" key={catalog.id} onDoubleClick={() => { setSelectedCatalogId(catalog.id); setSection('products') }}>
-                    <span className="admin-catalog-cell">{catalog.cover_image ? <img src={catalog.cover_image} alt="" /> : <i><Boxes size={18} /></i>}<b>{catalog.name}</b></span>
-                    <span>/{catalog.slug}</span><span>{catalog.products_count}</span>
-                    <span className="admin-v2-actions"><button onClick={() => setCatalogEditor(catalog)}><Edit3 size={16} /></button><button className="is-danger" onClick={() => void deleteCatalog(catalog)}><Trash2 size={16} /></button></span>
+                    <span className="admin-catalog-cell" data-label="Каталог" data-mobile-wide="true">{catalog.cover_image ? <img src={catalog.cover_image} alt="" /> : <i><Boxes size={18} /></i>}<b>{catalog.name}</b></span>
+                    <span data-label="Адрес">/{catalog.slug}</span><span data-label="Товары">{catalog.products_count}</span>
+                    <span className="admin-v2-actions" data-label="Действия" data-mobile-wide="true"><button aria-label={`Открыть товары ${catalog.name}`} onClick={() => { setSelectedCatalogId(catalog.id); setSection('products') }}><ShoppingBag size={16} /></button><button aria-label={`Редактировать ${catalog.name}`} onClick={() => setCatalogEditor(catalog)}><Edit3 size={16} /></button><button aria-label={`Удалить ${catalog.name}`} className="is-danger" onClick={() => void deleteCatalog(catalog)}><Trash2 size={16} /></button></span>
                   </div>
                 ))}
               </div>
@@ -714,10 +756,10 @@ export function AdminPageV2() {
                 <div className="admin-table-row admin-table-header"><span>Товар</span><span>Каталог</span><span>Цена</span><span>Действия</span></div>
                 {visibleProducts.map(product => (
                   <div className="admin-table-row admin-v2-clickable" key={product.id} onDoubleClick={() => setProductEditor(product)}>
-                    <span className="admin-catalog-cell">{product.primary_image ? <img src={product.primary_image} alt="" /> : <i><ImagePlus size={18} /></i>}<b>{product.name}</b></span>
-                    <span>{product.category_name}</span>
-                    <span>{product.base_price ? `${Number(product.base_price).toLocaleString('ru-RU')} ₽` : '—'}<small>{product.source_price_usd ? ` · $${product.source_price_usd}` : ''}</small></span>
-                    <span className="admin-v2-actions"><button onClick={() => setProductEditor(product)}><Edit3 size={16} /></button><button className="is-danger" onClick={() => void deleteProduct(product)}><Trash2 size={16} /></button></span>
+                    <span className="admin-catalog-cell" data-label="Товар" data-mobile-wide="true">{product.primary_image ? <img src={product.primary_image} alt="" /> : <i><ImagePlus size={18} /></i>}<b>{product.name}</b></span>
+                    <span data-label="Каталог">{product.category_name}</span>
+                    <span data-label="Цена">{product.base_price ? `${Number(product.base_price).toLocaleString('ru-RU')} ₽` : '—'}<small>{product.source_price_usd ? ` · $${product.source_price_usd}` : ''}</small></span>
+                    <span className="admin-v2-actions" data-label="Действия" data-mobile-wide="true"><button aria-label={`Редактировать ${product.name}`} onClick={() => setProductEditor(product)}><Edit3 size={16} /></button><button aria-label={`Удалить ${product.name}`} className="is-danger" onClick={() => void deleteProduct(product)}><Trash2 size={16} /></button></span>
                   </div>
                 ))}
               </div>
@@ -795,6 +837,7 @@ export function AdminPageV2() {
 
               <div className="admin-table admin-crm-orders-table">
                 <div className="admin-table-row admin-table-header">
+                  <span>Номер</span>
                   <span>Дата и время</span>
                   <span>Клиент</span>
                   <span>Телефон</span>
@@ -809,7 +852,11 @@ export function AdminPageV2() {
                     className="admin-table-row"
                     key={order.id}
                   >
-                    <span>
+                    <span data-label="Номер заказа">
+                      <b>№{order.public_number}</b>
+                    </span>
+
+                    <span data-label="Дата и время">
                       {formatCrmDate(order.created_at)}
                       <small>
                         {order.source === 'website_cart'
@@ -818,7 +865,7 @@ export function AdminPageV2() {
                       </small>
                     </span>
 
-                    <span>
+                    <span data-label="Клиент">
                       {order.customer_name ?? '—'}
                       <small>
                         {order.delivery_city
@@ -830,9 +877,11 @@ export function AdminPageV2() {
 </small>
                     </span>
 
-                    <span>
-                      {order.original_phone || '—'}
-                    </span><span className="admin-order-delivery">
+                    <span data-label="Телефон">
+                      {order.original_phone
+                        ? <a className="admin-phone-link" href={`tel:${order.original_phone}`}>{order.original_phone}</a>
+                        : '—'}
+                    </span><span className="admin-order-delivery" data-label="Получение" data-mobile-wide="true">
   <b>
     {order.delivery_method === 'pickup'
       ? 'Самовывоз'
@@ -861,11 +910,11 @@ export function AdminPageV2() {
   )}
 </span>
 
-                    <span>
+                    <span data-label="Товары · количество" data-mobile-wide="true">
                       {order.items_summary ?? '—'}
                     </span>
 
-                    <span>
+                    <span data-label="Цена">
                       <b>
                         {formatCrmMoney(
                           order.total_amount,
@@ -876,12 +925,12 @@ export function AdminPageV2() {
                       </small>
                     </span>
 
-                    <span className="admin-crm-comment">
+                    <span className="admin-crm-comment" data-label="Комментарий" data-mobile-wide="true">
                       {order.customer_comment?.trim()
                         || '—'}
                     </span>
 
-                    <span className="admin-crm-order-actions">
+                    <span className="admin-crm-order-actions" data-label="Статус и действия" data-mobile-wide="true">
                       <select
                         aria-label={
                           `Статус заказа №`
@@ -982,7 +1031,7 @@ export function AdminPageV2() {
                         void openCustomer(customer.id)
                       }}
                     >
-                      <span>
+                      <span data-label="Клиент" data-mobile-wide="true">
                         <b>{customer.name ?? '—'}</b>
                         <small>
                           {customer.email
@@ -990,26 +1039,27 @@ export function AdminPageV2() {
                         </small>
                       </span>
 
-                      <span>
+                      <span data-label="Телефон">
                         {customer.original_phone
-                          || '—'}
+                          ? <a className="admin-phone-link" href={`tel:${customer.original_phone}`}>{customer.original_phone}</a>
+                          : '—'}
                       </span>
 
-                      <span>
+                      <span data-label="Заказов">
                         {customer.orders_count}
                       </span>
 
-                      <span>
+                      <span data-label="Чатов">
                         {customer.chats_count ?? 0}
                       </span>
 
-                      <span>
+                      <span data-label="Последний заказ">
                         {formatCrmDate(
                           customer.last_order_at,
                         )}
                       </span>
 
-                      <span>
+                      <span data-label="Источник">
                         {customer.source === 'ai_chat'
                           ? 'AI-чат'
                           : customer.telegram_linked
@@ -1017,7 +1067,7 @@ export function AdminPageV2() {
                             : customer.source ?? '—'}
                       </span>
 
-                      <span className="admin-crm-customer-actions">
+                      <span className="admin-crm-customer-actions" data-label="Действия" data-mobile-wide="true">
                         <button
                           type="button"
                           onClick={() => {

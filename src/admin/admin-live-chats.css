@@ -514,3 +514,118 @@ background: #163126;
   margin-left: auto;
   margin-right: 0;
 }
+
+.admin-live-chat-back {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .admin-live-chats.is-embedded {
+    min-height: calc(100dvh - 105px);
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .admin-live-chats.is-embedded .admin-live-chats-header {
+    padding: 14px;
+  }
+
+  .admin-live-chats.is-embedded .admin-live-chats-header h1 {
+    font-size: 25px;
+  }
+
+  .admin-live-chats.is-embedded .admin-live-chats-header p {
+    font-size: 12px;
+  }
+
+  .admin-live-chats-layout {
+    height: auto;
+    min-height: calc(100dvh - 245px);
+    overflow: visible;
+  }
+
+  .admin-live-chats-layout:not(.has-selection) .admin-live-chat-dialog {
+    display: none;
+  }
+
+  .admin-live-chats-layout.has-selection .admin-live-chats-list {
+    display: none;
+  }
+
+  .admin-live-chats.is-embedded .admin-live-chats-list {
+    height: auto;
+    max-height: none;
+    min-height: calc(100dvh - 245px);
+  }
+
+  .admin-live-chats-items {
+    height: auto;
+    max-height: none;
+    padding: 8px;
+  }
+
+  .admin-live-chat-item {
+    min-height: 76px;
+    padding: 11px;
+  }
+
+  .admin-live-chats.is-embedded .admin-live-chat-dialog {
+    min-height: calc(100dvh - 245px);
+  }
+
+  .admin-live-chat-dialog > header {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    align-items: stretch;
+    flex-direction: column;
+    padding: 12px;
+    background: #fffdf9;
+  }
+
+  .admin-live-chat-back {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    padding: 8px 11px !important;
+  }
+
+  .admin-live-chat-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .admin-live-chat-controls button {
+    min-height: 42px;
+  }
+
+  .admin-live-chat-messages {
+    min-height: 46dvh;
+    padding: 12px;
+  }
+
+  .admin-live-chat-messages article {
+    max-width: 90%;
+  }
+
+  .admin-live-chat-dialog form {
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    padding: 10px 12px max(10px, env(safe-area-inset-bottom));
+    background: #fffdf9;
+  }
+
+  .admin-live-chat-dialog form textarea {
+    min-height: 88px;
+    font-size: 16px;
+  }
+
+  .admin-live-chat-dialog form > button[type="submit"] {
+    width: 100%;
+    min-height: 46px;
+  }
+}

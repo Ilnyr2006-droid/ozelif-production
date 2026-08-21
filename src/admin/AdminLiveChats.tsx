@@ -358,7 +358,7 @@ export function AdminLiveChats({
 
       {error ? <div className="admin-live-chats-error">{error}</div> : null}
 
-      <div className="admin-live-chats-layout">
+      <div className={`admin-live-chats-layout ${selected ? 'has-selection' : ''}`}>
         <aside className="admin-live-chats-list">
           <div className="admin-live-chats-filters">
             {(['active', 'closed', 'all'] as const).map(item => (
@@ -438,6 +438,16 @@ export function AdminLiveChats({
           {selected ? (
             <>
               <header>
+                <button
+                  type="button"
+                  className="admin-live-chat-back"
+                  onClick={() => {
+                    setSelectedId('')
+                    setSelected(null)
+                  }}
+                >
+                  ← Диалоги
+                </button>
                 <div>
                   <strong>
                     {selected.visitorName
