@@ -94,7 +94,10 @@ export function AdminLiveChats({
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const promptHost = useRef<HTMLDivElement>(null)
+  const messagesHostRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const followLatestRef = useRef(true)
+  const previousSelectedIdRef = useRef('')
 
   const loadList = useCallback(async () => {
     const result = await requestJson<{
@@ -150,8 +153,48 @@ export function AdminLiveChats({
   }, [loadConversation, selectedId])
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    const conversationChanged =
+      previousSelectedIdRef.current !== selectedId
+
+    if (conversationChanged) {
+      previousSelectedIdRef.current = selectedId
+      followLatestRef.current = true
+    }
+
+    if (!selectedId || !followLatestRef.current) {
+      return
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      bottomRef.current?.scrollIntoView({
+        behavior: conversationChanged
+          ? 'auto'
+          : 'smooth',
+        block: 'end',
+      })
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [messages, selectedId])
+
+  function handleMessagesScroll() {
+    const host = messagesHostRef.current
+
+    if (!host) return
+
+    const distanceFromBottom =
+      host.scrollHeight
+      - host.scrollTop
+      - host.clientHeight
+
+    /*
+     * Keep following new messages only while the manager is already
+     * near the bottom. Scrolling up to read history disables automatic
+     * jumps caused by the 3-second conversation polling.
+     */
+    followLatestRef.current =
+      distanceFromBottom <= 96
+  }
 
   async function action(
     name: 'takeover' | 'enable-ai' | 'close' | 'reopen',
@@ -479,7 +522,11 @@ export function AdminLiveChats({
                 </div>
               </header>
 
-              <div className="admin-live-chat-messages">
+              <div
+                ref={messagesHostRef}
+                className="admin-live-chat-messages"
+                onScroll={handleMessagesScroll}
+              >
                 {messages.map(message => (
                   <article
                     className={`role-${message.role}`}
