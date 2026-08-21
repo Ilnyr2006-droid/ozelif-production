@@ -4,6 +4,7 @@ import {
   createTelegramLiveChatBridge,
   formatTelegramAssistantReply,
   telegramPhotoRequested,
+  telegramProductCaption,
   telegramProductPhotos,
   telegramLiveChatToken,
 } from './telegram-live-chat.mjs'
@@ -215,11 +216,40 @@ test('builds Telegram photo jobs from verified catalog products', () => {
 
   assert.deepEqual(photos, [{
     photoUrl: 'https://ozelifkoja.ru/images/catalog/dublyonka/570274326502/w720.webp',
-    caption: [
-      '📷 Дубленочный материал Кёрли "Black&Silky"',
-      'https://ozelifkoja.ru/dublyonka/tproduct/570274326502-blackampsil',
-    ].join('\n'),
+    caption: 'Дубленочный материал Кёрли "Black&Silky"\nНаличие: уточнять у менеджера',
   }])
+})
+
+test('formats a verified product photo as a compact Telegram card', () => {
+  const caption = telegramProductCaption({
+    name: 'Дубленочный материал Кёрли "Black&Silky"',
+    category: 'Дублёночный материал',
+    stockQuantity: null,
+    attributes: {
+      subtype: ['Керли'],
+      color: 'Чёрный',
+      material: 'Овчина',
+      coating: 'Кожа',
+      origin: 'Испания',
+      hideSize: '6-7 фут²',
+    },
+    variants: [
+      { unit: 'фут²', priceRub: 1136.33 },
+      { unit: 'дм²', priceRub: 122.37 },
+    ],
+  })
+
+  assert.equal(caption, [
+    'Дубленочный материал Кёрли "Black&Silky"',
+    'Цена: 1 136,33 ₽ / фут² · 122,37 ₽ / дм²',
+    'Категория: Дублёночный материал / Керли',
+    'Цвет: Чёрный',
+    'Сырьё: Овчина',
+    'Покрытие: Кожа',
+    'Производство: Испания',
+    'Размер шкуры: 6-7 фут²',
+    'Наличие: уточнять у менеджера',
+  ].join('\n'))
 })
 
 test('recognizes an explicit request for product photos', () => {
@@ -261,6 +291,6 @@ test('queues product photos separately from the idempotent text reply', async ()
   assert.deepEqual(JSON.parse(outbox[1].params[3]), {
     type: 'photo',
     photoUrl: 'https://ozelifkoja.ru/images/catalog/black-silky.webp',
-    caption: '📷 Black&Silky\nhttps://ozelifkoja.ru/dublyonka/tproduct/1-black-silky',
+    caption: 'Black&Silky\nНаличие: уточнять у менеджера',
   })
 })

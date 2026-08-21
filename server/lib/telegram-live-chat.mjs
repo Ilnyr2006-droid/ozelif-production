@@ -47,6 +47,83 @@ function absoluteHttpUrl(value, siteUrl) {
   return /^https?:\/\//iu.test(url) ? url : ''
 }
 
+function productAttribute(product, ...keys) {
+  const attributes = product?.attributes
+  if (!attributes || typeof attributes !== 'object') return ''
+
+  for (const key of keys) {
+    const value = attributes[key]
+    if (Array.isArray(value)) {
+      const text = value.map(item => clean(item, 120)).filter(Boolean).join(', ')
+      if (text) return text
+    } else {
+      const text = clean(value, 180)
+      if (text) return text
+    }
+  }
+  return ''
+}
+
+function telegramProductPrices(product) {
+  const variants = Array.isArray(product?.variants)
+    ? product.variants
+    : []
+  const byUnit = new Map()
+
+  for (const variant of variants) {
+    const price = Number(variant?.priceRub)
+    const unit = clean(variant?.unit, 40)
+    if (!Number.isFinite(price) || price <= 0 || !unit) continue
+    const current = byUnit.get(unit)
+    if (current === undefined || price < current) byUnit.set(unit, price)
+  }
+
+  return [...byUnit.entries()]
+    .slice(0, 2)
+    .map(([unit, price]) => (
+      `${price.toLocaleString('ru-RU', {
+        minimumFractionDigits: Number.isInteger(price) ? 0 : 2,
+        maximumFractionDigits: 2,
+      })} ₽ / ${unit}`
+    ))
+    .join(' · ')
+}
+
+export function telegramProductCaption(product) {
+  const name = clean(product?.name, 180)
+  const subtype = productAttribute(product, 'subtype', 'type', 'leatherType')
+  const category = [clean(product?.category, 120), subtype]
+    .filter((value, index, values) => value && values.indexOf(value) === index)
+    .join(' / ')
+  const stockQuantity = Number(product?.stockQuantity)
+  const stock = product?.stockQuantity === null
+    || product?.stockQuantity === undefined
+    ? 'уточнять у менеджера'
+    : Number.isFinite(stockQuantity) && stockQuantity > 0
+      ? 'в наличии'
+      : 'уточнять у менеджера'
+  const rows = [
+    name,
+    telegramProductPrices(product) && `Цена: ${telegramProductPrices(product)}`,
+    category && `Категория: ${category}`,
+    productAttribute(product, 'color', 'normalizedColor')
+      && `Цвет: ${productAttribute(product, 'color', 'normalizedColor')}`,
+    productAttribute(product, 'purpose', 'application', 'use')
+      && `Назначение: ${productAttribute(product, 'purpose', 'application', 'use')}`,
+    productAttribute(product, 'material', 'rawMaterial')
+      && `Сырьё: ${productAttribute(product, 'material', 'rawMaterial')}`,
+    productAttribute(product, 'coating')
+      && `Покрытие: ${productAttribute(product, 'coating')}`,
+    productAttribute(product, 'origin', 'country')
+      && `Производство: ${productAttribute(product, 'origin', 'country')}`,
+    productAttribute(product, 'hideSize')
+      && `Размер шкуры: ${productAttribute(product, 'hideSize')}`,
+    `Наличие: ${stock}`,
+  ]
+
+  return rows.filter(Boolean).join('\n').slice(0, 1_024)
+}
+
 export function telegramProductPhotos(
   assistant,
   { siteUrl = env.siteUrl } = {},
@@ -67,10 +144,9 @@ export function telegramProductPhotos(
 
       return {
         photoUrl,
-        caption: [name ? `📷 ${name}` : '📷 Товар OZELIF', productUrl]
-          .filter(Boolean)
-          .join('\n')
-          .slice(0, 1_024),
+        caption: telegramProductCaption(product)
+          || name
+          || productUrl,
       }
     })
     .filter(Boolean)
