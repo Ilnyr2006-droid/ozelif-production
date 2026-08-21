@@ -2,6 +2,7 @@ import { query, transaction } from './db.mjs'
 import { env } from './env.mjs'
 import { hashLinkToken, ORDER_STATUS_LABELS } from './order-crm.mjs'
 import { adminTelegramRecipients } from './admin-telegram-recipients.mjs'
+import { processTelegramLiveChatMessage } from './telegram-live-chat.mjs'
 
 const telegramApi = () => `https://api.telegram.org/bot${env.telegramBotToken}`
 export const telegramEnabled = () => Boolean(env.telegramBotToken && env.telegramBotUsername)
@@ -58,6 +59,16 @@ async function customerOrders(customerId) {
 
 function orderText(row) {
   return `Заказ №${row.public_number}\nСтатус: ${ORDER_STATUS_LABELS[row.status] ?? row.status}\nСумма: ${Number(row.total_amount).toLocaleString('ru-RU')} ${row.currency}\nДоставка: ${row.delivery_method ?? 'уточняется'}${row.delivery_company ? ` (${row.delivery_company})` : ''}${row.tracking_number ? `\nТрек: ${row.tracking_number}` : ''}\nОбновлён: ${new Date(row.updated_at).toLocaleString('ru-RU')}`
+}
+
+export function formatTelegramCustomerNotificationText(item) {
+  const payload = item?.payload ?? {}
+
+  if (String(item?.event_type).startsWith('chat.ai_reply.')) {
+    return clean(payload.text, 4_000)
+  }
+
+  return `Заказ №${payload.publicNumber}\n${payload.statusLabel ?? 'Статус обновлён.'}${payload.deliveryCompany ? `\nДоставка: ${payload.deliveryCompany}` : ''}${payload.trackingNumber ? `\nТрек: ${payload.trackingNumber}` : ''}`
 }
 
 function addLine(lines, label, value) {
@@ -260,25 +271,37 @@ export async function handleTelegramUpdate(update) {
       await send(chatId, 'Уведомления менеджера активны.\nКоманда: /notifications')
       return { admin: true }
     }
-    await send(chatId, 'Для доступа к заказам откройте одноразовую ссылку из подтверждения заявки.')
-    return { linked: false }
+    if (/^\/start(?:@\w+)?$/u.test(text)) {
+      await send(
+        chatId,
+        'Здравствуйте! Я AI-консультант OZELIF — тот же помощник, что работает на сайте. Помогу подобрать материал, проверить характеристики и оформить заявку. Для доступа к своим заказам используйте одноразовую ссылку из подтверждения заявки.',
+      )
+      return { linked: false, ai: true }
+    }
+
+    return processTelegramLiveChatMessage({
+      message,
+      text,
+    })
   }
   if (/^(\/start|мои заказы|текущий заказ|история заказа)$/iu.test(text)) {
     const orders = await customerOrders(link.rows[0].customer_id)
     await send(chatId, orders.length ? orders.map(orderText).join('\n\n') : 'Заказов пока нет.')
     return { linked: true }
   }
-  if (/^(связаться с менеджером|задать вопрос)$/iu.test(text)) {
-    await send(chatId, 'Передал запрос менеджеру. Он ответит в рабочее время.')
-    return { linked: true, managerRequest: true }
+  if (/^задать вопрос$/iu.test(text)) {
+    await send(chatId, 'Напишите вопрос одним сообщением — AI-консультант ответит здесь. Если нужен человек, напишите «Связаться с менеджером».')
+    return { linked: true, ai: true }
   }
   if (/^отвязать аккаунт$/iu.test(text)) {
     await query(`UPDATE telegram_customer_links SET revoked_at=now(),updated_at=now() WHERE telegram_user_id=$1`, [userId])
     await send(chatId, 'Аккаунт Telegram отвязан.')
     return { unlinked: true }
   }
-  await send(chatId, 'Доступные команды: Мои заказы, Текущий заказ, История заказа, Задать вопрос, Связаться с менеджером, Отвязать аккаунт.')
-  return { linked: true }
+  return processTelegramLiveChatMessage({
+    message,
+    text,
+  })
 }
 
 async function pendingAdminSubscriptions() {
@@ -338,8 +361,8 @@ export async function processTelegramOutbox() {
         const text = formatAdminNotificationText(item)
         for (const admin of admins) await send(admin.chat_id, text)
       } else {
-        const payload = item.payload ?? {}
-        const text = `Заказ №${payload.publicNumber}\n${payload.statusLabel ?? 'Статус обновлён.'}${payload.deliveryCompany ? `\nДоставка: ${payload.deliveryCompany}` : ''}${payload.trackingNumber ? `\nТрек: ${payload.trackingNumber}` : ''}`
+        const text = formatTelegramCustomerNotificationText(item)
+        if (!text) throw new Error('telegram_notification_empty')
         await send(item.recipient, text)
       }
       await markOutboxSent(item.id)

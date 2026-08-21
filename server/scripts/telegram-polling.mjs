@@ -58,15 +58,15 @@ async function main() {
       })
 
       for (const update of updates) {
-        offset = Math.max(offset, Number(update.update_id) + 1)
-
         try {
           await handleTelegramUpdate(update)
+          offset = Math.max(offset, Number(update.update_id) + 1)
         } catch (error) {
           console.error(
             'Ошибка обработки Telegram update:',
             error,
           )
+          break
         }
       }
 

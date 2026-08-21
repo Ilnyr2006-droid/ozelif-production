@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { formatAdminNotificationText } from './telegram-bot.mjs'
+import {
+  formatAdminNotificationText,
+  formatTelegramCustomerNotificationText,
+} from './telegram-bot.mjs'
 
 test('formats a new order for manager without order number', () => {
   const text = formatAdminNotificationText(
@@ -43,4 +46,15 @@ test('formats explicit chat manager request', () => {
   )
   assert.match(text, /Клиент просит менеджера/u)
   assert.match(text, /Позовите менеджера/u)
+})
+
+test('formats a queued common AI reply for Telegram', () => {
+  const text = formatTelegramCustomerNotificationText({
+    event_type: 'chat.ai_reply.42',
+    payload: {
+      text: 'Это ответ общего AI-консультанта.',
+    },
+  })
+
+  assert.equal(text, 'Это ответ общего AI-консультанта.')
 })
