@@ -142,3 +142,32 @@ test(
     )
   },
 )
+
+test(
+  'sends a trusted catalog URL through sendPhoto',
+  async () => {
+    let captured
+    const client = createTelegramCustomerChat({
+      token: 'test-token',
+      fetchImpl: async (url, options) => {
+        captured = { url, options }
+        return okResult(303)
+      },
+    })
+
+    const result = await client.sendPhotoUrl(
+      789,
+      {
+        url: 'https://example.test/images/product.webp',
+        caption: 'Фото Black&Silky',
+      },
+    )
+
+    assert.equal(result.messageId, 303)
+    assert.match(captured.url, /sendPhoto$/u)
+    const body = JSON.parse(captured.options.body)
+    assert.equal(body.chat_id, '789')
+    assert.equal(body.photo, 'https://example.test/images/product.webp')
+    assert.equal(body.caption, 'Фото Black&Silky')
+  },
+)

@@ -3,6 +3,8 @@ import test from 'node:test'
 import {
   createTelegramLiveChatBridge,
   formatTelegramAssistantReply,
+  telegramPhotoRequested,
+  telegramProductPhotos,
   telegramLiveChatToken,
 } from './telegram-live-chat.mjs'
 
@@ -184,7 +186,7 @@ test('acknowledges product photos and removes unsupported Telegram markdown', ()
   const text = formatTelegramAssistantReply({
     message: {
       content: [
-        'К сожалению, у меня нет возможности отправить фотографии.',
+        'К сожалению, у меня нет возможности предоставить фотографии.',
         '**Black&Silky**',
         '- Толщина: Подходит для одежды',
       ].join('\n'),
@@ -200,4 +202,65 @@ test('acknowledges product photos and removes unsupported Telegram markdown', ()
   assert.doesNotMatch(text, /\*\*/u)
   assert.doesNotMatch(text, /Толщина: Подходит/u)
   assert.match(text, /https:\/\/ozelifkoja\.ru\/dublyonka\/tproduct\/1-black-silky/u)
+})
+
+test('builds Telegram photo jobs from verified catalog products', () => {
+  const photos = telegramProductPhotos({
+    products: [{
+      name: 'Дубленочный материал Кёрли "Black&Silky"',
+      image: '/images/catalog/dublyonka/570274326502/w720.webp',
+      productUrl: '/dublyonka/tproduct/570274326502-blackampsil',
+    }],
+  }, { siteUrl: 'https://ozelifkoja.ru' })
+
+  assert.deepEqual(photos, [{
+    photoUrl: 'https://ozelifkoja.ru/images/catalog/dublyonka/570274326502/w720.webp',
+    caption: [
+      '📷 Дубленочный материал Кёрли "Black&Silky"',
+      'https://ozelifkoja.ru/dublyonka/tproduct/570274326502-blackampsil',
+    ].join('\n'),
+  }])
+})
+
+test('recognizes an explicit request for product photos', () => {
+  assert.equal(telegramPhotoRequested('Можно фотографии Black&Silky?'), true)
+  assert.equal(telegramPhotoRequested('Расскажи характеристики Black&Silky'), false)
+})
+
+test('queues product photos separately from the idempotent text reply', async () => {
+  const calls = []
+  const bridge = createTelegramLiveChatBridge({
+    queryFn: queryMock(calls),
+    sessionSecret: 'test-secret',
+    siteUrl: 'https://ozelifkoja.ru',
+    fetchImpl: async () => new Response(JSON.stringify({
+      ok: true,
+      assistant: {
+        message: { id: 'photo-reply', content: 'Вот фотография.' },
+        products: [{
+          name: 'Black&Silky',
+          image: '/images/catalog/black-silky.webp',
+          productUrl: '/dublyonka/tproduct/1-black-silky',
+        }],
+      },
+    }), {
+      status: 201,
+      headers: { 'Content-Type': 'application/json' },
+    }),
+  })
+
+  const result = await bridge({ message, text: 'Можно фото Black&Silky?' })
+  const outbox = calls.filter(call => (
+    call.sql.includes('INSERT INTO notification_outbox')
+  ))
+
+  assert.equal(result.queued, true)
+  assert.equal(outbox.length, 2)
+  assert.equal(outbox[0].params[0], 'chat.ai_reply.photo-reply')
+  assert.equal(outbox[1].params[0], 'chat.ai_photo.photo-reply.1')
+  assert.deepEqual(JSON.parse(outbox[1].params[3]), {
+    type: 'photo',
+    photoUrl: 'https://ozelifkoja.ru/images/catalog/black-silky.webp',
+    caption: '📷 Black&Silky\nhttps://ozelifkoja.ru/dublyonka/tproduct/1-black-silky',
+  })
 })

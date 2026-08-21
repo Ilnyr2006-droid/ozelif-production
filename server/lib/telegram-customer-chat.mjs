@@ -186,9 +186,65 @@ export function createTelegramCustomerChat({
     }
   }
 
+  async function sendPhotoUrl(
+    chatId,
+    {
+      url,
+      caption = '',
+    },
+  ) {
+    if (!botToken) {
+      throw new Error(
+        'telegram_not_configured',
+      )
+    }
+
+    const photo = clean(url, 1_000)
+    if (!/^https?:\/\//iu.test(photo)) {
+      throw new Error(
+        'photo_url_required',
+      )
+    }
+
+    const response =
+      await fetchImpl(
+        `${apiBase(botToken)}/sendPhoto`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type':
+              'application/json',
+          },
+          body:
+            JSON.stringify({
+              chat_id:
+                String(chatId),
+              photo,
+              caption:
+                clean(caption, 1_024),
+            }),
+          signal:
+            AbortSignal.timeout(20_000),
+        },
+      )
+
+    const result =
+      await telegramResult(
+        response,
+        'sendPhoto',
+      )
+
+    return {
+      messageId:
+        result.message_id
+        ?? null,
+    }
+  }
+
   return {
     sendText,
     sendPhoto,
+    sendPhotoUrl,
   }
 }
 

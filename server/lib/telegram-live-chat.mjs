@@ -42,6 +42,46 @@ function absoluteUrl(value, siteUrl) {
   }
 }
 
+function absoluteHttpUrl(value, siteUrl) {
+  const url = absoluteUrl(value, siteUrl)
+  return /^https?:\/\//iu.test(url) ? url : ''
+}
+
+export function telegramProductPhotos(
+  assistant,
+  { siteUrl = env.siteUrl } = {},
+) {
+  const products = Array.isArray(assistant?.products)
+    ? assistant.products
+    : []
+  const seen = new Set()
+
+  return products
+    .map(product => {
+      const photoUrl = absoluteHttpUrl(product?.image, siteUrl)
+      const productUrl = absoluteHttpUrl(product?.productUrl, siteUrl)
+      const name = clean(product?.name, 180)
+
+      if (!photoUrl || seen.has(photoUrl)) return null
+      seen.add(photoUrl)
+
+      return {
+        photoUrl,
+        caption: [name ? `📷 ${name}` : '📷 Товар OZELIF', productUrl]
+          .filter(Boolean)
+          .join('\n')
+          .slice(0, 1_024),
+      }
+    })
+    .filter(Boolean)
+    .slice(0, 3)
+}
+
+export function telegramPhotoRequested(value) {
+  return /(?:фото(?:граф(?:ию|ии|ий|ия|ии)?|чк[ауи])?|покаж\p{L}*\s+(?:товар|материал|кож))/iu
+    .test(clean(value, 1_000))
+}
+
 export function formatTelegramAssistantReply(
   assistant,
   { siteUrl = env.siteUrl } = {},
@@ -64,7 +104,7 @@ export function formatTelegramAssistantReply(
 
   if (
     hasProductCard
-    && /(?:нет возможности|не могу|не умею)\s+отправ\p{L}*\s+фотограф\p{L}*/iu.test(content)
+    && /(?:нет возможности|не могу|не умею)\s+(?:отправ|предостав)\p{L}*\s+фотограф\p{L}*/iu.test(content)
   ) {
     content = 'Да, отправляю фотографии подходящих вариантов ниже.'
   }
@@ -235,31 +275,51 @@ async function enqueueReply(
     chatId,
     eventId,
     text,
+    photos = [],
   },
 ) {
   if (!text) return false
 
-  const result = await queryFn(
-    `INSERT INTO notification_outbox (
-       event_type,
-       aggregate_type,
-       aggregate_id,
-       channel,
-       recipient,
-       payload
-     )
-     VALUES ($1,'live_chat',$2,'telegram',$3,$4::jsonb)
-     ON CONFLICT DO NOTHING
-     RETURNING id`,
-    [
-      `chat.ai_reply.${clean(eventId, 80)}`,
-      conversationId,
-      chatId,
-      JSON.stringify({ text }),
-    ],
-  )
+  const entries = [
+    {
+      eventType: `chat.ai_reply.${clean(eventId, 80)}`,
+      payload: { type: 'text', text },
+    },
+    ...photos.map((photo, index) => ({
+      eventType: `chat.ai_photo.${clean(eventId, 80)}.${index + 1}`,
+      payload: {
+        type: 'photo',
+        photoUrl: photo.photoUrl,
+        caption: photo.caption,
+      },
+    })),
+  ]
+  let queued = false
 
-  return Boolean(result.rowCount)
+  for (const entry of entries) {
+    const result = await queryFn(
+      `INSERT INTO notification_outbox (
+         event_type,
+         aggregate_type,
+         aggregate_id,
+         channel,
+         recipient,
+         payload
+       )
+       VALUES ($1,'live_chat',$2,'telegram',$3,$4::jsonb)
+       ON CONFLICT DO NOTHING
+       RETURNING id`,
+      [
+        entry.eventType,
+        conversationId,
+        chatId,
+        JSON.stringify(entry.payload),
+      ],
+    )
+    queued ||= Boolean(result.rowCount)
+  }
+
+  return queued
 }
 
 export function createTelegramLiveChatBridge({
@@ -326,6 +386,12 @@ export function createTelegramLiveChatBridge({
       body?.assistant,
       { siteUrl },
     )
+    const photos = telegramPhotoRequested(content)
+      ? telegramProductPhotos(
+          body?.assistant,
+          { siteUrl },
+        )
+      : []
     const fallback = assistantError
       ? 'AI-консультант временно недоступен. Попробуйте ещё раз немного позже или напишите «Связаться с менеджером».'
       : ''
@@ -340,6 +406,7 @@ export function createTelegramLiveChatBridge({
         chatId: identity.chatId,
         eventId,
         text: reply || fallback,
+        photos: assistantError ? [] : photos,
       },
     )
 

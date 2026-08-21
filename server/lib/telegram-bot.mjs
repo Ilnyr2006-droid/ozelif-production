@@ -3,6 +3,7 @@ import { env } from './env.mjs'
 import { hashLinkToken, ORDER_STATUS_LABELS } from './order-crm.mjs'
 import { adminTelegramRecipients } from './admin-telegram-recipients.mjs'
 import { processTelegramLiveChatMessage } from './telegram-live-chat.mjs'
+import { telegramCustomerChat } from './telegram-customer-chat.mjs'
 
 const telegramApi = () => `https://api.telegram.org/bot${env.telegramBotToken}`
 export const telegramEnabled = () => Boolean(env.telegramBotToken && env.telegramBotUsername)
@@ -366,6 +367,14 @@ export async function processTelegramOutbox() {
       if (item.channel === 'admin') {
         const text = formatAdminNotificationText(item)
         for (const admin of admins) await send(admin.chat_id, text)
+      } else if (item.payload?.type === 'photo') {
+        await telegramCustomerChat.sendPhotoUrl(
+          item.recipient,
+          {
+            url: item.payload.photoUrl,
+            caption: item.payload.caption,
+          },
+        )
       } else {
         const text = formatTelegramCustomerNotificationText(item)
         if (!text) throw new Error('telegram_notification_empty')
