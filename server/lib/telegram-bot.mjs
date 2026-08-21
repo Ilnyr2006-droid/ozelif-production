@@ -71,9 +71,18 @@ function orderText(row) {
 
 export function formatTelegramCustomerNotificationText(item) {
   const payload = item?.payload ?? {}
+  const eventType = String(item?.event_type ?? '')
+  const text = clean(payload.text, 4_000)
 
-  if (String(item?.event_type).startsWith('chat.ai_reply.')) {
-    return clean(payload.text, 4_000)
+  // Chat messages are never order-status notifications. Treat every explicit
+  // text payload as text so an internal chat event cannot become
+  // "Заказ №undefined" in the customer's Telegram conversation.
+  if (payload.type === 'text' || eventType.startsWith('chat.')) {
+    return text
+  }
+
+  if (!eventType.startsWith('order.') || !clean(payload.publicNumber, 120)) {
+    return ''
   }
 
   return `Заказ №${payload.publicNumber}\n${payload.statusLabel ?? 'Статус обновлён.'}${payload.deliveryCompany ? `\nДоставка: ${payload.deliveryCompany}` : ''}${payload.trackingNumber ? `\nТрек: ${payload.trackingNumber}` : ''}`

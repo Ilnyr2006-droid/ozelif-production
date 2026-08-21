@@ -95,13 +95,6 @@ export function telegramProductCaption(product) {
   const category = [clean(product?.category, 120), subtype]
     .filter((value, index, values) => value && values.indexOf(value) === index)
     .join(' / ')
-  const stockQuantity = Number(product?.stockQuantity)
-  const stock = product?.stockQuantity === null
-    || product?.stockQuantity === undefined
-    ? 'уточнять у менеджера'
-    : Number.isFinite(stockQuantity) && stockQuantity > 0
-      ? 'в наличии'
-      : 'уточнять у менеджера'
   const rows = [
     name,
     telegramProductPrices(product) && `Цена: ${telegramProductPrices(product)}`,
@@ -118,7 +111,6 @@ export function telegramProductCaption(product) {
       && `Производство: ${productAttribute(product, 'origin', 'country')}`,
     productAttribute(product, 'hideSize')
       && `Размер шкуры: ${productAttribute(product, 'hideSize')}`,
-    `Наличие: ${stock}`,
   ]
 
   return rows.filter(Boolean).join('\n').slice(0, 1_024)

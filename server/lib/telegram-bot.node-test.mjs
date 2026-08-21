@@ -82,3 +82,20 @@ test('formats a queued common AI reply for Telegram', () => {
 
   assert.equal(text, 'Это ответ общего AI-консультанта.')
 })
+
+test('never formats a chat event as an order with an undefined number', () => {
+  const text = formatTelegramCustomerNotificationText({
+    event_type: 'chat.reset.42',
+    payload: { type: 'text', text: 'Диалог сброшен.' },
+  })
+
+  assert.equal(text, 'Диалог сброшен.')
+  assert.doesNotMatch(text, /Заказ №/u)
+})
+
+test('does not create an order notification without a public number', () => {
+  assert.equal(formatTelegramCustomerNotificationText({
+    event_type: 'order.confirmed',
+    payload: { statusLabel: 'Подтверждён' },
+  }), '')
+})

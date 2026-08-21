@@ -216,7 +216,7 @@ test('builds Telegram photo jobs from verified catalog products', () => {
 
   assert.deepEqual(photos, [{
     photoUrl: 'https://ozelifkoja.ru/images/catalog/dublyonka/570274326502/w720.webp',
-    caption: 'Дубленочный материал Кёрли "Black&Silky"\nНаличие: уточнять у менеджера',
+    caption: 'Дубленочный материал Кёрли "Black&Silky"',
   }])
 })
 
@@ -248,7 +248,6 @@ test('formats a verified product photo as a compact Telegram card', () => {
     'Покрытие: Кожа',
     'Производство: Испания',
     'Размер шкуры: 6-7 фут²',
-    'Наличие: уточнять у менеджера',
   ].join('\n'))
 })
 
@@ -291,7 +290,7 @@ test('queues product photos separately from the idempotent text reply', async ()
   assert.deepEqual(JSON.parse(outbox[1].params[3]), {
     type: 'photo',
     photoUrl: 'https://ozelifkoja.ru/images/catalog/black-silky.webp',
-    caption: 'Black&Silky\nНаличие: уточнять у менеджера',
+    caption: 'Black&Silky',
   })
 })
 
