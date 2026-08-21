@@ -64,6 +64,31 @@ function productAttribute(product, ...keys) {
   return ''
 }
 
+export function telegramProductInlineKeyboard(
+  product,
+  { siteUrl = env.siteUrl } = {},
+) {
+  const productUrl = absoluteHttpUrl(
+    product?.productUrl,
+    siteUrl,
+  )
+
+  return [[
+    {
+      text: '🛒 Добавить в корзину',
+      callbackData: 'oz:add',
+    },
+    ...(
+      productUrl
+        ? [{
+            text: '🔗 Открыть товар',
+            url: productUrl,
+          }]
+        : []
+    ),
+  ]]
+}
+
 function telegramProductPrices(product) {
   const variants = Array.isArray(product?.variants)
     ? product.variants
@@ -139,6 +164,11 @@ export function telegramProductPhotos(
         caption: telegramProductCaption(product)
           || name
           || productUrl,
+        inlineKeyboard:
+          telegramProductInlineKeyboard(
+            product,
+            { siteUrl },
+          ),
       }
     })
     .filter(Boolean)
@@ -397,9 +427,33 @@ async function enqueueReply(
         type: 'photo',
         photoUrl: photo.photoUrl,
         caption: photo.caption,
+        inlineKeyboard:
+          photo.inlineKeyboard,
       },
     })),
   ]
+
+  if (photos.length) {
+    entries.push({
+      eventType:
+        `chat.ai_cart_panel.${clean(eventId, 80)}`,
+      payload: {
+        type: 'text',
+        text: 'Действия с заказом:',
+        inlineKeyboard: [[
+          {
+            text: '🛒 Корзина',
+            callbackData: 'oz:cart',
+          },
+          {
+            text: '✅ Оформить заявку',
+            callbackData: 'oz:checkout',
+          },
+        ]],
+      },
+    })
+  }
+
   let queued = false
 
   for (const entry of entries) {

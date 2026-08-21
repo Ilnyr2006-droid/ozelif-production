@@ -171,3 +171,122 @@ test(
     assert.equal(body.caption, 'Фото Black&Silky')
   },
 )
+
+
+test(
+  'sends inline keyboard with a catalog photo',
+  async () => {
+    let captured
+
+    const client =
+      createTelegramCustomerChat({
+        token:
+          'test-token',
+        fetchImpl:
+          async (url, options) => {
+            captured = {
+              url,
+              options,
+            }
+
+            return okResult(404)
+          },
+      })
+
+    await client.sendPhotoUrl(
+      999,
+      {
+        url:
+          'https://example.test/product.jpg',
+        caption:
+          'Napato Grey',
+        inlineKeyboard: [[
+          {
+            text:
+              '🛒 Добавить в корзину',
+            callbackData:
+              'oz:add',
+          },
+          {
+            text:
+              '🔗 Открыть товар',
+            url:
+              'https://example.test/product',
+          },
+        ]],
+      },
+    )
+
+    const body =
+      JSON.parse(
+        captured.options.body,
+      )
+
+    assert.deepEqual(
+      body.reply_markup,
+      {
+        inline_keyboard: [[
+          {
+            text:
+              '🛒 Добавить в корзину',
+            callback_data:
+              'oz:add',
+          },
+          {
+            text:
+              '🔗 Открыть товар',
+            url:
+              'https://example.test/product',
+          },
+        ]],
+      },
+    )
+  },
+)
+
+test(
+  'sends inline keyboard with a text message',
+  async () => {
+    let captured
+
+    const client =
+      createTelegramCustomerChat({
+        token:
+          'test-token',
+        fetchImpl:
+          async (_url, options) => {
+            captured =
+              options
+
+            return okResult(405)
+          },
+      })
+
+    await client.sendText(
+      999,
+      'Действия с заказом:',
+      {
+        inlineKeyboard: [[
+          {
+            text:
+              '🛒 Корзина',
+            callbackData:
+              'oz:cart',
+          },
+        ]],
+      },
+    )
+
+    const body =
+      JSON.parse(
+        captured.body,
+      )
+
+    assert.equal(
+      body.reply_markup
+        .inline_keyboard[0][0]
+        .callback_data,
+      'oz:cart',
+    )
+  },
+)

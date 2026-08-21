@@ -10,6 +10,73 @@ function apiBase(token) {
   return `https://api.telegram.org/bot${token}`
 }
 
+export function telegramInlineReplyMarkup(
+  inlineKeyboard,
+) {
+  const rows = (
+    Array.isArray(inlineKeyboard)
+      ? inlineKeyboard
+      : []
+  )
+    .map(row => (
+      Array.isArray(row)
+        ? row
+          .map(button => {
+            const text =
+              clean(
+                button?.text,
+                64,
+              )
+
+            if (!text) return null
+
+            const url =
+              clean(
+                button?.url,
+                1_000,
+              )
+
+            if (
+              url
+              && /^https?:\/\//iu.test(url)
+            ) {
+              return {
+                text,
+                url,
+              }
+            }
+
+            const callbackData =
+              clean(
+                button?.callbackData,
+                64,
+              )
+
+            if (callbackData) {
+              return {
+                text,
+                callback_data:
+                  callbackData,
+              }
+            }
+
+            return null
+          })
+          .filter(Boolean)
+        : []
+    ))
+    .filter(row => row.length)
+
+  return rows.length
+    ? {
+        reply_markup: {
+          inline_keyboard:
+            rows,
+        },
+      }
+    : {}
+}
+
 async function telegramResult(
   response,
   method,
@@ -45,6 +112,9 @@ export function createTelegramCustomerChat({
   async function sendText(
     chatId,
     text,
+    {
+      inlineKeyboard = [],
+    } = {},
   ) {
     if (!botToken) {
       throw new Error(
@@ -78,6 +148,9 @@ export function createTelegramCustomerChat({
                 content,
               disable_web_page_preview:
                 true,
+              ...telegramInlineReplyMarkup(
+                inlineKeyboard,
+              ),
             }),
           signal:
             AbortSignal.timeout(10_000),
@@ -191,6 +264,7 @@ export function createTelegramCustomerChat({
     {
       url,
       caption = '',
+      inlineKeyboard = [],
     },
   ) {
     if (!botToken) {
@@ -222,6 +296,9 @@ export function createTelegramCustomerChat({
               photo,
               caption:
                 clean(caption, 1_024),
+              ...telegramInlineReplyMarkup(
+                inlineKeyboard,
+              ),
             }),
           signal:
             AbortSignal.timeout(20_000),

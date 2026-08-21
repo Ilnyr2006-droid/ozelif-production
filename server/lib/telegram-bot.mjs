@@ -271,7 +271,204 @@ async function handleAdminStart(message, rawToken) {
   return { linked: true, admin: true }
 }
 
+
+async function answerTelegramCallbackQuery(
+  callbackQueryId,
+  text = '',
+) {
+  const response = await fetch(
+    `${telegramApi()}/answerCallbackQuery`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type':
+          'application/json',
+      },
+      body: JSON.stringify({
+        callback_query_id:
+          callbackQueryId,
+        ...(text
+          ? {
+              text:
+                String(text)
+                  .slice(0, 180),
+            }
+          : {}),
+      }),
+      signal:
+        AbortSignal.timeout(10_000),
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(
+      `Telegram answerCallbackQuery: HTTP ${
+        response.status
+      }`,
+    )
+  }
+}
+
+function telegramCallbackMessage(
+  callbackQuery,
+  {
+    replyToCard = false,
+  } = {},
+) {
+  const original =
+    callbackQuery?.message
+
+  return {
+    message_id:
+      `callback_${
+        String(
+          callbackQuery?.id
+          ?? Date.now(),
+        )
+      }`,
+    date:
+      Math.floor(
+        Date.now() / 1_000,
+      ),
+    chat:
+      original?.chat,
+    from:
+      callbackQuery?.from,
+    ...(replyToCard
+      ? {
+          reply_to_message:
+            original,
+        }
+      : {}),
+  }
+}
+
+async function handleTelegramInlineCartCallback(
+  update,
+) {
+  const callbackQuery =
+    update?.callback_query
+
+  const data =
+    String(
+      callbackQuery?.data
+      ?? '',
+    ).trim()
+
+  if (
+    !callbackQuery
+    || !data.startsWith('oz:')
+  ) {
+    return null
+  }
+
+  const chatId =
+    callbackQuery
+      ?.message
+      ?.chat
+      ?.id
+
+  const userId =
+    callbackQuery
+      ?.from
+      ?.id
+
+  if (!chatId || !userId) {
+    await answerTelegramCallbackQuery(
+      callbackQuery.id,
+      'Не удалось определить чат.',
+    )
+
+    return {
+      ignored: true,
+      callback: true,
+    }
+  }
+
+  const action = (
+    data === 'oz:add'
+      ? {
+          text:
+            'Хочу заказать это',
+          replyToCard:
+            true,
+          notice:
+            'Добавляю в корзину…',
+        }
+      : data === 'oz:cart'
+        ? {
+            text:
+              'Покажи корзину',
+            replyToCard:
+              false,
+            notice:
+              'Открываю корзину…',
+          }
+        : data === 'oz:checkout'
+          ? {
+              text:
+                'Оформить',
+              replyToCard:
+                false,
+              notice:
+                'Переходим к оформлению…',
+            }
+          : null
+  )
+
+  if (!action) {
+    await answerTelegramCallbackQuery(
+      callbackQuery.id,
+    )
+
+    return {
+      ignored: true,
+      callback: true,
+    }
+  }
+
+  /*
+   * answerCallbackQuery first so Telegram immediately
+   * stops the button spinner. The existing shared
+   * live-chat/order pipeline then handles the action.
+   */
+  await answerTelegramCallbackQuery(
+    callbackQuery.id,
+    action.notice,
+  )
+
+  const result =
+    await processTelegramLiveChatMessage({
+      message:
+        telegramCallbackMessage(
+          callbackQuery,
+          {
+            replyToCard:
+              action.replyToCard,
+          },
+        ),
+      text:
+        action.text,
+    })
+
+  return {
+    ...result,
+    callback: true,
+    callbackAction:
+      data.slice(3),
+  }
+}
+
 export async function handleTelegramUpdate(update) {
+  const callbackResult =
+    await handleTelegramInlineCartCallback(
+      update,
+    )
+
+  if (callbackResult) {
+    return callbackResult
+  }
+
   const message = update?.message
   const userId = message?.from?.id
   const chatId = message?.chat?.id
@@ -441,12 +638,21 @@ export async function processTelegramOutbox() {
           {
             url: item.payload.photoUrl,
             caption: item.payload.caption,
+            inlineKeyboard:
+              item.payload.inlineKeyboard,
           },
         )
       } else {
         const text = formatTelegramCustomerNotificationText(item)
         if (!text) throw new Error('telegram_notification_empty')
-        await send(item.recipient, text)
+        await telegramCustomerChat.sendText(
+          item.recipient,
+          text,
+          {
+            inlineKeyboard:
+              item.payload?.inlineKeyboard,
+          },
+        )
       }
       await markOutboxSent(item.id)
       processed += 1
