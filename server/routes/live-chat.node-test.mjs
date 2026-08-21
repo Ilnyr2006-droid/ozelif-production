@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { normalizeClientMessageId, readPublicToken } from '../lib/live-chat-auth.mjs'
 import {
+  telegramNamedProductOrderRequest,
   telegramSelectedProductOrderRequest,
   telegramSelectedProductRequest,
 } from './live-chat.mjs'
@@ -38,4 +39,27 @@ test('accepts a selected product only from the Telegram bridge payload', () => {
 test('recognizes an order request made in response to a product card', () => {
   assert.equal(telegramSelectedProductOrderRequest('Можно её заказать?'), true)
   assert.equal(telegramSelectedProductOrderRequest('Расскажи подробнее'), false)
+})
+
+test('adds an exact published catalog product named in a Telegram order request', () => {
+  const products = [
+    { id: 'soft-white-black', name: 'Soft White-Black' },
+    { id: 'chelsea-pink', name: 'Chelsea Pink' },
+  ]
+
+  assert.deepEqual(
+    telegramNamedProductOrderRequest(
+      'Добавь в заказ Soft White-Black',
+      products,
+    ),
+    {
+      id: 'soft-white-black',
+      name: 'Soft White-Black',
+      normalizedName: 'soft white black',
+    },
+  )
+  assert.equal(
+    telegramNamedProductOrderRequest('Расскажи про Soft White-Black', products),
+    null,
+  )
 })

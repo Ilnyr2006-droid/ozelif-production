@@ -53,6 +53,48 @@ export function telegramSelectedProductOrderRequest(value) {
     .test(String(value ?? ''))
 }
 
+function normalizedCatalogName(value) {
+  return String(value ?? '')
+    .toLocaleLowerCase('ru')
+    .replace(/ё/gu, 'е')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .replace(/\s+/gu, ' ')
+    .trim()
+}
+
+// This is deliberately stricter than a fuzzy search: adding an item to an
+// order is allowed only when the customer wrote a complete published product
+// name alongside a clear order intent.
+export function telegramNamedProductOrderRequest(value, products) {
+  if (!telegramSelectedProductOrderRequest(value)) return null
+
+  const message = ` ${normalizedCatalogName(value)} `
+  const matches = (Array.isArray(products) ? products : [])
+    .map(product => ({
+      ...product,
+      normalizedName: normalizedCatalogName(product?.name),
+    }))
+    .filter(product => (
+      product.normalizedName.length >= 3
+      && message.includes(` ${product.normalizedName} `)
+    ))
+    .sort((left, right) => (
+      right.normalizedName.length - left.normalizedName.length
+    ))
+
+  return matches[0] ?? null
+}
+
+async function namedTelegramCatalogProduct(content) {
+  const products = (await query(
+    `SELECT id, name
+     FROM products
+     WHERE is_published = TRUE`,
+  )).rows
+
+  return telegramNamedProductOrderRequest(content, products)
+}
+
 function clientIp(request) {
   const forwarded = String(request.headers['x-forwarded-for'] ?? '')
     .split(',')[0]
@@ -929,8 +971,35 @@ export function createLiveChatRouter() {
               currentOrderDraft =
                 draftResult.draft
             }
+          }
+
+          const namedTelegramProduct = (
+            !draftResult?.changed
+            && safePath(request.body?.path) === 'telegram'
+              ? await namedTelegramCatalogProduct(content)
+              : null
+          )
+
+          if (namedTelegramProduct) {
+            // Exact product-name mentions are resolved from the published
+            // catalog, so the user does not have to reply to a card.
+            draftResult = await applyChatOrderDraftUpdate(
+              conversation.id,
+              {
+                startNewOrder: false,
+                cancel: false,
+                confirm: false,
+                operations: [{
+                  operation: 'upsert',
+                  productId: namedTelegramProduct.id,
+                  productName: namedTelegramProduct.name,
+                }],
+              },
+            )
+            currentOrderDraft = draftResult.draft
           } else if (
-            telegramSelection
+            !draftResult?.changed
+            && telegramSelection
             && telegramSelectedProductOrderRequest(
               telegramSelection.userMessage,
             )
@@ -950,7 +1019,7 @@ export function createLiveChatRouter() {
               },
             )
             currentOrderDraft = draftResult.draft
-          } else {
+          } else if (!draftResult?.changed) {
             const implicit = await applyImplicitChatOrderSignals(
               conversation.id,
               content,
