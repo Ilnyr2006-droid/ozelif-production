@@ -54,7 +54,10 @@ async function main() {
       const updates = await telegram('getUpdates', {
         offset,
         timeout: 25,
-        allowed_updates: ['message'],
+        allowed_updates: [
+          'message',
+          'callback_query',
+        ],
       })
 
       for (const update of updates) {
