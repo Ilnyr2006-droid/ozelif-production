@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { renderCatalogSeoLandingPage } from './public-seo-landing.mjs'
 
-const template = `<!doctype html><html><head><title>Cluster</title></head><body><main><article><h1>Cluster</h1></article></main></body></html>`
+const template = `<!doctype html><html><head><title>Cluster</title></head><body><div id="root"></div></body></html>`
 
 const landing = {
   path: '/odejnayakozha/krs',
