@@ -90,6 +90,25 @@ const EXPLICIT_COLOR_GROUPS = [
 
 const EXPLICIT_USE_GROUPS = [
   {
+    use: 'light_clothing',
+    label: 'юбки и другой одежды',
+    patterns: [
+      /юбк\p{L}*/iu,
+      /плать\p{L}*/iu,
+      /брюк\p{L}*/iu,
+      /жакет\p{L}*/iu,
+      /жилет\p{L}*/iu,
+    ],
+    productPatterns: [
+      /юбк\p{L}*/iu,
+      /плать\p{L}*/iu,
+      /брюк\p{L}*/iu,
+      /жакет\p{L}*/iu,
+      /жилет\p{L}*/iu,
+    ],
+    preferredCategories: ['odejnayakozha', 'zamsha'],
+  },
+  {
     use: 'jacket',
     label: 'куртки и верхней одежды',
     patterns: [
@@ -585,8 +604,17 @@ export function rankProductRecommendations(
         score += semanticScore * 70
       }
 
-      if (use && productMatchesUse(product, use)) {
-        score += 90
+      if (use) {
+        const group = useGroupById(use)
+        const preferredCategory = group?.preferredCategories.includes(
+          String(product?.categorySlug ?? ''),
+        )
+
+        if (preferredCategory) {
+          score += 140
+        } else if (productMatchesUse(product, use)) {
+          score += 60
+        }
       }
 
       if (color && productMatchesColor(product, color)) {

@@ -179,3 +179,25 @@ test('formats product actions as public OZELIF links', () => {
   assert.match(text, /Нашёл вариант/u)
   assert.match(text, /https:\/\/ozelifkoja\.ru\/catalog\/product/u)
 })
+
+test('acknowledges product photos and removes unsupported Telegram markdown', () => {
+  const text = formatTelegramAssistantReply({
+    message: {
+      content: [
+        'К сожалению, у меня нет возможности отправить фотографии.',
+        '**Black&Silky**',
+        '- Толщина: Подходит для одежды',
+      ].join('\n'),
+    },
+    actions: [{
+      label: '**Открыть товар**',
+      href: '/dublyonka/tproduct/1-black-silky',
+    }],
+  }, { siteUrl: 'https://ozelifkoja.ru' })
+
+  assert.match(text, /отправляю фотографии подходящих вариантов/u)
+  assert.doesNotMatch(text, /нет возможности/u)
+  assert.doesNotMatch(text, /\*\*/u)
+  assert.doesNotMatch(text, /Толщина: Подходит/u)
+  assert.match(text, /https:\/\/ozelifkoja\.ru\/dublyonka\/tproduct\/1-black-silky/u)
+})

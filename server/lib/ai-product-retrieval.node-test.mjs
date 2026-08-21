@@ -244,6 +244,39 @@ test('detects product use and ranks suitable clothing leather first', () => {
   )
 })
 
+test('ranks clothing leather above shearling for a skirt request', () => {
+  assert.equal(
+    inferExplicitUse('нужна чёрная кожа для юбки'),
+    'light_clothing',
+  )
+
+  const ranked = rankProductRecommendations(
+    [
+      {
+        id: '1',
+        name: 'Кёрли Black&Silky',
+        categorySlug: 'dublyonka',
+        description: 'Дублёночный материал для верхней одежды',
+        attributes: { Цвет: 'Чёрный' },
+        variants: [{ priceRub: 86.67 }],
+      },
+      {
+        id: '2',
+        name: 'Nappa Black',
+        categorySlug: 'odejnayakozha',
+        description: 'Мягкая натуральная кожа',
+        attributes: { Цвет: 'Чёрный', Толщина: '0,7 мм' },
+        variants: [{ priceRub: 46.33 }],
+      },
+    ],
+    'нужна чёрная кожа для юбки',
+    [],
+  )
+
+  assert.equal(ranked[0].name, 'Nappa Black')
+  assert.match(ranked[0].recommendationReason, /юбки/u)
+})
+
 test('builds a deterministic recommendation reason', () => {
   const reason = buildRecommendationReason(
     {

@@ -46,20 +46,41 @@ export function formatTelegramAssistantReply(
   assistant,
   { siteUrl = env.siteUrl } = {},
 ) {
-  const content = normalizeChatContent(
+  const rawContent = normalizeChatContent(
     assistant?.message?.content,
   )
 
-  if (!content) return ''
+  if (!rawContent) return ''
 
   const actions = Array.isArray(assistant?.actions)
     ? assistant.actions
     : []
 
+  const hasProductCard = actions.some(action => (
+    /\/tproduct\//u.test(clean(action?.href, 1_000))
+  ))
+
+  let content = rawContent
+
+  if (
+    hasProductCard
+    && /(?:нет возможности|не могу|не умею)\s+отправ\p{L}*\s+фотограф\p{L}*/iu.test(content)
+  ) {
+    content = 'Да, отправляю фотографии подходящих вариантов ниже.'
+  }
+
+  content = content
+    .replace(/^\s*-\s*Толщина:\s*Подходит[^\n]*\n?/gimu, '')
+    .replace(/\*\*([^*\n]+)\*\*/gu, '$1')
+    .replace(/`([^`\n]+)`/gu, '$1')
+    .trim()
+
   const links = actions
     .slice(0, 3)
     .map(action => ({
-      label: clean(action?.label, 120),
+      label: clean(action?.label, 120)
+        .replace(/\*\*/gu, '')
+        .replace(/`/gu, ''),
       url: absoluteUrl(action?.href, siteUrl),
     }))
     .filter(action => (
