@@ -150,6 +150,29 @@ export function telegramPhotoRequested(value) {
     .test(clean(value, 1_000))
 }
 
+export function telegramMessageContent(message, text) {
+  const content = normalizeChatContent(text)
+  if (!content) return ''
+
+  // Telegram puts the message selected by the customer in reply_to_message.
+  // Product cards are photos, so their identifying text lives in caption.
+  const quoted = clean(
+    message?.reply_to_message?.caption
+      ?? message?.reply_to_message?.text,
+    1_500,
+  )
+
+  if (!quoted || quoted === content) return content
+
+  return [
+    'Контекст сообщения, на которое отвечает клиент:',
+    quoted,
+    '',
+    'Новое сообщение клиента:',
+    content,
+  ].join('\n')
+}
+
 export function formatTelegramAssistantReply(
   assistant,
   { siteUrl = env.siteUrl } = {},
@@ -421,7 +444,7 @@ export function createTelegramLiveChatBridge({
     message,
     text,
   } = {}) {
-    const content = normalizeChatContent(text)
+    const content = telegramMessageContent(message, text)
 
     if (!content) return { ignored: true }
 

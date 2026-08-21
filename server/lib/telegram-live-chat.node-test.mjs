@@ -4,6 +4,7 @@ import {
   createTelegramLiveChatBridge,
   formatTelegramAssistantReply,
   telegramPhotoRequested,
+  telegramMessageContent,
   telegramProductCaption,
   telegramProductPhotos,
   telegramLiveChatToken,
@@ -52,6 +53,18 @@ test('uses an opaque stable token instead of exposing Telegram identity', () => 
   assert.equal(first, second)
   assert.notEqual(first, 'telegram:12345')
   assert.doesNotMatch(first, /12345/u)
+})
+
+test('includes a selected Telegram product card with the new message', () => {
+  const content = telegramMessageContent({
+    reply_to_message: {
+      caption: 'Chelsea Beige\nЦена: 437,05 ₽ / фут²\nЦвет: Бежевый',
+    },
+  }, 'Можно эту заказать?')
+
+  assert.match(content, /Контекст сообщения/u)
+  assert.match(content, /Chelsea Beige/u)
+  assert.match(content, /Можно эту заказать/u)
 })
 
 test('routes a Telegram message through the website live-chat pipeline', async () => {
@@ -104,6 +117,34 @@ test('routes a Telegram message through the website live-chat pipeline', async (
   assert.equal(outbox.params[0], 'chat.ai_reply.11')
   assert.match(outbox.params[3], /Napato Black/u)
   assert.match(outbox.params[3], /https:\/\/example\.test\/odejnayakozha/u)
+})
+
+test('forwards a selected product card to the shared AI conversation', async () => {
+  const calls = []
+  let request = null
+  const bridge = createTelegramLiveChatBridge({
+    queryFn: queryMock(calls),
+    sessionSecret: 'test-secret',
+    fetchImpl: async (_url, options) => {
+      request = options
+      return new Response(JSON.stringify({
+        ok: true,
+        assistant: { message: { id: 'quote-1', content: 'Добавлю материал в заявку.' } },
+      }), { status: 201, headers: { 'Content-Type': 'application/json' } })
+    },
+  })
+
+  await bridge({
+    message: {
+      ...message,
+      reply_to_message: { caption: 'Chelsea Beige\nЦена: 437,05 ₽ / фут²' },
+    },
+    text: 'Можно эту заказать?',
+  })
+
+  const body = JSON.parse(request.body)
+  assert.match(body.content, /Chelsea Beige/u)
+  assert.match(body.content, /Можно эту заказать/u)
 })
 
 test('uses the same outbox identity when Telegram retries one update', async () => {
