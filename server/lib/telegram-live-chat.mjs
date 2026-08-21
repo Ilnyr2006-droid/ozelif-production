@@ -174,13 +174,15 @@ export function formatTelegramAssistantReply(
 
   const hasProductCard = actions.some(action => (
     /\/tproduct\//u.test(clean(action?.href, 1_000))
-  ))
+  )) || (Array.isArray(assistant?.products) && assistant.products.some(product => (
+    /\/tproduct\//u.test(clean(product?.productUrl, 1_000))
+  )))
 
   let content = rawContent
 
   if (
     hasProductCard
-    && /(?:нет возможности|не могу|не умею)\s+(?:отправ|предостав)\p{L}*\s+фотограф\p{L}*/iu.test(content)
+    && /(?:нет возможности|не могу|не умею)\s+(?:отправ|предостав|присл)\p{L}*\s+фотограф\p{L}*/iu.test(content)
   ) {
     content = 'Да, отправляю фотографии подходящих вариантов ниже.'
   }
@@ -398,6 +400,24 @@ async function enqueueReply(
   return queued
 }
 
+async function latestRecommendedProducts(queryFn, conversationId) {
+  const result = await queryFn(
+    `SELECT metadata->'products' AS products
+     FROM live_chat_messages
+     WHERE conversation_id=$1
+       AND role='assistant'
+       AND jsonb_typeof(metadata->'products')='array'
+       AND jsonb_array_length(metadata->'products')>0
+     ORDER BY id DESC
+     LIMIT 1`,
+    [conversationId],
+  )
+
+  return Array.isArray(result.rows[0]?.products)
+    ? result.rows[0].products
+    : []
+}
+
 export function createTelegramLiveChatBridge({
   queryFn = query,
   fetchImpl = fetch,
@@ -458,16 +478,30 @@ export function createTelegramLiveChatBridge({
         : String(error)
     }
 
+    const photoRequested = telegramPhotoRequested(content)
+    let assistantForTelegram = body?.assistant
+    let photos = photoRequested
+      ? telegramProductPhotos(assistantForTelegram, { siteUrl })
+      : []
+
+    if (photoRequested && !photos.length && !assistantError) {
+      const products = await latestRecommendedProducts(
+        queryFn,
+        identity.conversationId,
+      )
+      if (products.length) {
+        assistantForTelegram = {
+          ...assistantForTelegram,
+          products,
+        }
+        photos = telegramProductPhotos(assistantForTelegram, { siteUrl })
+      }
+    }
+
     const reply = formatTelegramAssistantReply(
-      body?.assistant,
+      assistantForTelegram,
       { siteUrl },
     )
-    const photos = telegramPhotoRequested(content)
-      ? telegramProductPhotos(
-          body?.assistant,
-          { siteUrl },
-        )
-      : []
     const fallback = assistantError
       ? 'AI-консультант временно недоступен. Попробуйте ещё раз немного позже или напишите «Связаться с менеджером».'
       : ''

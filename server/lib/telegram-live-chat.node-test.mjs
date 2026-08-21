@@ -294,3 +294,60 @@ test('queues product photos separately from the idempotent text reply', async ()
     caption: 'Black&Silky\nНаличие: уточнять у менеджера',
   })
 })
+
+test('uses the previous recommendation for a follow-up photo request', async () => {
+  const outbox = []
+  const previousProduct = {
+    name: 'Full Vegetale G.Black',
+    image: '/images/catalog/full-vegetale-black.webp',
+    productUrl: '/odejnayakozha/tproduct/463601248272-full-vegetale-gblack',
+    category: 'Одежная кожа',
+    attributes: { color: 'Чёрный' },
+    variants: [{ unit: 'фут²', priceRub: 437.1 }],
+  }
+  const bridge = createTelegramLiveChatBridge({
+    sessionSecret: 'test-secret',
+    siteUrl: 'https://ozelifkoja.ru',
+    queryFn: async (sql, params) => {
+      if (sql.includes('FROM telegram_customer_links')) {
+        return { rowCount: 0, rows: [] }
+      }
+      if (sql.includes('INSERT INTO live_chat_conversations')) {
+        return { rowCount: 1, rows: [{ id: '11111111-1111-4111-8111-111111111111' }] }
+      }
+      if (sql.includes("metadata->'products' AS products")) {
+        return { rowCount: 1, rows: [{ products: [previousProduct] }] }
+      }
+      if (sql.includes('INSERT INTO notification_outbox')) {
+        outbox.push({ eventType: params[0], payload: JSON.parse(params[3]) })
+        return { rowCount: 1, rows: [{ id: String(outbox.length) }] }
+      }
+      throw new Error(`Unexpected SQL: ${sql}`)
+    },
+    fetchImpl: async () => new Response(JSON.stringify({
+      ok: true,
+      assistant: {
+        message: {
+          id: 'follow-up-photo',
+          content: 'К сожалению, я не могу прислать фотографии.',
+        },
+        products: [],
+        actions: [],
+      },
+    }), {
+      status: 201,
+      headers: { 'Content-Type': 'application/json' },
+    }),
+  })
+
+  await bridge({ message, text: 'Можно фотографии прислать?' })
+
+  assert.equal(outbox.length, 2)
+  assert.match(outbox[0].payload.text, /отправляю фотографии/u)
+  assert.equal(
+    outbox[1].payload.photoUrl,
+    'https://ozelifkoja.ru/images/catalog/full-vegetale-black.webp',
+  )
+  assert.match(outbox[1].payload.caption, /Full Vegetale G\.Black/u)
+  assert.match(outbox[1].payload.caption, /437,10 ₽ \/ фут²/u)
+})
