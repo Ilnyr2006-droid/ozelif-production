@@ -5,6 +5,7 @@ import {
   formatTelegramCustomerNotificationText,
   isTelegramCartMenuCommand,
   isTelegramResetCommand,
+  telegramInlineCartAction,
   unlinkedTelegramMessageMode,
 } from './telegram-bot.mjs'
 
@@ -123,6 +124,40 @@ test(
     assert.equal(
       isTelegramCartMenuCommand('Покажи корзину'),
       false,
+    )
+  },
+)
+
+
+test(
+  'maps compact cart buttons to the shared order flow',
+  () => {
+    assert.equal(
+      telegramInlineCartAction(
+        'oz:add_more',
+      )?.text,
+      'Хочу добавить товар в корзину',
+    )
+
+    assert.equal(
+      telegramInlineCartAction(
+        'oz:change',
+      )?.text,
+      'Хочу изменить количество товара в корзине',
+    )
+
+    assert.equal(
+      telegramInlineCartAction(
+        'oz:remove',
+      )?.text,
+      'Хочу удалить товар из корзины',
+    )
+
+    assert.equal(
+      telegramInlineCartAction(
+        'oz:checkout',
+      )?.text,
+      'Оформить',
     )
   },
 )

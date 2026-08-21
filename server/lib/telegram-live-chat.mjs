@@ -5,6 +5,9 @@ import {
   hashPublicChatToken,
   normalizeChatContent,
 } from './live-chat-utils.mjs'
+import {
+  loadChatOrderDraft,
+} from './chat-order.mjs'
 
 function clean(value, max = 4_000) {
   return String(value ?? '').trim().slice(0, max)
@@ -45,6 +48,360 @@ function absoluteUrl(value, siteUrl) {
 function absoluteHttpUrl(value, siteUrl) {
   const url = absoluteUrl(value, siteUrl)
   return /^https?:\/\//iu.test(url) ? url : ''
+}
+
+const TELEGRAM_CART_MONEY =
+  new Intl.NumberFormat(
+    'ru-RU',
+    {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    },
+  )
+
+const TELEGRAM_CART_QUANTITY =
+  new Intl.NumberFormat(
+    'ru-RU',
+    {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 3,
+    },
+  )
+
+function telegramCartNumber(value) {
+  const number = Number(value)
+
+  return Number.isFinite(number)
+    ? number
+    : null
+}
+
+function telegramCartMoney(value) {
+  const number =
+    telegramCartNumber(value)
+
+  if (number === null) {
+    return 'цена уточняется'
+  }
+
+  return `${
+    TELEGRAM_CART_MONEY
+      .format(number)
+      .replace(
+        /[\u00a0\u202f]/gu,
+        ' ',
+      )
+  } ₽`
+}
+
+function telegramCartQuantity(value) {
+  const number =
+    telegramCartNumber(value)
+
+  if (number === null) {
+    return ''
+  }
+
+  return TELEGRAM_CART_QUANTITY
+    .format(number)
+    .replace(
+      /[\u00a0\u202f]/gu,
+      ' ',
+    )
+}
+
+function telegramCartPositionLabel(count) {
+  const number =
+    Math.abs(
+      Math.trunc(
+        Number(count) || 0,
+      ),
+    )
+
+  const mod100 =
+    number % 100
+
+  const mod10 =
+    number % 10
+
+  if (
+    mod100 >= 11
+    && mod100 <= 14
+  ) {
+    return 'позиций'
+  }
+
+  if (mod10 === 1) {
+    return 'позиция'
+  }
+
+  if (
+    mod10 >= 2
+    && mod10 <= 4
+  ) {
+    return 'позиции'
+  }
+
+  return 'позиций'
+}
+
+function telegramCartVariantSuffix(item) {
+  const product =
+    clean(
+      item?.productName,
+      180,
+    )
+
+  const variant =
+    clean(
+      item?.variantName,
+      180,
+    )
+
+  if (
+    !variant
+    || !product
+    || variant
+      .toLocaleLowerCase('ru')
+      .startsWith(
+        product
+          .toLocaleLowerCase('ru'),
+      )
+  ) {
+    return ''
+  }
+
+  return `, ${variant}`
+}
+
+export function telegramCartRequested(value) {
+  const text =
+    String(value ?? '')
+      .trim()
+      .toLocaleLowerCase('ru')
+      .replace(/ё/gu, 'е')
+      .replace(/[.!?]+$/gu, '')
+      .replace(/\s+/gu, ' ')
+
+  return (
+    text === 'покажи корзину'
+    || text === 'корзина'
+    || text === 'открой корзину'
+    || text === '/cart'
+  )
+}
+
+export function formatTelegramCart(draft) {
+  const items =
+    Array.isArray(draft?.items)
+      ? draft.items
+      : []
+
+  if (!items.length) {
+    return [
+      '🛒 Ваша корзина',
+      '',
+      'Корзина пока пуста.',
+      '',
+      'Добавьте товар из рекомендаций или напишите, что хотите заказать.',
+    ].join('\n')
+  }
+
+  const rows = items.flatMap(
+    (item, index) => {
+      const name =
+        `${
+          index + 1
+        }. ${
+          clean(
+            item?.productName,
+            180,
+          )
+          || 'Товар'
+        }${
+          telegramCartVariantSuffix(
+            item,
+          )
+        }`
+
+      const quantityValue =
+        telegramCartNumber(
+          item?.quantity,
+        )
+
+      const quantityText =
+        quantityValue !== null
+          ? `${
+              telegramCartQuantity(
+                quantityValue,
+              )
+            } ${
+              clean(
+                item?.unit,
+                40,
+              )
+              || 'ед.'
+            }`
+          : ''
+
+      const priceValue =
+        telegramCartNumber(
+          item?.price,
+        )
+
+      const lineTotalValue =
+        telegramCartNumber(
+          item?.lineTotal,
+        )
+
+      let detail =
+        '   Количество: не указано'
+
+      if (
+        quantityText
+        && priceValue !== null
+        && lineTotalValue !== null
+      ) {
+        detail =
+          `   ${quantityText} × ${
+            telegramCartMoney(
+              priceValue,
+            )
+          } = ${
+            telegramCartMoney(
+              lineTotalValue,
+            )
+          }`
+      } else if (
+        quantityText
+        && lineTotalValue !== null
+      ) {
+        detail =
+          `   ${quantityText} = ${
+            telegramCartMoney(
+              lineTotalValue,
+            )
+          }`
+      } else if (quantityText) {
+        detail =
+          `   ${quantityText} · цена уточняется`
+      }
+
+      return [
+        name,
+        detail,
+        '',
+      ]
+    },
+  )
+
+  while (
+    rows.length
+    && rows.at(-1) === ''
+  ) {
+    rows.pop()
+  }
+
+  const knownTotal =
+    items.reduce(
+      (sum, item) => (
+        sum
+        + (
+          telegramCartNumber(
+            item?.lineTotal,
+          )
+          ?? 0
+        )
+      ),
+      0,
+    )
+
+  const allTotalsKnown =
+    items.every(item => (
+      telegramCartNumber(
+        item?.lineTotal,
+      ) !== null
+    ))
+
+  const totalText =
+    allTotalsKnown
+      ? telegramCartMoney(
+          knownTotal,
+        )
+      : knownTotal > 0
+        ? `${
+            telegramCartMoney(
+              knownTotal,
+            )
+          } + позиции с уточняемой ценой`
+        : 'цена уточняется'
+
+  return [
+    '🛒 Ваша корзина',
+    '',
+    ...rows,
+    '',
+    '━━━━━━━━━━━━━━',
+    `Итого: ${totalText}`,
+    `Товаров: ${items.length} ${
+      telegramCartPositionLabel(
+        items.length,
+      )
+    }`,
+    '',
+    'Выберите действие:',
+  ].join('\n')
+}
+
+export function telegramCartInlineKeyboard(
+  draft,
+) {
+  const items =
+    Array.isArray(draft?.items)
+      ? draft.items
+      : []
+
+  if (!items.length) {
+    return [[
+      {
+        text:
+          '➕ Добавить товар',
+        callbackData:
+          'oz:add_more',
+      },
+    ]]
+  }
+
+  return [
+    [
+      {
+        text:
+          '➕ Добавить товар',
+        callbackData:
+          'oz:add_more',
+      },
+      {
+        text:
+          '✏️ Изменить количество',
+        callbackData:
+          'oz:change',
+      },
+    ],
+    [
+      {
+        text:
+          '❌ Удалить товар',
+        callbackData:
+          'oz:remove',
+      },
+      {
+        text:
+          '✅ Оформить заказ',
+        callbackData:
+          'oz:checkout',
+      },
+    ],
+  ]
 }
 
 function productAttribute(product, ...keys) {
@@ -412,6 +769,7 @@ async function enqueueReply(
     eventId,
     text,
     photos = [],
+    inlineKeyboard = [],
   },
 ) {
   if (!text) return false
@@ -419,7 +777,20 @@ async function enqueueReply(
   const entries = [
     {
       eventType: `chat.ai_reply.${clean(eventId, 80)}`,
-      payload: { type: 'text', text },
+      payload: {
+        type: 'text',
+        text,
+        ...(
+          Array.isArray(
+            inlineKeyboard,
+          )
+          && inlineKeyboard.length
+            ? {
+                inlineKeyboard,
+              }
+            : {}
+        ),
+      },
     },
     ...photos.map((photo, index) => ({
       eventType: `chat.ai_photo.${clean(eventId, 80)}.${index + 1}`,
@@ -504,6 +875,49 @@ export function createTelegramLiveChatBridge({
       identity.chatId,
       message?.message_id,
     )
+
+    if (telegramCartRequested(text)) {
+      const draft =
+        await loadChatOrderDraft(
+          identity.conversationId,
+          {
+            query:
+              queryFn,
+          },
+        )
+
+      const queued =
+        await enqueueReply(
+          queryFn,
+          {
+            conversationId:
+              identity.conversationId,
+            chatId:
+              identity.chatId,
+            eventId:
+              `cart_${
+                requestMessageId
+              }`,
+            text:
+              formatTelegramCart(
+                draft,
+              ),
+            inlineKeyboard:
+              telegramCartInlineKeyboard(
+                draft,
+              ),
+          },
+        )
+
+      return {
+        ok: true,
+        conversationId:
+          identity.conversationId,
+        duplicate: false,
+        queued,
+        cart: true,
+      }
+    }
 
     let body = null
     let assistantError = null

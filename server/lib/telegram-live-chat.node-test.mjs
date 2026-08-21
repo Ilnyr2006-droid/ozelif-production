@@ -3,12 +3,15 @@ import test from 'node:test'
 import {
   createTelegramLiveChatBridge,
   formatTelegramAssistantReply,
+  formatTelegramCart,
   telegramPhotoRequested,
   telegramMessageContent,
   telegramSelectedProduct,
   telegramProductCaption,
   telegramProductInlineKeyboard,
   telegramProductPhotos,
+  telegramCartInlineKeyboard,
+  telegramCartRequested,
   telegramLiveChatToken,
 } from './telegram-live-chat.mjs'
 
@@ -512,3 +515,339 @@ test('builds a compact inline keyboard for a product card', () => {
     ]],
   )
 })
+
+
+test(
+  'formats the Telegram cart as one compact message',
+  () => {
+    const draft = {
+      items: [
+        {
+          productName:
+            'Napato Black',
+          quantity:
+            2,
+          unit:
+            'фут²',
+          price:
+            437.05,
+          lineTotal:
+            874.10,
+        },
+        {
+          productName:
+            'Vegetale Black',
+          quantity:
+            1,
+          unit:
+            'фут²',
+          price:
+            450,
+          lineTotal:
+            450,
+        },
+      ],
+    }
+
+    const text =
+      formatTelegramCart(
+        draft,
+      )
+
+    assert.match(
+      text,
+      /🛒 Ваша корзина/u,
+    )
+
+    assert.match(
+      text,
+      /1\. Napato Black/u,
+    )
+
+    assert.match(
+      text,
+      /2 фут² × 437,05 ₽ = 874,1 ₽/u,
+    )
+
+    assert.match(
+      text,
+      /2\. Vegetale Black/u,
+    )
+
+    assert.match(
+      text,
+      /Итого: 1 324,1 ₽/u,
+    )
+
+    assert.match(
+      text,
+      /Товаров: 2 позиции/u,
+    )
+
+    assert.match(
+      text,
+      /Выберите действие/u,
+    )
+  },
+)
+
+test(
+  'shows only add action for an empty Telegram cart',
+  () => {
+    assert.match(
+      formatTelegramCart({
+        items: [],
+      }),
+      /Корзина пока пуста/u,
+    )
+
+    assert.deepEqual(
+      telegramCartInlineKeyboard({
+        items: [],
+      }),
+      [[
+        {
+          text:
+            '➕ Добавить товар',
+          callbackData:
+            'oz:add_more',
+        },
+      ]],
+    )
+  },
+)
+
+test(
+  'builds four compact actions for a non-empty Telegram cart',
+  () => {
+    const keyboard =
+      telegramCartInlineKeyboard({
+        items: [{
+          productName:
+            'Napato Black',
+        }],
+      })
+
+    assert.equal(
+      keyboard.length,
+      2,
+    )
+
+    assert.deepEqual(
+      keyboard
+        .flat()
+        .map(button => (
+          button.callbackData
+        )),
+      [
+        'oz:add_more',
+        'oz:change',
+        'oz:remove',
+        'oz:checkout',
+      ],
+    )
+  },
+)
+
+test(
+  'recognizes deterministic Telegram cart requests',
+  () => {
+    assert.equal(
+      telegramCartRequested(
+        'Покажи корзину',
+      ),
+      true,
+    )
+
+    assert.equal(
+      telegramCartRequested(
+        'корзина',
+      ),
+      true,
+    )
+
+    assert.equal(
+      telegramCartRequested(
+        'покажи товары',
+      ),
+      false,
+    )
+  },
+)
+
+test(
+  'opens Telegram cart without calling the AI endpoint',
+  async () => {
+    const calls = []
+    let fetchCalled =
+      false
+
+    const bridge =
+      createTelegramLiveChatBridge({
+        sessionSecret:
+          'test-secret',
+        queryFn:
+          async (
+            sql,
+            params,
+          ) => {
+            calls.push({
+              sql,
+              params,
+            })
+
+            if (
+              sql.includes(
+                'FROM telegram_customer_links',
+              )
+            ) {
+              return {
+                rowCount: 0,
+                rows: [],
+              }
+            }
+
+            if (
+              sql.includes(
+                'INSERT INTO live_chat_conversations',
+              )
+            ) {
+              return {
+                rowCount: 1,
+                rows: [{
+                  id:
+                    '11111111-1111-4111-8111-111111111111',
+                }],
+              }
+            }
+
+            if (
+              sql.includes(
+                'INSERT INTO live_chat_order_drafts',
+              )
+            ) {
+              return {
+                rowCount: 0,
+                rows: [],
+              }
+            }
+
+            if (
+              sql.includes(
+                'FROM live_chat_order_drafts',
+              )
+            ) {
+              return {
+                rowCount: 1,
+                rows: [{
+                  conversation_id:
+                    '11111111-1111-4111-8111-111111111111',
+                  status:
+                    'collecting',
+                  items: [{
+                    productId:
+                      'product-1',
+                    productName:
+                      'Napato Black',
+                    quantity:
+                      2,
+                    unit:
+                      'фут²',
+                    price:
+                      437.05,
+                    lineTotal:
+                      874.10,
+                  }],
+                  delivery_method:
+                    null,
+                  delivery_city:
+                    null,
+                  delivery_address:
+                    null,
+                  revision:
+                    1,
+                  confirmed_revision:
+                    null,
+                  confirmed_at:
+                    null,
+                  order_id:
+                    null,
+                  created_at:
+                    new Date(),
+                  updated_at:
+                    new Date(),
+                }],
+              }
+            }
+
+            if (
+              sql.includes(
+                'INSERT INTO notification_outbox',
+              )
+            ) {
+              return {
+                rowCount: 1,
+                rows: [{
+                  id:
+                    'outbox-cart',
+                }],
+              }
+            }
+
+            throw new Error(
+              `Unexpected SQL: ${sql}`,
+            )
+          },
+        fetchImpl:
+          async () => {
+            fetchCalled =
+              true
+
+            throw new Error(
+              'AI should not be called',
+            )
+          },
+      })
+
+    const result =
+      await bridge({
+        message,
+        text:
+          'Покажи корзину',
+      })
+
+    assert.equal(
+      fetchCalled,
+      false,
+    )
+
+    assert.equal(
+      result.cart,
+      true,
+    )
+
+    const outbox =
+      calls.find(call => (
+        call.sql.includes(
+          'INSERT INTO notification_outbox',
+        )
+      ))
+
+    const payload =
+      JSON.parse(
+        outbox.params[3],
+      )
+
+    assert.match(
+      payload.text,
+      /Napato Black/u,
+    )
+
+    assert.equal(
+      payload.inlineKeyboard
+        .flat()
+        .length,
+      4,
+    )
+  },
+)

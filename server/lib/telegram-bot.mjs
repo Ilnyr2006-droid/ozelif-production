@@ -353,6 +353,68 @@ function telegramCallbackMessage(
   }
 }
 
+export function telegramInlineCartAction(
+  data,
+) {
+  return (
+    data === 'oz:add'
+      ? {
+          text:
+            'Хочу заказать это',
+          replyToCard:
+            true,
+          notice:
+            'Добавляю в корзину…',
+        }
+      : data === 'oz:cart'
+        ? {
+            text:
+              'Покажи корзину',
+            replyToCard:
+              false,
+            notice:
+              'Открываю корзину…',
+          }
+        : data === 'oz:add_more'
+          ? {
+              text:
+                'Хочу добавить товар в корзину',
+              replyToCard:
+                false,
+              notice:
+                'Что добавим?',
+            }
+          : data === 'oz:change'
+            ? {
+                text:
+                  'Хочу изменить количество товара в корзине',
+                replyToCard:
+                  false,
+                notice:
+                  'Изменяем количество…',
+              }
+            : data === 'oz:remove'
+              ? {
+                  text:
+                    'Хочу удалить товар из корзины',
+                  replyToCard:
+                    false,
+                  notice:
+                    'Выбираем товар для удаления…',
+                }
+              : data === 'oz:checkout'
+                ? {
+                    text:
+                      'Оформить',
+                    replyToCard:
+                      false,
+                    notice:
+                      'Переходим к оформлению…',
+                  }
+                : null
+  )
+}
+
 async function handleTelegramInlineCartCallback(
   update,
 ) {
@@ -395,36 +457,10 @@ async function handleTelegramInlineCartCallback(
     }
   }
 
-  const action = (
-    data === 'oz:add'
-      ? {
-          text:
-            'Хочу заказать это',
-          replyToCard:
-            true,
-          notice:
-            'Добавляю в корзину…',
-        }
-      : data === 'oz:cart'
-        ? {
-            text:
-              'Покажи корзину',
-            replyToCard:
-              false,
-            notice:
-              'Открываю корзину…',
-          }
-        : data === 'oz:checkout'
-          ? {
-              text:
-                'Оформить',
-              replyToCard:
-                false,
-              notice:
-                'Переходим к оформлению…',
-            }
-          : null
-  )
+  const action =
+    telegramInlineCartAction(
+      data,
+    )
 
   if (!action) {
     await answerTelegramCallbackQuery(
