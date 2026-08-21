@@ -3,6 +3,7 @@ import test from 'node:test'
 import { normalizeClientMessageId, readPublicToken } from '../lib/live-chat-auth.mjs'
 import {
   telegramNamedProductOrderRequest,
+  telegramRecommendedProductsOrderRequest,
   telegramSelectedProductOrderRequest,
   telegramSelectedProductRequest,
 } from './live-chat.mjs'
@@ -61,5 +62,29 @@ test('adds an exact published catalog product named in a Telegram order request'
   assert.equal(
     telegramNamedProductOrderRequest('Расскажи про Soft White-Black', products),
     null,
+  )
+})
+
+test('resolves Telegram ordinal order requests from the preceding recommendation', () => {
+  const products = [
+    { id: 'zberba-black', name: 'Zberba black' },
+    { id: 'vegetale-brown', name: 'Vegetale Brown' },
+    { id: 'chelsea-grey', name: 'Chelsea Grey' },
+  ]
+
+  assert.deepEqual(
+    telegramRecommendedProductsOrderRequest(
+      'Можно заказать первые две кожи?',
+      products,
+    ),
+    products.slice(0, 2),
+  )
+  assert.deepEqual(
+    telegramRecommendedProductsOrderRequest('Беру вторую и третью', products),
+    products.slice(1),
+  )
+  assert.deepEqual(
+    telegramRecommendedProductsOrderRequest('Можно заказать?', products),
+    [],
   )
 })

@@ -85,6 +85,64 @@ export function telegramNamedProductOrderRequest(value, products) {
   return matches[0] ?? null
 }
 
+// Ordinal references such as "первые две" are resolved only from the last
+// multi-product recommendation saved for this Telegram conversation.  The AI
+// may run a new catalog search for the same turn, so using its fresh results
+// here could add unrelated products to a draft.
+export function telegramRecommendedProductsOrderRequest(value, products) {
+  if (!telegramSelectedProductOrderRequest(value)) return []
+
+  const recommendation = (Array.isArray(products) ? products : [])
+    .filter(product => product?.id && product?.name)
+    .slice(0, 3)
+
+  if (!recommendation.length) return []
+
+  const message = String(value ?? '')
+    .toLocaleLowerCase('ru')
+    .replace(/ё/gu, 'е')
+
+  if (
+    /(?:^|[^\p{L}\p{N}])(?:все|все\s+три|кажд\p{L}*)(?:$|[^\p{L}\p{N}])/iu.test(message)
+  ) {
+    return recommendation
+  }
+
+  if (
+    /(?:^|[^\p{L}\p{N}])(?:перв\p{L}*\s+(?:дв\p{L}*|2)|обе|оба|1\s*(?:и|,|&)\s*2)(?:$|[^\p{L}\p{N}])/iu
+      .test(message)
+  ) {
+    return recommendation.slice(0, 2)
+  }
+
+  const indexes = []
+  if (/(?:^|[^\p{L}\p{N}])(?:перв\p{L}*|1)(?:$|[^\p{L}\p{N}])/iu.test(message)) indexes.push(0)
+  if (/(?:^|[^\p{L}\p{N}])(?:втор\p{L}*|2)(?:$|[^\p{L}\p{N}])/iu.test(message)) indexes.push(1)
+  if (/(?:^|[^\p{L}\p{N}])(?:трет\p{L}*|3)(?:$|[^\p{L}\p{N}])/iu.test(message)) indexes.push(2)
+
+  return [...new Set(indexes)]
+    .map(index => recommendation[index])
+    .filter(Boolean)
+}
+
+async function latestTelegramRecommendationProducts(conversationId) {
+  const result = await query(
+    `SELECT metadata->'products' AS products
+     FROM live_chat_messages
+     WHERE conversation_id = $1
+       AND role = 'assistant'
+       AND jsonb_typeof(metadata->'products') = 'array'
+       AND jsonb_array_length(metadata->'products') >= 2
+     ORDER BY id DESC
+     LIMIT 1`,
+    [conversationId],
+  )
+
+  return Array.isArray(result.rows[0]?.products)
+    ? result.rows[0].products
+    : []
+}
+
 async function namedTelegramCatalogProduct(content) {
   const products = (await query(
     `SELECT id, name
@@ -937,7 +995,41 @@ export function createLiveChatRouter() {
           let draftResult = null
           let quantityAmbiguity = false
 
-          if (generated.orderDraftUpdate) {
+          const priorTelegramRecommendation = (
+            safePath(request.body?.path) === 'telegram'
+              ? await latestTelegramRecommendationProducts(conversation.id)
+              : []
+          )
+          const selectedTelegramRecommendation =
+            telegramRecommendedProductsOrderRequest(
+              content,
+              priorTelegramRecommendation,
+            )
+
+          if (selectedTelegramRecommendation.length) {
+            // The products named by an ordinal reference come from the
+            // persisted previous reply, never from an unrelated fresh search.
+            draftResult = await applyChatOrderDraftUpdate(
+              conversation.id,
+              {
+                startNewOrder: false,
+                cancel: false,
+                confirm: false,
+                operations: selectedTelegramRecommendation.map(product => ({
+                  operation: 'upsert',
+                  productId: product.id,
+                  productName: product.name,
+                })),
+              },
+            )
+            currentOrderDraft = draftResult.draft
+            generated.orderDraftUpdate = null
+            // Do not send cards for a fresh search when this message only
+            // selects products from the preceding recommendation.
+            generated.products = []
+          }
+
+          if (!draftResult?.changed && generated.orderDraftUpdate) {
             const validation =
               validateModelOrderDraftUpdate({
                 draft: currentOrderDraft,
