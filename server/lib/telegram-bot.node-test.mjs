@@ -3,7 +3,24 @@ import test from 'node:test'
 import {
   formatAdminNotificationText,
   formatTelegramCustomerNotificationText,
+  unlinkedTelegramMessageMode,
 } from './telegram-bot.mjs'
+
+test('routes an ordinary manager-subscriber message to the shared assistant', () => {
+  assert.equal(
+    unlinkedTelegramMessageMode('можно фото Дублёночный материал Кёрли "Black&Silky"', {
+      adminSubscription: true,
+    }),
+    'assistant',
+  )
+})
+
+test('keeps a dedicated start greeting for a manager subscriber', () => {
+  assert.equal(
+    unlinkedTelegramMessageMode('/start', { adminSubscription: true }),
+    'manager_greeting',
+  )
+})
 
 test('formats a new order for manager without order number', () => {
   const text = formatAdminNotificationText(

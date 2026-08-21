@@ -48,6 +48,13 @@ async function send(chatId, text) {
   return true
 }
 
+export function unlinkedTelegramMessageMode(text, { adminSubscription = false } = {}) {
+  if (/^\/start(?:@\w+)?$/u.test(String(text ?? '').trim())) {
+    return adminSubscription ? 'manager_greeting' : 'greeting'
+  }
+  return 'assistant'
+}
+
 async function customerOrders(customerId) {
   return (await query(
     `SELECT public_number,status,total_amount,currency,delivery_method,
@@ -267,14 +274,13 @@ export async function handleTelegramUpdate(update) {
     [userId, chatId],
   )
   if (!link.rowCount) {
-    if (adminSubscription) {
-      await send(chatId, 'Уведомления менеджера активны.\nКоманда: /notifications')
-      return { admin: true }
-    }
-    if (/^\/start(?:@\w+)?$/u.test(text)) {
+    const unlinkedMode = unlinkedTelegramMessageMode(text, {
+      adminSubscription: Boolean(adminSubscription),
+    })
+    if (unlinkedMode !== 'assistant') {
       await send(
         chatId,
-        'Здравствуйте! Я AI-консультант OZELIF — тот же помощник, что работает на сайте. Помогу подобрать материал, проверить характеристики и оформить заявку. Для доступа к своим заказам используйте одноразовую ссылку из подтверждения заявки.',
+        `Здравствуйте! Я AI-консультант OZELIF — тот же помощник, что работает на сайте. Помогу подобрать материал, проверить характеристики и оформить заявку. Для доступа к своим заказам используйте одноразовую ссылку из подтверждения заявки.${adminSubscription ? '\n\nУведомления менеджера активны. Управление: /notifications.' : ''}`,
       )
       return { linked: false, ai: true }
     }
