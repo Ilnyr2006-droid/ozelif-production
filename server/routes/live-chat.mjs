@@ -33,6 +33,26 @@ function safePath(value) {
   return String(value ?? '/').slice(0, 500)
 }
 
+export function telegramSelectedProductRequest(body) {
+  if (safePath(body?.path) !== 'telegram') return null
+
+  const productName = String(
+    body?.telegramSelection?.productName ?? '',
+  ).trim().slice(0, 180)
+  const userMessage = String(
+    body?.telegramSelection?.userMessage ?? '',
+  ).trim().slice(0, 1_000)
+
+  if (!productName || !userMessage) return null
+
+  return { productName, userMessage }
+}
+
+export function telegramSelectedProductOrderRequest(value) {
+  return /(?:заказ(?:ать)?|оформ\p{L}*|добав\p{L}*|беру|возьму|хочу\s+(?:эту|его|ее|её))/iu
+    .test(String(value ?? ''))
+}
+
 function clientIp(request) {
   const forwarded = String(request.headers['x-forwarded-for'] ?? '')
     .split(',')[0]
@@ -804,6 +824,9 @@ export function createLiveChatRouter() {
         conversation.id,
       )
       let orderFlow = null
+      const telegramSelection = telegramSelectedProductRequest(
+        request.body,
+      )
 
       if (freshConversation?.aiEnabled) {
         const historyResult = await query(
@@ -906,6 +929,27 @@ export function createLiveChatRouter() {
               currentOrderDraft =
                 draftResult.draft
             }
+          } else if (
+            telegramSelection
+            && telegramSelectedProductOrderRequest(
+              telegramSelection.userMessage,
+            )
+          ) {
+            // The selected bot card supplies a product name; the draft service
+            // resolves it only against the published PostgreSQL catalog.
+            draftResult = await applyChatOrderDraftUpdate(
+              conversation.id,
+              {
+                startNewOrder: false,
+                cancel: false,
+                confirm: false,
+                operations: [{
+                  operation: 'upsert',
+                  productName: telegramSelection.productName,
+                }],
+              },
+            )
+            currentOrderDraft = draftResult.draft
           } else {
             const implicit = await applyImplicitChatOrderSignals(
               conversation.id,

@@ -173,6 +173,19 @@ export function telegramMessageContent(message, text) {
   ].join('\n')
 }
 
+export function telegramSelectedProduct(message) {
+  const replied = message?.reply_to_message
+
+  // Only a reply to a message produced by this bot can select a catalog card.
+  // A regular quoted user message must not be interpreted as a cart item.
+  if (!replied?.from?.is_bot) return null
+
+  const caption = clean(replied.caption, 1_500)
+  const productName = clean(caption.split(/\r?\n/u, 1)[0], 180)
+
+  return productName || null
+}
+
 export function formatTelegramAssistantReply(
   assistant,
   { siteUrl = env.siteUrl } = {},
@@ -445,6 +458,7 @@ export function createTelegramLiveChatBridge({
     text,
   } = {}) {
     const content = telegramMessageContent(message, text)
+    const selectedProductName = telegramSelectedProduct(message)
 
     if (!content) return { ignored: true }
 
@@ -474,6 +488,14 @@ export function createTelegramLiveChatBridge({
             content,
             path: 'telegram',
             clientMessageId: requestMessageId,
+            ...(selectedProductName
+              ? {
+                  telegramSelection: {
+                    productName: selectedProductName,
+                    userMessage: normalizeChatContent(text),
+                  },
+                }
+              : {}),
           }),
           signal: AbortSignal.timeout(60_000),
         },

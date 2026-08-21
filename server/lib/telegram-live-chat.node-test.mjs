@@ -5,6 +5,7 @@ import {
   formatTelegramAssistantReply,
   telegramPhotoRequested,
   telegramMessageContent,
+  telegramSelectedProduct,
   telegramProductCaption,
   telegramProductPhotos,
   telegramLiveChatToken,
@@ -65,6 +66,21 @@ test('includes a selected Telegram product card with the new message', () => {
   assert.match(content, /Контекст сообщения/u)
   assert.match(content, /Chelsea Beige/u)
   assert.match(content, /Можно эту заказать/u)
+})
+
+test('recognizes only bot product cards as a Telegram selection', () => {
+  assert.equal(telegramSelectedProduct({
+    reply_to_message: {
+      from: { is_bot: true },
+      caption: 'Chelsea Beige\nЦена: 437,05 ₽ / фут²',
+    },
+  }), 'Chelsea Beige')
+  assert.equal(telegramSelectedProduct({
+    reply_to_message: {
+      from: { is_bot: false },
+      text: 'Chelsea Beige',
+    },
+  }), null)
 })
 
 test('routes a Telegram message through the website live-chat pipeline', async () => {
@@ -137,7 +153,10 @@ test('forwards a selected product card to the shared AI conversation', async () 
   await bridge({
     message: {
       ...message,
-      reply_to_message: { caption: 'Chelsea Beige\nЦена: 437,05 ₽ / фут²' },
+      reply_to_message: {
+        from: { is_bot: true },
+        caption: 'Chelsea Beige\nЦена: 437,05 ₽ / фут²',
+      },
     },
     text: 'Можно эту заказать?',
   })
@@ -145,6 +164,10 @@ test('forwards a selected product card to the shared AI conversation', async () 
   const body = JSON.parse(request.body)
   assert.match(body.content, /Chelsea Beige/u)
   assert.match(body.content, /Можно эту заказать/u)
+  assert.deepEqual(body.telegramSelection, {
+    productName: 'Chelsea Beige',
+    userMessage: 'Можно эту заказать?',
+  })
 })
 
 test('uses the same outbox identity when Telegram retries one update', async () => {
