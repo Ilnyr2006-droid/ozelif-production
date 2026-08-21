@@ -433,27 +433,6 @@ async function enqueueReply(
     })),
   ]
 
-  if (photos.length) {
-    entries.push({
-      eventType:
-        `chat.ai_cart_panel.${clean(eventId, 80)}`,
-      payload: {
-        type: 'text',
-        text: 'Действия с заказом:',
-        inlineKeyboard: [[
-          {
-            text: '🛒 Корзина',
-            callbackData: 'oz:cart',
-          },
-          {
-            text: '✅ Оформить заявку',
-            callbackData: 'oz:checkout',
-          },
-        ]],
-      },
-    })
-  }
-
   let queued = false
 
   for (const entry of entries) {

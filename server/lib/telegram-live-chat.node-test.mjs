@@ -359,7 +359,7 @@ test('queues product photos separately from the idempotent text reply', async ()
   ))
 
   assert.equal(result.queued, true)
-  assert.equal(outbox.length, 3)
+  assert.equal(outbox.length, 2)
   assert.equal(outbox[0].params[0], 'chat.ai_reply.photo-reply')
   assert.equal(outbox[1].params[0], 'chat.ai_photo.photo-reply.1')
   assert.deepEqual(JSON.parse(outbox[1].params[3]), {
@@ -377,15 +377,6 @@ test('queues product photos separately from the idempotent text reply', async ()
       },
     ]],
   })
-  assert.equal(
-    outbox[2].params[0],
-    'chat.ai_cart_panel.photo-reply',
-  )
-  assert.equal(
-    JSON.parse(outbox[2].params[3])
-      .inlineKeyboard[0][0].callbackData,
-    'oz:cart',
-  )
 })
 
 test('queues a separate catalog card for every recommended material', async () => {
@@ -427,21 +418,12 @@ test('queues a separate catalog card for every recommended material', async () =
     call.sql.includes('INSERT INTO notification_outbox')
   ))
 
-  assert.equal(outbox.length, 4)
+  assert.equal(outbox.length, 3)
   assert.equal(outbox[0].params[0], 'chat.ai_reply.recommendation-cards')
   assert.equal(outbox[1].params[0], 'chat.ai_photo.recommendation-cards.1')
   assert.equal(outbox[2].params[0], 'chat.ai_photo.recommendation-cards.2')
-  assert.equal(
-    outbox[3].params[0],
-    'chat.ai_cart_panel.recommendation-cards',
-  )
   assert.match(JSON.parse(outbox[1].params[3]).caption, /Full Vegetale/u)
   assert.match(JSON.parse(outbox[2].params[3]).caption, /Soft White-Black/u)
-  assert.equal(
-    JSON.parse(outbox[3].params[3])
-      .inlineKeyboard[0][1].callbackData,
-    'oz:checkout',
-  )
 })
 
 test('uses the previous recommendation for a follow-up photo request', async () => {
@@ -491,7 +473,7 @@ test('uses the previous recommendation for a follow-up photo request', async () 
 
   await bridge({ message, text: 'Можно фотографии прислать?' })
 
-  assert.equal(outbox.length, 3)
+  assert.equal(outbox.length, 2)
   assert.match(outbox[0].payload.text, /отправляю фотографии/u)
   assert.equal(
     outbox[1].payload.photoUrl,
@@ -499,15 +481,6 @@ test('uses the previous recommendation for a follow-up photo request', async () 
   )
   assert.match(outbox[1].payload.caption, /Full Vegetale G\.Black/u)
   assert.match(outbox[1].payload.caption, /437,10 ₽ \/ фут²/u)
-  assert.equal(
-    outbox[2].eventType,
-    'chat.ai_cart_panel.follow-up-photo',
-  )
-  assert.equal(
-    outbox[2].payload
-      .inlineKeyboard[0][0].callbackData,
-    'oz:cart',
-  )
 })
 
 

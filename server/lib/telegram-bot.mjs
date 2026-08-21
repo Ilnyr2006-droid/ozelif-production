@@ -49,6 +49,16 @@ async function send(chatId, text) {
   return true
 }
 
+export function isTelegramCartMenuCommand(
+  value,
+) {
+  return (
+    /^\/cart(?:@\w+)?$/iu.test(
+      String(value ?? '').trim(),
+    )
+  )
+}
+
 export function unlinkedTelegramMessageMode(text, { adminSubscription = false } = {}) {
   if (/^\/start(?:@\w+)?$/u.test(String(text ?? '').trim())) {
     return adminSubscription ? 'manager_greeting' : 'greeting'
@@ -501,6 +511,13 @@ export async function handleTelegramUpdate(update) {
     )
     await send(chatId, 'Уведомления менеджера отключены.')
     return { admin: true, notifications: false }
+  }
+
+  if (isTelegramCartMenuCommand(text)) {
+    return processTelegramLiveChatMessage({
+      message,
+      text: 'Покажи корзину',
+    })
   }
 
   const start = text.match(/^\/start(?:@\w+)?(?:\s+order_([A-Za-z0-9_-]+))?/u)

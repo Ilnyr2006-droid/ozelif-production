@@ -3,6 +3,7 @@ import test from 'node:test'
 import {
   formatAdminNotificationText,
   formatTelegramCustomerNotificationText,
+  isTelegramCartMenuCommand,
   isTelegramResetCommand,
   unlinkedTelegramMessageMode,
 } from './telegram-bot.mjs'
@@ -99,3 +100,29 @@ test('does not create an order notification without a public number', () => {
     payload: { statusLabel: 'Подтверждён' },
   }), '')
 })
+
+
+test(
+  'recognizes only the native cart menu command',
+  () => {
+    assert.equal(
+      isTelegramCartMenuCommand('/cart'),
+      true,
+    )
+
+    assert.equal(
+      isTelegramCartMenuCommand('/cart@Ozelif_bot'),
+      true,
+    )
+
+    assert.equal(
+      isTelegramCartMenuCommand('/reset'),
+      false,
+    )
+
+    assert.equal(
+      isTelegramCartMenuCommand('Покажи корзину'),
+      false,
+    )
+  },
+)
