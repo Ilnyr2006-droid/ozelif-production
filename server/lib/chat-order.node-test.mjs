@@ -171,6 +171,32 @@ test('quantity with a named draft product remains deterministic', () => {
   assert.equal(command.update.operations[0].quantity, 10)
 })
 
+test('adding another named product does not overwrite the only cart item', () => {
+  const command = parseChatCartCommand(
+    'добавь в заказ новый материал 60 футов',
+    {
+      ...readyDraft,
+      items: [readyDraft.items[0]],
+    },
+  )
+
+  assert.equal(command, null)
+})
+
+test('an explicit quantity command can still target the only cart item', () => {
+  const command = parseChatCartCommand(
+    'поставь количество 25 футов',
+    {
+      ...readyDraft,
+      items: [readyDraft.items[0]],
+    },
+  )
+
+  assert.equal(command.kind, 'quantity')
+  assert.equal(command.update.operations[0].productId, 'p1')
+  assert.equal(command.update.operations[0].quantity, 25)
+})
+
 test('ambiguous remove and quantity commands ask for a product', () => {
   const remove = parseChatCartCommand(
     'удали товар из корзины',

@@ -1203,9 +1203,9 @@ function cartItemIndex(text, items) {
     }))
     .filter(item => item.name && text.includes(item.name))
 
-  if (matches.length === 1) return matches[0].index
-  if (items.length === 1) return 0
-  return -1
+  return matches.length === 1
+    ? matches[0].index
+    : -1
 }
 
 function cartSelectionReply(action, items) {
@@ -1294,13 +1294,20 @@ export function parseChatCartCommand(value, draft) {
   if (/^(?:хочу )?добавить товар в корзину[.!?]*$/u.test(text)) {
     return {
       kind: 'prompt',
-      reply: 'Напишите название товара и количество. Например: «добавь Chelsea Pink, 10 фут²».',
+      reply: 'Напишите название товара и количество. Например: «добавь [название товара], 10 фут²».',
     }
   }
 
   const removeIntent = /(?:удал(?:и|ить)|убер(?:и|ите))(?=$|[\s,;.!?])/u.test(text)
   if (removeIntent) {
-    const index = cartItemIndex(text, items)
+    let index = cartItemIndex(text, items)
+    if (
+      index < 0
+      && items.length === 1
+      && /(?:корзин|заказ|товар|позиц)/u.test(text)
+    ) {
+      index = 0
+    }
     if (index < 0) {
       if (!/(?:корзин|заказ|товар|позиц)/u.test(text)) {
         return null
@@ -1327,9 +1334,22 @@ export function parseChatCartCommand(value, draft) {
     }
   }
 
+  const newItemIntent = /(?:^|[\s,;.!?])(?:добав\p{L}*|закаж\p{L}*|беру|возьму)(?=$|[\s,;.!?])/u.test(text)
+  if (newItemIntent) return null
+
   const explicitAmount = explicitCartQuantity(text)
-  const mentionedItem = cartItemIndex(text, items)
-  const quantityIntent = /(?:измен(?:и|ить)|постав(?:ь|ить)|(?:^|\s)у\s+(?:перв|втор|трет))/u.test(text)
+  let mentionedItem = cartItemIndex(text, items)
+  const explicitQuantityIntent = /(?:измен(?:и|ить)|постав(?:ь|ить)|(?:^|\s)у\s+(?:перв|втор|трет))/u.test(text)
+
+  if (
+    mentionedItem < 0
+    && items.length === 1
+    && explicitQuantityIntent
+  ) {
+    mentionedItem = 0
+  }
+
+  const quantityIntent = explicitQuantityIntent
     || Boolean(explicitAmount && mentionedItem >= 0)
   if (quantityIntent) {
     const selected = mentionedItem
