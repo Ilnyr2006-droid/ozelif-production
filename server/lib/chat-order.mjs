@@ -1329,7 +1329,7 @@ export function parseChatCartCommand(value, draft) {
 
   const explicitAmount = explicitCartQuantity(text)
   const mentionedItem = cartItemIndex(text, items)
-  const quantityIntent = /(?:измен(?:и|ить)|постав(?:ь|ить)|количеств|(?:^|\s)у\s+(?:перв|втор|трет)|(?:^|\s)для\s+)/u.test(text)
+  const quantityIntent = /(?:измен(?:и|ить)|постав(?:ь|ить)|(?:^|\s)у\s+(?:перв|втор|трет))/u.test(text)
     || Boolean(explicitAmount && mentionedItem >= 0)
   if (quantityIntent) {
     const selected = mentionedItem

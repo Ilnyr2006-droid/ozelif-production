@@ -142,6 +142,35 @@ test('cart command changes quantity with a Cyrillic square unit', () => {
   assert.equal(command.update.operations[0].unit, 'DM2')
 })
 
+test('product selection for a jacket is not mistaken for a cart command', () => {
+  assert.equal(
+    parseChatCartCommand(
+      'Привет подбери пожалуйста кожу для куртки',
+      { items: [] },
+    ),
+    null,
+  )
+
+  assert.equal(
+    parseChatCartCommand(
+      'Подбери кожу для куртки',
+      readyDraft,
+    ),
+    null,
+  )
+})
+
+test('quantity with a named draft product remains deterministic', () => {
+  const command = parseChatCartCommand(
+    'для Chelsea Grey 10 фут²',
+    readyDraft,
+  )
+
+  assert.equal(command.kind, 'quantity')
+  assert.equal(command.update.operations[0].productId, 'p1')
+  assert.equal(command.update.operations[0].quantity, 10)
+})
+
 test('ambiguous remove and quantity commands ask for a product', () => {
   const remove = parseChatCartCommand(
     'удали товар из корзины',
