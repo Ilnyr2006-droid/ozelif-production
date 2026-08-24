@@ -362,13 +362,24 @@ export function formatTelegramCart(draft) {
   ].join('\n')
 }
 
-export function telegramCartInlineKeyboard() {
-  /*
-   * The cart itself is intentionally read-only in Telegram.
-   * Quantity changes, removals, additions and checkout are handled
-   * conversationally by the shared OZELIF assistant.
-   */
-  return []
+export function telegramCartInlineKeyboard(draft) {
+  const items = Array.isArray(draft?.items) ? draft.items : []
+
+  if (!items.length) return []
+
+  return [
+    [
+      { text: '➕ Добавить', callbackData: 'oz:add_more' },
+      { text: '✏️ Количество', callbackData: 'oz:change' },
+    ],
+    [
+      { text: '➖ Удалить', callbackData: 'oz:remove' },
+      { text: '🗑 Очистить', callbackData: 'oz:clear' },
+    ],
+    [
+      { text: '✅ Оформить заявку', callbackData: 'oz:checkout' },
+    ],
+  ]
 }
 
 function productAttribute(product, ...keys) {

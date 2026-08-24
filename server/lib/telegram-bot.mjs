@@ -405,12 +405,21 @@ export function telegramInlineCartAction(
               : data === 'oz:checkout'
                 ? {
                     text:
-                      'Оформить',
+                      'Оформить заказ из корзины',
                     replyToCard:
                       false,
                     notice:
                       'Переходим к оформлению…',
                   }
+                : data === 'oz:clear'
+                  ? {
+                      text:
+                        'Очистить корзину полностью',
+                      replyToCard:
+                        false,
+                      notice:
+                        'Очищаю корзину…',
+                    }
                 : null
   )
 }

@@ -802,6 +802,11 @@ export async function applyChatOrderDraftUpdate(
 
     let changed = Boolean(update?.startNewOrder)
 
+    if (update?.clearItems && items.length) {
+      items = []
+      changed = true
+    }
+
     let deliveryMethod = (
       update?.startNewOrder
         ? null
@@ -1076,8 +1081,209 @@ function simpleConfirmation(value) {
     .trim()
 
   return (
-    /^(?:все верно|верно|правильно|да(?: все верно)?|оформляй|оформить|подтверждаю|согласен|согласна)$/u
+    /^(?:все верно|подтверждаю заказ)$/u
   ).test(text)
+}
+
+function normalizedCartCommand(value) {
+  return String(value ?? '')
+    .trim()
+    .toLocaleLowerCase('ru')
+    .replace(/ё/gu, 'е')
+    .replace(/[«»"']/gu, '')
+    .replace(/\s+/gu, ' ')
+    .trim()
+}
+
+function cartItemIndex(text, items) {
+  if (!items.length) return -1
+
+  const ordinal = [
+    [/(?:^|[\s,;.!?])(?:перв(?:ый|ую|ое|ого)|1)(?=$|[\s,;.!?])/u, 0],
+    [/(?:^|[\s,;.!?])(?:втор(?:ой|ую|ое|ого)|2)(?=$|[\s,;.!?])/u, 1],
+    [/(?:^|[\s,;.!?])(?:трет(?:ий|ью|ье|ьего)|3)(?=$|[\s,;.!?])/u, 2],
+    [/(?:^|[\s,;.!?])последн(?:ий|юю|ее)(?=$|[\s,;.!?])/u, items.length - 1],
+  ].find(([pattern]) => pattern.test(text))
+
+  if (ordinal && ordinal[1] < items.length) {
+    return ordinal[1]
+  }
+
+  const matches = items
+    .map((item, index) => ({
+      index,
+      name: normalizedCartCommand(item.productName),
+    }))
+    .filter(item => item.name && text.includes(item.name))
+
+  if (matches.length === 1) return matches[0].index
+  if (items.length === 1) return 0
+  return -1
+}
+
+function cartSelectionReply(action, items) {
+  if (!items.length) {
+    return 'Корзина пуста. Напишите название товара, который хотите добавить.'
+  }
+
+  const verb = action === 'remove'
+    ? 'удалить'
+    : 'изменить количество у'
+
+  return [
+    `Уточните, какой товар нужно ${verb}:`,
+    '',
+    ...items.map((item, index) => `${index + 1}. ${item.productName}`),
+    '',
+    action === 'remove'
+      ? 'Например: «удали второй товар». '
+      : `Например: «у второго товара 10 ${items[1]?.unit ?? items[0]?.unit ?? 'ед.'}».`,
+  ].join('\n').trim()
+}
+
+function explicitCartQuantity(text) {
+  const matches = [
+    ...text.matchAll(
+      /(\d+(?:[.,]\d+)?)\s*(штук(?:а|и)?|шт\.?|фут(?:²|2|ов|а|ы)?|дм(?:²|2)|м(?:²|2))(?=$|[\s,;.!?])/giu,
+    ),
+  ]
+
+  if (matches.length !== 1) return null
+
+  const amount = Number(matches[0][1].replace(',', '.'))
+  if (!(amount > 0)) return null
+
+  const rawUnit = matches[0][2]
+    .toLocaleLowerCase('ru')
+    .replace(/ё/gu, 'е')
+
+  return {
+    quantity: amount,
+    unit: rawUnit.startsWith('шт')
+      ? 'PCS'
+      : rawUnit.startsWith('фут')
+        ? 'FOT'
+        : rawUnit.startsWith('дм')
+          ? 'DM2'
+          : 'M2',
+  }
+}
+
+export function parseChatCartCommand(value, draft) {
+  const text = normalizedCartCommand(value)
+  const items = Array.isArray(draft?.items) ? draft.items : []
+
+  if (!text) return null
+
+  if (/^(?:очисти|очистить) корзину(?: полностью)?[.!?]*$/u.test(text)) {
+    return {
+      kind: 'clear',
+      update: {
+        startNewOrder: draft?.status === 'created',
+        clearItems: true,
+        cancel: false,
+        confirm: false,
+        operations: [],
+      },
+    }
+  }
+
+  if (/^(?:все верно|подтверждаю заказ)[.!?]*$/u.test(text)) {
+    return {
+      kind: 'confirm',
+      update: {
+        startNewOrder: false,
+        cancel: false,
+        confirm: true,
+        operations: [],
+      },
+    }
+  }
+
+  if (/(?:оформ(?:и|ить)|сделай|создай)\s+(?:заказ|заявк)/u.test(text)) {
+    return { kind: 'checkout' }
+  }
+
+  if (/^(?:хочу )?добавить товар в корзину[.!?]*$/u.test(text)) {
+    return {
+      kind: 'prompt',
+      reply: 'Напишите название товара и количество. Например: «добавь Chelsea Pink, 10 фут²».',
+    }
+  }
+
+  const removeIntent = /(?:удал(?:и|ить)|убер(?:и|ите))(?=$|[\s,;.!?])/u.test(text)
+  if (removeIntent) {
+    const index = cartItemIndex(text, items)
+    if (index < 0) {
+      if (!/(?:корзин|заказ|товар|позиц)/u.test(text)) {
+        return null
+      }
+
+      return {
+        kind: 'prompt',
+        reply: cartSelectionReply('remove', items),
+      }
+    }
+
+    return {
+      kind: 'remove',
+      update: {
+        startNewOrder: false,
+        cancel: false,
+        confirm: false,
+        operations: [{
+          operation: 'remove',
+          productId: items[index].productId,
+          productName: items[index].productName,
+        }],
+      },
+    }
+  }
+
+  const explicitAmount = explicitCartQuantity(text)
+  const mentionedItem = cartItemIndex(text, items)
+  const quantityIntent = /(?:измен(?:и|ить)|постав(?:ь|ить)|количеств|(?:^|\s)у\s+(?:перв|втор|трет)|(?:^|\s)для\s+)/u.test(text)
+    || Boolean(explicitAmount && mentionedItem >= 0)
+  if (quantityIntent) {
+    const selected = mentionedItem
+    const amount = explicitAmount
+
+    if (selected < 0 || !amount) {
+      return {
+        kind: 'prompt',
+        reply: selected < 0
+          ? cartSelectionReply('quantity', items)
+          : `Укажите количество для ${items[selected].productName} вместе с единицей, например «10 ${items[selected].unit ?? 'ед.'}».`,
+      }
+    }
+
+    const item = items[selected]
+    return {
+      kind: 'quantity',
+      update: {
+        startNewOrder: false,
+        cancel: false,
+        confirm: false,
+        operations: [{
+          operation: 'upsert',
+          productId: item.productId,
+          productName: item.productName,
+          variantId: item.variantId,
+          quantity: amount.quantity,
+          unit: amount.unit,
+        }],
+      },
+    }
+  }
+
+  if (/^(?:хочу )?удалить товар из корзины[.!?]*$/u.test(text)) {
+    return {
+      kind: 'prompt',
+      reply: cartSelectionReply('remove', items),
+    }
+  }
+
+  return null
 }
 
 export async function applyImplicitChatOrderSignals(

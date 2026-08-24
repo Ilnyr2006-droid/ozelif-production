@@ -5,6 +5,7 @@ import {
   formatAmbiguousQuantityReply,
   formatChatOrderDraftReply,
   orderDraftMissingFields,
+  parseChatCartCommand,
   validateModelOrderDraftUpdate,
 } from './chat-order.mjs'
 
@@ -38,6 +39,79 @@ const readyDraft = {
     },
   ],
 }
+
+test('checkout asks for confirmation instead of confirming implicitly', () => {
+  const command = parseChatCartCommand(
+    'Оформить заказ из корзины',
+    readyDraft,
+  )
+
+  assert.equal(command.kind, 'checkout')
+  assert.equal(command.update, undefined)
+})
+
+test('only an explicit order phrase confirms the current draft', () => {
+  assert.equal(
+    parseChatCartCommand('да', readyDraft),
+    null,
+  )
+
+  const command = parseChatCartCommand(
+    'Подтверждаю заказ',
+    readyDraft,
+  )
+
+  assert.equal(command.kind, 'confirm')
+  assert.equal(command.update.confirm, true)
+})
+
+test('cart command removes an item by its catalog name', () => {
+  const command = parseChatCartCommand(
+    'удали Chelsea Grey',
+    readyDraft,
+  )
+
+  assert.equal(command.kind, 'remove')
+  assert.equal(command.update.operations[0].productId, 'p1')
+})
+
+test('cart command changes quantity with a Cyrillic square unit', () => {
+  const command = parseChatCartCommand(
+    'у второго товара 12 дм²',
+    readyDraft,
+  )
+
+  assert.equal(command.kind, 'quantity')
+  assert.equal(command.update.operations[0].productId, 'p2')
+  assert.equal(command.update.operations[0].quantity, 12)
+  assert.equal(command.update.operations[0].unit, 'DM2')
+})
+
+test('ambiguous remove and quantity commands ask for a product', () => {
+  const remove = parseChatCartCommand(
+    'удали товар из корзины',
+    readyDraft,
+  )
+  const quantity = parseChatCartCommand(
+    'измени количество товара в корзине',
+    readyDraft,
+  )
+
+  assert.equal(remove.kind, 'prompt')
+  assert.match(remove.reply, /1\. Chelsea Grey/u)
+  assert.equal(quantity.kind, 'prompt')
+  assert.match(quantity.reply, /2\. Amazon Black/u)
+})
+
+test('clear cart command removes all draft items', () => {
+  const command = parseChatCartCommand(
+    'Очистить корзину полностью',
+    readyDraft,
+  )
+
+  assert.equal(command.kind, 'clear')
+  assert.equal(command.update.clearItems, true)
+})
 
 test('multi-item order keeps quantity per product', () => {
   const reply = formatChatOrderDraftReply(readyDraft)

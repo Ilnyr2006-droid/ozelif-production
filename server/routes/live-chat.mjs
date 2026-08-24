@@ -20,6 +20,7 @@ import {
   formatAmbiguousQuantityReply,
   formatChatOrderDraftReply,
   loadChatOrderDraft,
+  parseChatCartCommand,
   validateModelOrderDraftUpdate,
 } from '../lib/chat-order.mjs'
 
@@ -995,6 +996,207 @@ export function createLiveChatRouter() {
       const telegramSelection = telegramSelectedProductRequest(
         request.body,
       )
+
+      /*
+       * Cart commands are deterministic and must keep working when OpenAI is
+       * unavailable or AI is disabled for a manager handoff. Product names
+       * are still resolved only through the published PostgreSQL catalog by
+       * applyChatOrderDraftUpdate; no product data is trusted from Telegram.
+       */
+      const cartCommand = parseChatCartCommand(
+        content,
+        currentOrderDraft,
+      )
+      let deterministicUpdate = cartCommand?.update ?? null
+      let deterministicReply = cartCommand?.reply ?? null
+      let deterministicCartHandled = Boolean(cartCommand)
+
+      if (
+        !deterministicCartHandled
+        && telegramSelectedProductOrderRequest(content)
+      ) {
+        const isTelegram =
+          safePath(request.body?.path) === 'telegram'
+        const priorTelegramRecommendation = isTelegram
+          ? await latestTelegramRecommendationProducts(
+              conversation.id,
+            )
+          : []
+        const selectedTelegramRecommendation =
+          telegramRecommendedProductsOrderRequest(
+            content,
+            priorTelegramRecommendation,
+          )
+
+        if (selectedTelegramRecommendation.length) {
+          deterministicUpdate = {
+            startNewOrder:
+              currentOrderDraft?.status === 'created',
+            cancel: false,
+            confirm: false,
+            operations:
+              selectedTelegramRecommendation.map(product => ({
+                operation: 'upsert',
+                productId: product.id,
+                productName: product.name,
+              })),
+          }
+          deterministicCartHandled = true
+        } else {
+          const namedTelegramProduct =
+            await namedTelegramCatalogProduct(content)
+
+          if (namedTelegramProduct) {
+            const namedTelegramQuantity =
+              telegramExplicitOrderQuantity(content)
+
+            deterministicUpdate = {
+              startNewOrder:
+                currentOrderDraft?.status === 'created',
+              cancel: false,
+              confirm: false,
+              operations: [{
+                operation: 'upsert',
+                productId: namedTelegramProduct.id,
+                productName: namedTelegramProduct.name,
+                ...(
+                  namedTelegramQuantity
+                    ? {
+                        quantity:
+                          namedTelegramQuantity.quantity,
+                        unit:
+                          namedTelegramQuantity.unit,
+                      }
+                    : {}
+                ),
+              }],
+            }
+            deterministicCartHandled = true
+          } else if (isTelegram && telegramSelection) {
+            deterministicUpdate = {
+              startNewOrder:
+                currentOrderDraft?.status === 'created',
+              cancel: false,
+              confirm: false,
+              operations: [{
+                operation: 'upsert',
+                productName: telegramSelection.productName,
+              }],
+            }
+            deterministicCartHandled = true
+          }
+        }
+      }
+
+      if (deterministicCartHandled) {
+        let draftResult = null
+
+        if (deterministicUpdate) {
+          draftResult = await applyChatOrderDraftUpdate(
+            conversation.id,
+            deterministicUpdate,
+          )
+          currentOrderDraft = draftResult.draft
+        }
+
+        const creation = await createChatOrderIfReady({
+          conversationId: conversation.id,
+          draft: currentOrderDraft,
+          name: responseConversation?.visitorName ?? null,
+          phone: responseConversation?.visitorPhone ?? null,
+        })
+
+        if (creation.created) {
+          currentOrderDraft = creation.draft
+          orderFlow = {
+            type: 'order',
+            status: 'created',
+            created: true,
+          }
+          deterministicReply = formatChatOrderDraftReply(
+            currentOrderDraft,
+            { created: true },
+          )
+        } else if (!deterministicReply) {
+          const confirmed =
+            currentOrderDraft?.status === 'awaiting_contact'
+
+          orderFlow = {
+            type: 'order',
+            status:
+              currentOrderDraft?.status ?? 'collecting',
+            created: false,
+          }
+          deterministicReply = formatChatOrderDraftReply(
+            currentOrderDraft,
+            {
+              needsContact:
+                confirmed
+                && !responseConversation?.visitorPhone,
+              needsNewOrderCommand: Boolean(
+                draftResult?.needsNewOrderCommand,
+              ),
+            },
+          )
+        }
+
+        const saved = await query(
+          `INSERT INTO live_chat_messages (
+             conversation_id,
+             role,
+             content,
+             metadata
+           )
+           VALUES ($1, 'assistant', $2, $3::jsonb)
+           RETURNING
+             id::text,
+             role,
+             content,
+             metadata,
+             created_at AS "createdAt"`,
+          [
+            conversation.id,
+            deterministicReply.trim(),
+            JSON.stringify({
+              products: [],
+              actions: [],
+              meta: { deterministicCart: true },
+              conversion,
+              orderFlow,
+              replyToClientMessageId: requestMessageId,
+            }),
+          ],
+        )
+
+        await query(
+          `UPDATE live_chat_conversations
+           SET last_message_at = now(), updated_at = now()
+           WHERE id = $1`,
+          [conversation.id],
+        )
+
+        responseConversation = await findConversation(
+          conversation.id,
+          readPublicToken(request),
+        )
+
+        response.status(201).json({
+          ok: true,
+          conversation: responseConversation,
+          userMessage: userMessage.rows[0],
+          assistant: {
+            reply: deterministicReply,
+            products: [],
+            actions: [],
+            meta: { deterministicCart: true },
+            message: saved.rows[0],
+          },
+          assistantError: null,
+          conversion,
+          orderFlow,
+        })
+        return
+      }
 
       if (freshConversation?.aiEnabled) {
         const historyResult = await query(

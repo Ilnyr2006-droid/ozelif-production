@@ -611,16 +611,24 @@ test(
 )
 
 test(
-  'does not attach action buttons to a non-empty Telegram cart',
+  'attaches complete cart controls to a non-empty Telegram cart',
   () => {
+    const keyboard = telegramCartInlineKeyboard({
+      items: [{
+        productName:
+          'Napato Black',
+      }],
+    })
+
     assert.deepEqual(
-      telegramCartInlineKeyboard({
-        items: [{
-          productName:
-            'Napato Black',
-        }],
-      }),
-      [],
+      keyboard.flat().map(button => button.callbackData),
+      [
+        'oz:add_more',
+        'oz:change',
+        'oz:remove',
+        'oz:clear',
+        'oz:checkout',
+      ],
     )
   },
 )
@@ -819,9 +827,17 @@ test(
       /Napato Black/u,
     )
 
-    assert.equal(
-      payload.inlineKeyboard,
-      undefined,
+    assert.deepEqual(
+      payload.inlineKeyboard.flat().map(
+        button => button.callbackData,
+      ),
+      [
+        'oz:add_more',
+        'oz:change',
+        'oz:remove',
+        'oz:clear',
+        'oz:checkout',
+      ],
     )
   },
 )

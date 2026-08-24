@@ -157,7 +157,14 @@ test(
       telegramInlineCartAction(
         'oz:checkout',
       )?.text,
-      'Оформить',
+      'Оформить заказ из корзины',
+    )
+
+    assert.equal(
+      telegramInlineCartAction(
+        'oz:clear',
+      )?.text,
+      'Очистить корзину полностью',
     )
   },
 )
