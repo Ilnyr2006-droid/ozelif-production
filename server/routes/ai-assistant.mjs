@@ -24,6 +24,9 @@ import {
   extractOrderDraftToolCalls,
   formatOrderDraftContext,
 } from '../lib/ai-order-draft.mjs'
+import {
+  formatChatOrderHistoryContext,
+} from '../lib/chat-order.mjs'
 
 const WINDOW_MS = 10 * 60 * 1000
 const MAX_REQUESTS_PER_WINDOW = 24
@@ -141,6 +144,7 @@ async function createAssistantReply({
   currentProfile = {},
   allowOrderDraftUpdate = false,
   currentOrderDraft = null,
+  orderHistory = [],
 }) {
   const apiKey = String(
     process.env.OPENAI_API_KEY ?? '',
@@ -210,6 +214,8 @@ async function createAssistantReply({
       'confirm=true ставь только когда покупатель явно подтвердил уже показанный итог заказа: например «всё верно», «верно», «подтверждаю», «оформляй» или однозначный эквивалент.',
       'Никогда не утверждай, что заказ создан: update_chat_order_draft меняет только черновик. Факт создания сообщает только сервер.',
       'Не показывай PRODUCT_ID или VARIANT_ID покупателю.',
+      'ИСТОРИЯ ЗАКАЗОВ доступна только для справки и уже сохранена в PostgreSQL/CRM. Не изменяй её и не называй заказ созданным, если его нет в этой истории.',
+      'Если покупатель спрашивает о прошлых заказах, отвечай только по ИСТОРИИ ЗАКАЗОВ ЭТОГО ЧАТА. Не подменяй её текущим черновиком.',
     ].join('\n')
 
     const input = [
@@ -233,6 +239,11 @@ async function createAssistantReply({
               'ТЕКУЩИЙ ЧЕРНОВИК ЗАКАЗА:',
               formatOrderDraftContext(
                 currentOrderDraft,
+              ),
+              '',
+              'ИСТОРИЯ ЗАКАЗОВ ЭТОГО ЧАТА:',
+              formatChatOrderHistoryContext(
+                orderHistory,
               ),
               '',
               'УТОЧНЯЮЩИЙ ВОПРОС:',
@@ -395,6 +406,12 @@ export function createAiAssistantRouter() {
       ? request.body.orderDraft
       : null
 
+    const orderHistory = Array.isArray(
+      request.body?.orderHistory,
+    )
+      ? request.body.orderHistory.slice(0, 10)
+      : []
+
     if (!message) {
       response.status(400).json({
         error: 'Сообщение не должно быть пустым.',
@@ -424,6 +441,7 @@ export function createAiAssistantRouter() {
         currentProfile,
         allowOrderDraftUpdate: allowProfileCapture,
         currentOrderDraft,
+        orderHistory,
       })
 
       const reply = sanitizeSalesReply(

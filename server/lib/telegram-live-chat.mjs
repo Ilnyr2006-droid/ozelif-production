@@ -362,26 +362,6 @@ export function formatTelegramCart(draft) {
   ].join('\n')
 }
 
-export function telegramCartInlineKeyboard(draft) {
-  const items = Array.isArray(draft?.items) ? draft.items : []
-
-  if (!items.length) return []
-
-  return [
-    [
-      { text: '➕ Добавить', callbackData: 'oz:add_more' },
-      { text: '✏️ Количество', callbackData: 'oz:change' },
-    ],
-    [
-      { text: '➖ Удалить', callbackData: 'oz:remove' },
-      { text: '🗑 Очистить', callbackData: 'oz:clear' },
-    ],
-    [
-      { text: '✅ Оформить заявку', callbackData: 'oz:checkout' },
-    ],
-  ]
-}
-
 function productAttribute(product, ...keys) {
   const attributes = product?.attributes
   if (!attributes || typeof attributes !== 'object') return ''
@@ -878,10 +858,6 @@ export function createTelegramLiveChatBridge({
               }`,
             text:
               formatTelegramCart(
-                draft,
-              ),
-            inlineKeyboard:
-              telegramCartInlineKeyboard(
                 draft,
               ),
           },

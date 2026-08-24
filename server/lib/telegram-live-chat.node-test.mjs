@@ -10,7 +10,6 @@ import {
   telegramProductCaption,
   telegramProductInlineKeyboard,
   telegramProductPhotos,
-  telegramCartInlineKeyboard,
   telegramCartRequested,
   telegramLiveChatToken,
 } from './telegram-live-chat.mjs'
@@ -591,47 +590,14 @@ test(
   },
 )
 
-test(
-  'does not attach action buttons to an empty Telegram cart',
-  () => {
-    assert.match(
-      formatTelegramCart({
-        items: [],
-      }),
-      /Корзина пока пуста/u,
-    )
-
-    assert.deepEqual(
-      telegramCartInlineKeyboard({
-        items: [],
-      }),
-      [],
-    )
-  },
-)
-
-test(
-  'attaches complete cart controls to a non-empty Telegram cart',
-  () => {
-    const keyboard = telegramCartInlineKeyboard({
-      items: [{
-        productName:
-          'Napato Black',
-      }],
-    })
-
-    assert.deepEqual(
-      keyboard.flat().map(button => button.callbackData),
-      [
-        'oz:add_more',
-        'oz:change',
-        'oz:remove',
-        'oz:clear',
-        'oz:checkout',
-      ],
-    )
-  },
-)
+test('formats an empty Telegram cart without action controls', () => {
+  assert.match(
+    formatTelegramCart({
+      items: [],
+    }),
+    /Корзина пока пуста/u,
+  )
+})
 
 test(
   'recognizes deterministic Telegram cart requests',
@@ -827,17 +793,9 @@ test(
       /Napato Black/u,
     )
 
-    assert.deepEqual(
-      payload.inlineKeyboard.flat().map(
-        button => button.callbackData,
-      ),
-      [
-        'oz:add_more',
-        'oz:change',
-        'oz:remove',
-        'oz:clear',
-        'oz:checkout',
-      ],
+    assert.equal(
+      payload.inlineKeyboard,
+      undefined,
     )
   },
 )

@@ -1,5 +1,6 @@
 import {
   createOrder,
+  ORDER_STATUS_LABELS,
 } from './order-crm.mjs'
 
 import {
@@ -165,6 +166,92 @@ export async function loadChatOrderDraft(
   )
 
   return mapDraft(result.rows[0])
+}
+
+export async function loadChatOrderHistory(
+  conversationId,
+  client = null,
+) {
+  const executor = client ?? { query }
+  const prefix = `ai-chat:${conversationId}:`
+
+  const result = await executor.query(
+    `SELECT
+       o.public_number AS "publicNumber",
+       o.status,
+       o.total_amount AS "totalAmount",
+       o.delivery_method AS "deliveryMethod",
+       o.delivery_city AS "deliveryCity",
+       o.created_at AS "createdAt",
+       COALESCE(
+         (
+           SELECT json_agg(
+             json_build_object(
+               'productName', i.product_name_snapshot,
+               'quantity', i.quantity,
+               'unit', i.unit
+             )
+             ORDER BY i.id
+           )
+           FROM order_items i
+           WHERE i.order_id = o.id
+         ),
+         '[]'::json
+       ) AS items
+     FROM orders o
+     WHERE o.source = 'ai_chat'
+       AND left(o.idempotency_key, length($1)) = $1
+     ORDER BY o.created_at DESC, o.id DESC
+     LIMIT 10`,
+    [prefix],
+  )
+
+  return result.rows.map(row => ({
+    publicNumber: clean(row.publicNumber, 80),
+    status: clean(row.status, 80),
+    totalAmount: number(row.totalAmount),
+    deliveryMethod: clean(row.deliveryMethod, 80),
+    deliveryCity: clean(row.deliveryCity, 160),
+    createdAt: row.createdAt ?? null,
+    items: Array.isArray(row.items)
+      ? row.items.map(item => ({
+          productName: clean(item?.productName, 240),
+          quantity: number(item?.quantity),
+          unit: clean(item?.unit, 40),
+        })).filter(item => item.productName)
+      : [],
+  }))
+}
+
+export function formatChatOrderHistoryContext(history) {
+  const orders = Array.isArray(history)
+    ? history.slice(0, 10)
+    : []
+
+  if (!orders.length) {
+    return 'Сохранённых заказов из этого чата пока нет.'
+  }
+
+  return orders.map((order, index) => {
+    const status = ORDER_STATUS_LABELS[order?.status]
+      ?? clean(order?.status, 80)
+      ?? 'Статус не указан'
+    const items = Array.isArray(order?.items)
+      ? order.items
+      : []
+    const itemText = items.length
+      ? items.map(item => (
+          `${clean(item?.productName, 240) ?? 'Товар'} — `
+          + `${quantity(item?.quantity)} ${displayUnit(item?.unit)}`
+        )).join('; ')
+      : 'состав не указан'
+
+    return [
+      `${index + 1}. Заказ №${clean(order?.publicNumber, 80) ?? 'без номера'} — ${status}.`,
+      `Состав: ${itemText}.`,
+      `Сумма: ${money(order?.totalAmount)}.`,
+    ].join('\n')
+  }).join('\n\n')
 }
 
 async function productRecord(client, operation) {

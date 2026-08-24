@@ -19,6 +19,7 @@ import {
   createChatOrderIfReady,
   formatAmbiguousQuantityReply,
   formatChatOrderDraftReply,
+  loadChatOrderHistory,
   loadChatOrderDraft,
   parseChatCartCommand,
   validateModelOrderDraftUpdate,
@@ -408,6 +409,7 @@ async function callAssistant(
   profile,
   requestIp,
   orderDraft,
+  orderHistory,
 ) {
   const port = Number(process.env.PORT ?? 8093)
 
@@ -433,6 +435,9 @@ async function callAssistant(
   }
 
   payload.orderDraft = orderDraft ?? null
+  payload.orderHistory = Array.isArray(orderHistory)
+    ? orderHistory
+    : []
 
   const response = await fetch(
     `http://127.0.0.1:${port}/api/assistant`,
@@ -1214,6 +1219,14 @@ export function createLiveChatRouter() {
           ),
         )
 
+        const orderHistory = (
+          safePath(request.body?.path) === 'telegram'
+            ? await loadChatOrderHistory(
+                conversation.id,
+              )
+            : []
+        )
+
         try {
           const generated = await callAssistant(
             request.body?.assistantRequest,
@@ -1222,6 +1235,7 @@ export function createLiveChatRouter() {
             freshConversation,
             clientIp(request),
             currentOrderDraft,
+            orderHistory,
           )
 
           const profileUpdate = normalizeCustomerProfileUpdate(

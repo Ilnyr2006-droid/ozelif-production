@@ -3,7 +3,9 @@ import test from 'node:test'
 
 import {
   formatAmbiguousQuantityReply,
+  formatChatOrderHistoryContext,
   formatChatOrderDraftReply,
+  loadChatOrderHistory,
   orderDraftMissingFields,
   parseChatCartCommand,
   validateModelOrderDraftUpdate,
@@ -39,6 +41,59 @@ const readyDraft = {
     },
   ],
 }
+
+test('loads only saved CRM orders created by the current chat', async () => {
+  const calls = []
+  const history = await loadChatOrderHistory(
+    '11111111-1111-4111-8111-111111111111',
+    {
+      query: async (sql, params) => {
+        calls.push({ sql, params })
+        return {
+          rows: [{
+            publicNumber: '1042',
+            status: 'new',
+            totalAmount: '874.10',
+            deliveryMethod: 'pickup',
+            deliveryCity: null,
+            createdAt: new Date('2026-08-24T12:00:00Z'),
+            items: [{
+              productName: 'Napato Black',
+              quantity: '2',
+              unit: 'FOT',
+            }],
+          }],
+        }
+      },
+    },
+  )
+
+  assert.match(calls[0].sql, /o\.source = 'ai_chat'/u)
+  assert.match(calls[0].sql, /left\(o\.idempotency_key/u)
+  assert.equal(
+    calls[0].params[0],
+    'ai-chat:11111111-1111-4111-8111-111111111111:',
+  )
+  assert.equal(history[0].publicNumber, '1042')
+  assert.equal(history[0].items[0].productName, 'Napato Black')
+})
+
+test('formats saved chat order history for the assistant context', () => {
+  const context = formatChatOrderHistoryContext([{
+    publicNumber: '1042',
+    status: 'new',
+    totalAmount: 874.1,
+    items: [{
+      productName: 'Napato Black',
+      quantity: 2,
+      unit: 'FOT',
+    }],
+  }])
+
+  assert.match(context, /Заказ №1042 — Новый/u)
+  assert.match(context, /Napato Black — 2 фут²/u)
+  assert.match(context, /874,1 ₽/u)
+})
 
 test('checkout asks for confirmation instead of confirming implicitly', () => {
   const command = parseChatCartCommand(
