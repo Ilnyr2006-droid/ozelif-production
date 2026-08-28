@@ -30,7 +30,7 @@ const response = await openAiRequest('/responses', {
     store: false,
     instructions: 'Ответь одним словом: OK',
     input: 'Проверка соединения.',
-    max_output_tokens: 40,
+    max_output_tokens: 160,
   },
   timeoutMs: 40_000,
 })
