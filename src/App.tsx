@@ -28,6 +28,7 @@ const GenericCatalogPage = lazy(async () => ({ default: (await import('./compone
 const GenericProductPage = lazy(async () => ({ default: (await import('./components/ApiCategoryPages')).GenericProductFromApi }))
 const SaleProductsSection = lazy(async () => ({ default: (await import('./components/SaleProducts')).SaleProductsSection }))
 const SalePage = lazy(async () => ({ default: (await import('./components/SaleProducts')).SalePage }))
+const NewPage = lazy(async () => ({ default: (await import('./components/SaleProducts')).NewPage }))
 const DeliveryPaymentPage = lazy(async () => ({ default: (await import('./components/DeliveryPaymentPage')).DeliveryPaymentPage }))
 const ContactsPage = lazy(async () => ({ default: (await import('./components/ContactsPage')).ContactsPage }))
 const PrivacyPage = lazy(async () => ({ default: (await import('./components/PrivacyPage')).PrivacyPage }))
@@ -246,6 +247,7 @@ function AppRoutes() {
   const isHardwareCatalogPage = ['/furnitura', '/furnitura/'].includes(pathname)
   const isHardwareProductPage = /^\/furnitura\/tproduct\/\d+-/.test(pathname)
   const isSalePage = ['/sale', '/sale/'].includes(pathname)
+  const isNewPage = ['/new', '/new/'].includes(pathname)
   const isDeliveryPage = ['/delivery', '/delivery/', '/info', '/info/'].includes(pathname)
   const isContactsPage = ['/contacts', '/contacts/'].includes(pathname)
   const isPrivacyPage = ['/privacy', '/privacy/'].includes(pathname)
@@ -338,6 +340,7 @@ if (isShearlingCatalogPage) return <ShearlingCatalogPage/>
   if (isHardwareProductPage) return <HardwareProductPage/>
   if (isHardwareCatalogPage) return <HardwareCatalogPage/>
   if (isSalePage) return <SalePage/>
+  if (isNewPage) return <NewPage/>
   if (isDeliveryPage) return <DeliveryPaymentPage/>
   if (isContactsPage) return <ContactsPage/>
   if (isPrivacyPage) return <PrivacyPage/>

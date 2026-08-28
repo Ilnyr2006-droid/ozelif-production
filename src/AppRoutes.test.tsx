@@ -50,6 +50,7 @@ describe('application routes', () => {
     ['/galantereynayakozha', /Натуральная галантерейная кожа/],
     [`/dublyonka/tproduct/${shearlingProducts[0].id}-${shearlingProducts[0].slug}`, new RegExp(shearlingProducts[0].title)],
     ['/sale', /Товары.*скидкой/],
+    ['/new', /Новое.*каталоге/],
     ['/delivery', /Доставка.*оплата/],
     ['/info', /Доставка.*оплата/],
     ['/contacts', /Контакты.*шоурум/],

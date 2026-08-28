@@ -22,6 +22,7 @@ async function withServer(repository, verify) {
 test('serves the public category and product contracts', async () => {
   const repository = {
     listCategories: async () => [{ id: 'odejnayakozha', name: 'Одежная кожа' }],
+    listNewestProducts: async () => [{ id: 'newest', variants: [], images: [] }],
     listProducts: async () => ({
       category: { id: 'odejnayakozha', name: 'Одежная кожа' },
       pagination: { limit: 24, offset: 0, total: 1, hasMore: false },
@@ -44,12 +45,17 @@ test('serves the public category and product contracts', async () => {
     const detail = await fetch(`${baseUrl}/api/public/catalog/v1/categories/odejnayakozha/products/814535079882`)
     assert.equal(detail.status, 200)
     assert.equal((await detail.json()).item.id, '814535079882')
+
+    const newest = await fetch(`${baseUrl}/api/public/catalog/v1/new?limit=12`)
+    assert.equal(newest.status, 200)
+    assert.equal((await newest.json()).items[0].id, 'newest')
   })
 })
 
 test('returns JSON 404 for a missing public catalog item', async () => {
   const repository = {
     listCategories: async () => [],
+    listNewestProducts: async () => [],
     listProducts: async () => null,
     getProduct: async () => null,
   }

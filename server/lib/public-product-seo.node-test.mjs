@@ -76,6 +76,21 @@ test('renders escaped product metadata and JSON-LD into the application shell', 
   assert.equal((html.match(/<title>/g) ?? []).length, 1)
 })
 
+test('prioritizes zipper tape color in product descriptions', () => {
+  const black = getProductSeoMetadata({
+    name: 'Молния YKK 18 см,тёмный никель',
+    attributes: { subtype: 'Молнии', tapeColor: 'Черный', country: 'Япония', brand: 'YKK', length: '18 см', zipperType: '8', metalColor: 'Тёмный никель' },
+  }, { categoryName: 'Фурнитура' })
+  const beige = getProductSeoMetadata({
+    name: 'Молния YKK 18 см,тёмный никель',
+    attributes: { subtype: 'Молнии', tapeColor: 'Бежевый', country: 'Япония', brand: 'YKK', length: '18 см', zipperType: '8', metalColor: 'Тёмный никель' },
+  }, { categoryName: 'Фурнитура' })
+
+  assert.notEqual(black.description, beige.description)
+  assert.match(black.description, /Цвет ленты: Черный/)
+  assert.match(beige.description, /Цвет ленты: Бежевый/)
+})
+
 test('does not disguise duplicate descriptions with a product number', () => {
   const first = getProductSeoMetadata({
     id: '378521427732',

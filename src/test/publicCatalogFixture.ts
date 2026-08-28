@@ -18,6 +18,7 @@ export function stubPublicCatalogApi(categorySlug: string, products: StaticProdu
         { databaseId: 'galantereynayakozha', slug: 'galantereynayakozha', name: 'Галантерейная кожа', description: 'Материал для сумок, ремней, кошельков и малых кожаных изделий.', coverImage: '/images/categories/leather-goods.webp', filterConfig: null, seoTitle: null, seoDescription: null, showOnHome: true, showInMenu: true },
       ] }), { headers: { 'Content-Type': 'application/json' } })
     }
+    if (path.includes('/api/public/catalog/v1/new')) return new Response(JSON.stringify({ items }), { headers: { 'Content-Type': 'application/json' } })
     if (path.includes('/categories/galantereynayakozha/products')) {
       return new Response(JSON.stringify({ category: { slug: 'galantereynayakozha', name: 'Галантерейная кожа', description: 'Материал для сумок, ремней, кошельков и малых кожаных изделий.', coverImage: '/images/categories/leather-goods.webp' }, pagination: { limit: 48, offset: 0, total: 0, hasMore: false }, items: [] }), { headers: { 'Content-Type': 'application/json' } })
     }

@@ -215,6 +215,11 @@ export async function fetchPublicCatalogSale(signal?: AbortSignal): Promise<Publ
   return body.items.map(normalizePublicCatalogProduct)
 }
 
+export async function fetchPublicCatalogNewest(signal?: AbortSignal): Promise<PublicCatalogProduct[]> {
+  const body = await request<{ items: PublicCatalogApiProduct[] }>('/new?limit=12', signal)
+  return body.items.map(normalizePublicCatalogProduct)
+}
+
 export async function fetchAllPublicCatalogProducts(categorySlug: string, signal?: AbortSignal): Promise<PublicCatalogListResponse> {
   const first = await fetchPublicCatalogProducts(categorySlug, { limit: 48, offset: 0, signal })
   const items = [...first.items]

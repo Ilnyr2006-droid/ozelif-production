@@ -23,6 +23,10 @@ export function createPublicCatalogRouter({ repository = createPublicCatalogRepo
     response.json({ items: await repository.listSaleProducts() })
   }))
 
+  router.get('/new', asyncRoute(async (request, response) => {
+    response.json({ items: await repository.listNewestProducts(request.query.limit) })
+  }))
+
   router.get('/categories/:categorySlug/products', asyncRoute(async (request, response) => {
     const result = await repository.listProducts(
       request.params.categorySlug,

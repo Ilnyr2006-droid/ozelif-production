@@ -130,6 +130,7 @@ function productFacts(product) {
     ['Материал', attributes.material],
     ['Цвет', attributes.color || attributes.normalizedColor],
     ['Фактура', attributes.subtype || attributes.categories],
+    ['Цвет ленты', attributes.tapeColor],
     ['Покрытие', attributes.coating],
     ['Толщина', attributes.thickness],
     ['Размер шкуры', attributes.hideSize],
@@ -138,7 +139,6 @@ function productFacts(product) {
     ['Длина', attributes.length],
     ['Тип', attributes.zipperType],
     ['Цвет металла', attributes.metalColor],
-    ['Цвет ленты', attributes.tapeColor],
   ]
 
   return facts

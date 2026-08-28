@@ -288,6 +288,25 @@ export function createPublicCatalogRepository({ query = databaseQuery } = {}) {
         .filter(Boolean)
     },
 
+    async listNewestProducts(limit = 12) {
+      const maximum = Math.min(Math.max(Number.parseInt(limit, 10) || 12, 1), 24)
+      const result = await query(`
+        SELECT ${productJson} AS item
+        FROM products p
+        JOIN categories c ON c.id = p.category_id
+        ${variantsLateral}
+        ${imagesLateral}
+        WHERE p.is_published = true
+          AND c.is_published = true
+        ORDER BY p.updated_at DESC, p.id DESC
+        LIMIT $1
+      `, [maximum])
+
+      return result.rows
+        .map(row => normalizePublicProductPricing(parseJson(row.item, null)))
+        .filter(Boolean)
+    },
+
     async getProduct(categorySlug, identifier) {
       const slug = normalizeCategorySlug(categorySlug)
       const productIdentifier = normalizeProductIdentifier(identifier)

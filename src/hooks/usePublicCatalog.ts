@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { fetchAllPublicCatalogProducts, fetchPublicCatalogCategories, fetchPublicCatalogProduct, fetchPublicCatalogSale, normalizePublicCatalogProduct, type PublicCatalogApiProduct, type PublicCatalogCategory, type PublicCatalogListResponse, type PublicCatalogProduct } from '../api/publicCatalog'
+import { fetchAllPublicCatalogProducts, fetchPublicCatalogCategories, fetchPublicCatalogNewest, fetchPublicCatalogProduct, fetchPublicCatalogSale, normalizePublicCatalogProduct, type PublicCatalogApiProduct, type PublicCatalogCategory, type PublicCatalogListResponse, type PublicCatalogProduct } from '../api/publicCatalog'
 
 type LoadState<T> = { data: T | null; isLoading: boolean; error: Error | null }
 
@@ -111,4 +111,9 @@ export function usePublicCatalogCategories() {
 export function usePublicCatalogSale() {
   const load = useCallback((signal: AbortSignal) => fetchPublicCatalogSale(signal), [])
   return useLoader<PublicCatalogProduct[]>(load, 'public-catalog-sale')
+}
+
+export function usePublicCatalogNewest() {
+  const load = useCallback((signal: AbortSignal) => fetchPublicCatalogNewest(signal), [])
+  return useLoader<PublicCatalogProduct[]>(load, 'public-catalog-newest')
 }
