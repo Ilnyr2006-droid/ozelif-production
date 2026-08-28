@@ -10,7 +10,6 @@ import {
 import { normalizeClientMessageId, readPublicToken } from '../lib/live-chat-auth.mjs'
 import { normalizeCustomerProfileUpdate } from '../lib/ai-customer-profile.mjs'
 import { syncCustomerFromLiveChatContact } from '../lib/customer-contact.mjs'
-import { classifyAssistantIntent } from '../lib/ai-query-intent.mjs'
 import { buildConversionDecision } from '../lib/ai-conversion.mjs'
 import { safeEnqueueAdminNotification } from '../lib/admin-notifications.mjs'
 import {
@@ -912,10 +911,9 @@ export function createLiveChatRouter() {
         readPublicToken(request),
       )
 
-      const localIntent = classifyAssistantIntent(content)
       const initialConversion = buildConversionDecision({
         message: content,
-        intentType: localIntent.type,
+        intentType: null,
         hasPhone: Boolean(freshConversation?.visitorPhone),
         offerAlreadyShown: Boolean(
           freshConversation?.contactOfferShownAt,
@@ -925,15 +923,11 @@ export function createLiveChatRouter() {
       await recordLeadSignal(
         conversation.id,
         {
-          intentType: localIntent.type,
+          intentType: null,
           score: initialConversion.score,
           contactOfferShown:
             initialConversion.shouldOfferContact,
-          productInterest: [
-            'product',
-            'wholesale',
-            'production',
-          ].includes(localIntent.type),
+          productInterest: false,
         },
       )
 
@@ -941,7 +935,7 @@ export function createLiveChatRouter() {
         await requestManager(
           conversation.id,
           {
-            intentType: localIntent.type,
+            intentType: null,
             score: initialConversion.score,
             reason: 'explicit_customer_request',
             disableAi: true,
@@ -1514,7 +1508,7 @@ export function createLiveChatRouter() {
 
           const afterProfileDecision = buildConversionDecision({
             message: content,
-            intentType: localIntent.type,
+            intentType: null,
             hasPhone: Boolean(
               responseConversation?.visitorPhone,
             ),
@@ -1528,7 +1522,7 @@ export function createLiveChatRouter() {
             await requestManager(
               conversation.id,
               {
-                intentType: localIntent.type,
+                intentType: null,
                 score: afterProfileDecision.score,
                 reason: 'high_intent_with_contact',
                 disableAi: false,
