@@ -10,6 +10,7 @@ import {
   extractResponseText,
   latestUserText,
   productActions,
+  requiresDeterministicCatalogReply,
   sanitizeUnverifiedStockClaims,
 } from '../lib/ai-assistant-format.mjs'
 import {
@@ -420,11 +421,54 @@ export function createAiAssistantRouter() {
     }
 
     const intent = classifyAssistantIntent(message)
-    const retrieval = intent.needsProducts
-      ? await findLiveProductCandidates(message, { limit: 3 })
+    const catalogOnlyReply = requiresDeterministicCatalogReply({
+      intent,
+      message,
+      messages,
+    })
+    const retrieval = catalogOnlyReply
+      ? await findLiveProductCandidates(
+          messages
+            .filter(item => item?.role === 'user')
+            .map(item => item.content)
+            .join(' ')
+            .slice(-1400) || message,
+          { limit: 3 },
+        )
       : emptyRetrievalResult()
     const products = retrieval.products
     const actions = productActions(products)
+
+    if (catalogOnlyReply) {
+      const reply = sanitizeSalesReply(
+        sanitizeUnverifiedStockClaims(
+          deterministicCatalogReply(
+            products,
+            retrieval.clarificationQuestion ?? null,
+          ),
+          products,
+        ),
+      )
+
+      response.setHeader('Cache-Control', 'no-store')
+      response.json({
+        reply,
+        profileUpdate: null,
+        orderDraftUpdate: null,
+        actions,
+        products: products.slice(0, 3),
+        meta: {
+          source: 'deterministic_verified_catalog',
+          intent: intent.type,
+          semanticMatches: retrieval.semantic.matches.length,
+          lexicalMatches: retrieval.lexical.count,
+          constraints: retrieval.constraints ?? null,
+          clarificationQuestion:
+            retrieval.clarificationQuestion ?? null,
+        },
+      })
+      return
+    }
 
     try {
       const generated = await createAssistantReply({

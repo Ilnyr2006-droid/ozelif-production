@@ -337,10 +337,11 @@ export function deterministicCatalogReply(
 ) {
   if (!Array.isArray(products) || !products.length) {
     return (
-      'По этому запросу я пока не нашёл точного совпадения '
-      + 'в опубликованном каталоге. Уточните, пожалуйста, '
-      + 'что вы хотите изготовить, нужный цвет, толщину '
-      + 'или примерный бюджет.'
+      'Я не нашёл точного совпадения в опубликованном каталоге. '
+      + 'Без конкретной подтверждённой карточки я не могу назвать '
+      + 'производителя, страну, толщину, выделку или наличие. '
+      + 'Если эти условия обязательны, менеджер сможет проверить '
+      + 'подходящую партию.'
     )
   }
 
@@ -371,6 +372,32 @@ export function deterministicCatalogReply(
         + 'я сузжу подбор.'
       ),
   ].join('\n')
+}
+
+const ORDER_DRAFT_REQUEST = /(?:корзин|добав(?:ь|ить)|убер(?:и|ать)|оформ(?:и|ить)|заказ(?:ать|а)?)/iu
+const CATALOG_FACT_QUESTION = /(?:производител|производств|стран|происхожд|толщин|выделк|бахтарм|налич|остат|ягнен|козлен|шевро)/iu
+const PRODUCT_CONTEXT = /(?:кож|замш|дублен|овчин|козлин|товар|материал|перчат)/iu
+
+export function requiresDeterministicCatalogReply({
+  intent = null,
+  message = '',
+  messages = [],
+} = {}) {
+  const current = String(message ?? '').trim()
+  if (!current || ORDER_DRAFT_REQUEST.test(current)) return false
+  if (intent?.needsProducts) return true
+
+  const history = Array.isArray(messages)
+    ? messages
+        .filter(item => item?.role === 'user')
+        .map(item => String(item.content ?? ''))
+        .join(' ')
+    : ''
+
+  return (
+    CATALOG_FACT_QUESTION.test(current)
+    && PRODUCT_CONTEXT.test(history)
+  )
 }
 
 export function assistantProductContext(products, needsProducts) {
