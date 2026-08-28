@@ -57,15 +57,6 @@ test('keeps real product selection on hybrid retrieval', () => {
   assert.equal(result.isInformation, false)
 })
 
-test('treats a detailed leather search as product retrieval before wholesale wording', () => {
-  const result = classifyAssistantIntent(
-    'Ищу перчаточную кожу: ягненок или козленок шевро, тонкая выделка',
-  )
-
-  assert.equal(result.type, 'product')
-  assert.equal(result.needsProducts, true)
-})
-
 test('explicit selection remains product even when manager is mentioned', () => {
   const result = classifyAssistantIntent(
     'Подберите черную кожу для сумки и потом дайте контакт менеджера',

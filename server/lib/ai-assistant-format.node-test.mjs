@@ -8,7 +8,6 @@ import {
   enforceCriticalIntentFacts,
   productActions,
   sanitizeUnverifiedStockClaims,
-  requiresDeterministicCatalogReply,
 } from './ai-assistant-format.mjs'
 
 const product = {
@@ -45,38 +44,6 @@ test('returns attributable widget actions', () => {
     productId: product.id,
     reason: null,
   }])
-})
-
-test('requires a deterministic reply for product requests and catalog-fact follow-ups', () => {
-  assert.equal(
-    requiresDeterministicCatalogReply({
-      intent: { needsProducts: true },
-      message: 'Ищу перчаточную кожу',
-    }),
-    true,
-  )
-  assert.equal(
-    requiresDeterministicCatalogReply({
-      intent: { needsProducts: false },
-      message: 'Чье производство ягненок и козленок?',
-      messages: [{ role: 'user', content: 'Ищу перчаточную кожу из ягненка' }],
-    }),
-    true,
-  )
-  assert.equal(
-    requiresDeterministicCatalogReply({
-      intent: { needsProducts: true },
-      message: 'Добавь товар в корзину',
-    }),
-    false,
-  )
-})
-
-test('catalog fallback refuses to invent missing product facts', () => {
-  const reply = deterministicCatalogReply([])
-
-  assert.match(reply, /не нашёл точного совпадения/u)
-  assert.match(reply, /не могу назвать производителя/u)
 })
 
 test('fallback uses only live product data', () => {

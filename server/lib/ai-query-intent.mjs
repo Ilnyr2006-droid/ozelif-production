@@ -150,10 +150,9 @@ const INFORMATION_RULES = [
 export function classifyAssistantIntent(message) {
   const text = normalizeIntentText(message)
   const productSignal = includesAny(text, PRODUCT_FRAGMENTS)
-  const strongProductRequest = (
+  const strongProductRequest =
     includesAny(text, STRONG_PRODUCT_PHRASES)
-    || /(?:^|\s)ищ(?:у|ем|ете|ут)(?:\s|$)/u.test(text)
-  ) && productSignal
+    && productSignal
 
   // Явный запрос на подбор товара важнее слова «менеджер»
   // или других сопутствующих информационных слов.
