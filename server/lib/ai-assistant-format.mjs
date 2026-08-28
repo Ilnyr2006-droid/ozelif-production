@@ -64,6 +64,12 @@ function attributeLabel(value) {
     ['происхождение', 'Происхождение'],
     ['thickness', 'Толщина'],
     ['толщина', 'Толщина'],
+    ['material', 'Материал'],
+    ['материал', 'Материал'],
+    ['subtype', 'Тип/фактура'],
+    ['тип', 'Тип/фактура'],
+    ['hidesize', 'Размер шкуры'],
+    ['размер шкуры', 'Размер шкуры'],
     ['unit', 'Единица измерения'],
     ['единица', 'Единица измерения'],
     ['article', 'Артикул'],
@@ -212,6 +218,29 @@ function compactAttributes(attributes, limit = 5) {
     'portion',
     'coefficient',
     'коэффициент',
+    'normalizedcolor',
+    'sourceimageurls',
+    'categories',
+  ])
+
+  const priorityKeys = new Map([
+    ['material', 0],
+    ['материал', 0],
+    ['thickness', 1],
+    ['толщина', 1],
+    ['color', 2],
+    ['colour', 2],
+    ['цвет', 2],
+    ['subtype', 3],
+    ['тип', 3],
+    ['hidesize', 4],
+    ['размер шкуры', 4],
+    ['origin', 5],
+    ['country', 5],
+    ['происхождение', 5],
+    ['grade', 6],
+    ['гrade', 6],
+    ['сорт', 6],
   ])
 
   return Object.entries(attributes)
@@ -227,6 +256,22 @@ function compactAttributes(attributes, limit = 5) {
         && value !== undefined
         && String(value).trim()
       )
+    })
+    .sort(([leftKey], [rightKey]) => {
+      const normalize = key => String(key ?? '')
+        .trim()
+        .toLocaleLowerCase('ru')
+        .replace(/ё/g, 'е')
+        .replace(/\s+/g, ' ')
+
+      const leftPriority = priorityKeys.get(
+        normalize(leftKey),
+      ) ?? 100
+      const rightPriority = priorityKeys.get(
+        normalize(rightKey),
+      ) ?? 100
+
+      return leftPriority - rightPriority
     })
     .slice(0, limit)
     .map(([key, value]) => (

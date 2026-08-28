@@ -172,6 +172,35 @@ test('hides technical portion and normalizes unit/article labels', () => {
   assert.doesNotMatch(context, /article:/i)
 })
 
+test('prioritizes material and thickness in dense product attributes', () => {
+  const context = compactProductContext([{
+    ...product,
+    attributes: {
+      unit: 'FOT',
+      color: 'Черный',
+      grade: '1',
+      origin: 'Турция',
+      article: 'NAPATOBLACK',
+      portion: '1',
+      subtype: ['Винтажная'],
+      hideSize: '6-7 фут²',
+      material: 'Овчина',
+      thickness: '0.8-0.9',
+      categories: ['Одежная'],
+      normalizedColor: 'Чёрный',
+      sourceImageUrls: ['https://example.com/source.jpg'],
+    },
+  }])
+
+  assert.match(context, /Материал: Овчина/)
+  assert.match(context, /Толщина: 0\.8-0\.9/)
+  assert.match(context, /Цвет: Черный/)
+  assert.match(context, /Тип\/фактура: Винтажная/)
+  assert.match(context, /Размер шкуры: 6-7 фут²/)
+  assert.doesNotMatch(context, /sourceImageUrls/i)
+  assert.doesNotMatch(context, /normalizedColor/i)
+})
+
 test('product actions include product id for click attribution', () => {
   const actions = productActions([{
     ...product,
