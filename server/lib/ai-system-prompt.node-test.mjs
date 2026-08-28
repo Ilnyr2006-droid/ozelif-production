@@ -9,6 +9,7 @@ process.env.ADMIN_SESSION_SECRET ??=
 const {
   buildOzelifAssistantInstructions,
   getOzelifAssistantPrompt,
+  getProtectedAiPromptCore,
 } = await import('./ai-system-prompt.mjs')
 
 test('contains the required company knowledge', () => {
@@ -28,6 +29,20 @@ test('contains the required company knowledge', () => {
       prompt.includes(phrase),
       `Системный промпт не содержит обязательную фразу: ${phrase}`,
     )
+  }
+})
+
+test('keeps non-invention and no-repeat requirements in protected core', () => {
+  const prompt = getProtectedAiPromptCore()
+
+  for (const phrase of [
+    'обязательные условия',
+    'с обязательным условием',
+    'Страну, производителя и происхождение называй только из проверенных данных',
+    'Используй всю историю текущего диалога',
+    'Я не нашёл точного совпадения в опубликованном каталоге',
+  ]) {
+    assert.ok(prompt.includes(phrase), `В защищённом промпте нет правила: ${phrase}`)
   }
 })
 
