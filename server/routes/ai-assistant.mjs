@@ -1,4 +1,3 @@
-import { buildInformationFallback, classifyAssistantIntent, emptyRetrievalResult } from '../lib/ai-query-intent.mjs'
 import { buildOzelifAssistantInstructions } from '../lib/ai-system-prompt.mjs'
 import express from 'express'
 import { findLiveProductCandidates } from '../lib/ai-product-retrieval.mjs'
@@ -6,7 +5,6 @@ import {
   assistantProductContext,
   cleanAssistantMessages,
   deterministicCatalogReply,
-  enforceCriticalIntentFacts,
   extractResponseText,
   latestUserText,
   productActions,
@@ -419,10 +417,9 @@ export function createAiAssistantRouter() {
       return
     }
 
-    const intent = classifyAssistantIntent(message)
-    const retrieval = intent.needsProducts
-      ? await findLiveProductCandidates(message, { limit: 3 })
-      : emptyRetrievalResult()
+    // Intent is deliberately left to the model. Every request receives live
+    // catalog context so it can decide itself whether product data is relevant.
+    const retrieval = await findLiveProductCandidates(message, { limit: 3 })
     const products = retrieval.products
     const actions = productActions(products)
 
@@ -433,8 +430,8 @@ export function createAiAssistantRouter() {
           : [{ role: 'user', content: message }],
         pathname,
         products,
-        needsProducts: intent.needsProducts,
-        intentType: intent.type,
+        needsProducts: true,
+        intentType: null,
         clarificationQuestion:
           retrieval.clarificationQuestion ?? null,
         allowProfileCapture,
@@ -446,10 +443,7 @@ export function createAiAssistantRouter() {
 
       const reply = sanitizeSalesReply(
         sanitizeUnverifiedStockClaims(
-          enforceCriticalIntentFacts(
-            generated.text,
-            intent.type,
-          ),
+          generated.text,
           products,
         ),
       )
@@ -469,7 +463,7 @@ export function createAiAssistantRouter() {
           model: generated.model,
           responseId: generated.responseId,
           usage: generated.usage,
-          intent: intent.type,
+          intent: null,
           semanticMatches: retrieval.semantic.matches.length,
           lexicalMatches: retrieval.lexical.count,
           constraints: retrieval.constraints ?? null,
@@ -485,14 +479,9 @@ export function createAiAssistantRouter() {
 
       const fallbackReply = sanitizeSalesReply(
         sanitizeUnverifiedStockClaims(
-          enforceCriticalIntentFacts(
-            intent.needsProducts
-              ? deterministicCatalogReply(
-                  products,
-                  retrieval.clarificationQuestion ?? null,
-                )
-              : buildInformationFallback(intent),
-            intent.type,
+          deterministicCatalogReply(
+            products,
+            retrieval.clarificationQuestion ?? null,
           ),
           products,
         ),
@@ -506,10 +495,8 @@ export function createAiAssistantRouter() {
         actions,
         products: products.slice(0, 3),
         meta: {
-          source: intent.needsProducts
-            ? 'deterministic_live_catalog_fallback'
-            : 'deterministic_information_fallback',
-          intent: intent.type,
+          source: 'deterministic_live_catalog_fallback',
+          intent: null,
           semanticMatches: retrieval.semantic.matches.length,
           lexicalMatches: retrieval.lexical.count,
           constraints: retrieval.constraints ?? null,
