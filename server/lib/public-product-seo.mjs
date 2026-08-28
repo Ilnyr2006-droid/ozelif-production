@@ -5,6 +5,7 @@ import {
   absoluteSeoUrl,
   asSeoText,
   escapeSeoHtml,
+  replaceSeoStructuredData,
   replaceRootWithSeoContent,
   safeSeoJson,
   stripHomeHeroPreloads,
@@ -68,6 +69,26 @@ function positiveNumber(value) {
   return Number.isFinite(number) && number > 0 ? number : null
 }
 
+function knownStock(value) {
+  if (value === null || value === undefined || value === '') return null
+  const number = Number(value)
+  return Number.isFinite(number) && number >= 0 ? number : null
+}
+
+export function getPublishedProductAvailability(product) {
+  const variants = (Array.isArray(product?.variants) ? product.variants : [])
+    .filter(variant => variant?.isActive !== false)
+  const stocks = variants.map(variant => knownStock(variant?.stockQuantity))
+
+  if (stocks.some(stock => stock !== null && stock > 0)) return 'https://schema.org/InStock'
+  if (stocks.length && stocks.every(stock => stock === 0)) return 'https://schema.org/OutOfStock'
+  if (stocks.length) return null
+
+  const productStock = knownStock(product?.stockQuantity)
+  if (productStock === null) return null
+  return productStock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'
+}
+
 export function getPublishedProductPrice(product) {
   return getPublishedProductOffer(product)?.price ?? null
 }
@@ -108,14 +129,20 @@ function productFacts(product) {
   const facts = [
     ['Материал', attributes.material],
     ['Цвет', attributes.color || attributes.normalizedColor],
+    ['Фактура', attributes.subtype || attributes.categories],
+    ['Покрытие', attributes.coating],
     ['Толщина', attributes.thickness],
-    ['Страна', attributes.origin || attributes.country],
+    ['Размер шкуры', attributes.hideSize],
+    ['Производство', attributes.origin || attributes.country],
+    ['Бренд', attributes.brand],
+    ['Длина', attributes.length],
     ['Тип', attributes.zipperType],
+    ['Цвет металла', attributes.metalColor],
     ['Цвет ленты', attributes.tapeColor],
   ]
 
   return facts
-    .map(([label, value]) => [label, asText(value)])
+    .map(([label, value]) => [label, Array.isArray(value) ? value.map(asText).filter(Boolean).join(', ') : asText(value)])
     .filter(([, value]) => value)
     .map(([label, value]) => `${label}: ${value}`)
 }
@@ -169,6 +196,13 @@ function renderProductBody(product, { categoryName, productUrl, imageUrl, descri
       '    </section>',
     ] : []),
     '    <p><a href="/contacts">Уточнить наличие у менеджера</a></p>',
+    '    <nav aria-label="Полезная информация о покупке">',
+    `      <a href="${escapeHtml(categoryUrl)}">Все товары категории</a>`,
+    '      <a href="/kozhaozelif">О компании OZELIF</a>',
+    '      <a href="/kozhaoptom">Оптовые условия</a>',
+    '      <a href="/sale">Товары со скидкой</a>',
+    '      <a href="/delivery">Доставка и оплата</a>',
+    '    </nav>',
     `    <link itemprop="url" href="${escapeHtml(productUrl)}" />`,
     '  </article>',
     '</main>',
@@ -192,13 +226,16 @@ export function getProductSeoMetadata(product, { categoryName = null } = {}) {
   const name = asText(product?.name) || 'Материал OZELIF'
   const category = asText(categoryName || product?.category?.name) || 'Каталог'
   const reference = productReference(product)
-  const sourceDescription = asText(product?.description).replace(/[.!?]+$/, '')
   const facts = productFacts(product)
-  const referenceText = reference ? `№${reference}.` : ''
+  const offer = getPublishedProductOffer(product)
+  const priceText = offer
+    ? `Цена: ${offer.from ? 'от ' : ''}${new Intl.NumberFormat('ru-RU').format(offer.price)} ₽${offer.unit ? ` / ${offer.unit}` : ''}.`
+    : ''
   const description = conciseDescription([
-    sourceDescription || `${name} в каталоге OZELIF`,
-    facts.length ? `${facts.join(', ')}.` : '',
-  ], referenceText)
+    `${name} — ${category.toLowerCase()} в каталоге OZELIF.`,
+    facts.length ? `${facts.join('. ')}.` : '',
+    priceText,
+  ], '')
 
   return {
     name,
@@ -216,6 +253,7 @@ export function renderProductSeoPage(template, product, { origin = DEFAULT_ORIGI
   const imageUrl = absoluteUrl(origin, primaryImage)
   const responsiveImage = responsiveProductImage(imageUrl)
   const offer = getPublishedProductOffer(product)
+  const availability = getPublishedProductAvailability(product)
   const productSchema = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -232,6 +270,7 @@ export function renderProductSeoPage(template, product, { origin = DEFAULT_ORIGI
         priceCurrency: offer.currency,
         url: productUrl,
         seller: { '@id': PUBLIC_STORE_ID },
+        ...(availability ? { availability } : {}),
         ...(offer.unit ? {
           priceSpecification: {
             '@type': 'UnitPriceSpecification',
@@ -271,12 +310,13 @@ export function renderProductSeoPage(template, product, { origin = DEFAULT_ORIGI
     ] : []),
     ...(modulePreloadHref ? [`<link rel="modulepreload" href="${escapeHtml(modulePreloadHref)}" />`] : []),
     `<script id="ozelif-product-bootstrap" type="application/json">${bootstrap}</script>`,
-    `<script type="application/ld+json">${safeJson(PUBLIC_STORE_SCHEMA)}</script>`,
-    `<script type="application/ld+json">${safeJson(productSchema)}</script>`,
-    `<script type="application/ld+json">${safeJson(breadcrumbSchema)}</script>`,
   ].join('\n    ')
 
-  const html = stripHomeHeroPreloads(template)
+  const html = replaceSeoStructuredData(stripHomeHeroPreloads(template), [
+    PUBLIC_STORE_SCHEMA,
+    productSchema,
+    breadcrumbSchema,
+  ])
     .replace(/<meta\s+name="description"[^>]*>\s*/i, '')
     .replace(/<link\s+rel="canonical"[^>]*>\s*/i, '')
     .replace(/<meta\s+property="og:(?:type|url|title|description|image)"[^>]*>\s*/gi, '')

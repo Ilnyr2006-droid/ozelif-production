@@ -5,8 +5,8 @@ import {
   absoluteSeoUrl,
   asSeoText,
   escapeSeoHtml,
+  replaceSeoStructuredData,
   replaceRootWithSeoContent,
-  safeSeoJson,
   stripHomeHeroPreloads,
 } from './public-seo-html.mjs'
 import { getPublishedProductOffer } from './public-product-seo.mjs'
@@ -64,7 +64,7 @@ function renderCategoryBody(category,products,{origin,description,facts=[],profi
   return ['<main class="seo-prerender seo-prerender--category" data-seo-prerender="true">','  <nav aria-label="Хлебные крошки"><a href="/">Главная</a></nav>','  <header>','    <p>Каталог OZELIF</p>',`    <h1>${escapeHtml(profile?.heading||name)}</h1>`,`    <p>${escapeHtml(description)}</p>`,'  </header>',
     ...(subs.length?['  <section>',`    <h2>${escapeHtml(profile?.subcategoriesTitle||'Подкатегории')}</h2>`,'    <nav>',...subs.map(x=>`      <a href="${escapeHtml(x.path)}">${escapeHtml(x.title)}</a>`),'    </nav>','  </section>']:[]),
     ...(facts.length?['  <section>',`    <h2>${escapeHtml(profile?.choiceTitle||'Как выбрать материал')}</h2>`,'    <dl>',...facts.map(([k,v])=>`      <div><dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd></div>`),'    </dl>','  </section>']:[]),
-    ...(profile?.buyTitle?['  <section>',`    <h2>${escapeHtml(profile.buyTitle)}</h2>`,'    <p>Цены и характеристики указаны в карточках товаров. Наличие конкретной партии подтверждает менеджер.</p>','    <ul>','      <li><a href="/contacts">Контакты и шоурум OZELIF в Москве</a></li>','      <li><a href="/kozhaoptom">Условия для оптовых покупателей</a></li>','      <li><a href="/delivery">Доставка и оплата</a></li>','    </ul>','    <h3>Как узнать наличие конкретной партии?</h3>','    <p>Складской статус отдельной партии не публикуется в публичном API. Нужный вариант и объём подтвердит менеджер.</p>','  </section>']:[]),
+    ...(profile?.buyTitle?['  <section>',`    <h2>${escapeHtml(profile.buyTitle)}</h2>`,'    <p>Цены и характеристики указаны в карточках товаров. Наличие конкретной партии подтверждает менеджер.</p>','    <ul>','      <li><a href="/contacts">Контакты и шоурум OZELIF в Москве</a></li>','      <li><a href="/kozhaozelif">О компании OZELIF</a></li>','      <li><a href="/kozhaoptom">Условия для оптовых покупателей</a></li>','      <li><a href="/sale">Товары со скидкой</a></li>','      <li><a href="/delivery">Доставка и оплата</a></li>','    </ul>','    <h3>Как узнать наличие конкретной партии?</h3>','    <p>Складской статус отдельной партии не публикуется в публичном API. Нужный вариант и объём подтвердит менеджер.</p>','  </section>']:[]),
     ...(cards.length?['  <section>',`    <h2>${escapeHtml(profile?.productsTitle||'Товары категории')}</h2>`,'    <ul>',...cards,'    </ul>','  </section>']:['  <p>Опубликованные товары пока отсутствуют.</p>']),
     '</main>'].join('\n')
 }
@@ -123,14 +123,10 @@ export function renderCategorySeoPage(template, category, { origin = DEFAULT_ORI
     ...(override?.heroPreload && !notFound ? [
       `<link rel="preload" as="image" href="${escapeHtml(override.heroPreload.href)}" type="${escapeHtml(override.heroPreload.type)}" fetchpriority="high" />`,
     ] : []),
-    ...(!notFound ? [
-      `<script type="application/ld+json">${safeSeoJson(PUBLIC_STORE_SCHEMA)}</script>`,
-      `<script type="application/ld+json">${safeSeoJson(categorySchema)}</script>`,
-      `<script type="application/ld+json">${safeSeoJson(breadcrumbSchema)}</script>`,
-    ] : []),
   ].join('\n    ')
 
-  const html = stripHomeHeroPreloads(template)
+  const schemas = notFound ? [] : [PUBLIC_STORE_SCHEMA, categorySchema, breadcrumbSchema]
+  const html = replaceSeoStructuredData(stripHomeHeroPreloads(template), schemas)
     .replace(/<meta\s+name="description"[^>]*>\s*/i, '')
     .replace(/<meta\s+name="robots"[^>]*>\s*/gi, '')
     .replace(/<link\s+rel="canonical"[^>]*>\s*/i, '')

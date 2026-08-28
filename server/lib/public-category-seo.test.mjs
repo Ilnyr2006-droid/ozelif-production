@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { renderCategorySeoPage } from './public-category-seo.mjs'
 
-const template = `<!doctype html><html><head><title>Old</title><meta name="description" content="old"><link rel="canonical" href="https://example.test/old"><meta property="og:type" content="website"><meta property="og:url" content="https://example.test/old"><meta property="og:title" content="Old"><meta property="og:description" content="Old"></head><body><div id="root"></div></body></html>`
+const template = `<!doctype html><html><head><title>Old</title><meta name="description" content="old"><link rel="canonical" href="https://example.test/old"><meta property="og:type" content="website"><meta property="og:url" content="https://example.test/old"><meta property="og:title" content="Old"><meta property="og:description" content="Old"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Store","@id":"https://ozelifkoja.ru/#store"}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","@id":"https://ozelifkoja.ru/#webpage"}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","@id":"https://ozelifkoja.ru/#faq"}</script></head><body><div id="root"></div></body></html>`
+
+function structuredData(html) {
+  return [...html.matchAll(/<script\s+type="application\/ld\+json">([\s\S]*?)<\/script>/gi)]
+    .map(match => JSON.parse(match[1]))
+}
 
 const category = {
   slug: 'odejnayakozha',
@@ -47,9 +52,16 @@ describe('public clothing category commercial SEO', () => {
     expect(html).toContain('href="/kozhaoptom"')
     expect(html).toContain('href="/delivery"')
     expect(html).toContain('href="/contacts"')
+    expect(html).toContain('href="/kozhaozelif"')
+    expect(html).toContain('href="/sale"')
     expect(html).toContain('href="/odejnayakozha/krs"')
     expect(html).toContain('href="/odejnayakozha/perforirovannaya"')
     expect(html).not.toContain('Мы производим кожу')
     expect(html).not.toContain('шкур коз')
+    const schemas = structuredData(html)
+    expect(schemas.map(schema => schema['@type'])).toEqual(['Store', 'CollectionPage', 'BreadcrumbList'])
+    expect(schemas.filter(schema => schema['@type'] === 'Store')).toHaveLength(1)
+    expect(html).not.toContain('https://ozelifkoja.ru/#webpage')
+    expect(html).not.toContain('FAQPage')
   })
 })

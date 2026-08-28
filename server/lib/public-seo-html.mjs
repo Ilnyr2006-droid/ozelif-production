@@ -53,6 +53,21 @@ export function safeSeoJson(value) {
   return JSON.stringify(value).replaceAll('<', '\\u003c')
 }
 
+export function replaceSeoStructuredData(template, schemas = []) {
+  const html = String(template).replace(
+    /<script\s+[^>]*type=(?:"application\/ld\+json"|'application\/ld\+json')[^>]*>[\s\S]*?<\/script>\s*/gi,
+    '',
+  )
+  const structuredData = schemas
+    .filter(Boolean)
+    .map(schema => `<script type="application/ld+json">${safeSeoJson(schema)}</script>`)
+    .join('\n    ')
+
+  return structuredData
+    ? html.replace('</head>', `    ${structuredData}\n  </head>`)
+    : html
+}
+
 export function stripHomeHeroPreloads(value) {
   return String(value)
     .replace(

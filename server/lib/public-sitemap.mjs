@@ -25,7 +25,9 @@ function dateValue(value) {
 export function renderSitemapXml({ siteUrl, staticPaths = BASE_STATIC_PATHS, categories = [], products = [] }) {
   const origin = String(siteUrl).replace(/\/$/, '')
   const entries = [
-    ...staticPaths.map(path => ({ path })),
+    ...staticPaths.map(entry => typeof entry === 'string'
+      ? { path: entry }
+      : { path: entry?.path, updatedAt: entry?.updatedAt ?? entry?.updated_at }),
     ...categories.map(category => ({ path: `/${category.slug}`, updatedAt: category.updated_at })),
     ...products.map(product => ({
       path: `/${product.category_slug}/tproduct/${product.identifier}-${product.slug}`,

@@ -61,7 +61,7 @@ test('renders escaped product metadata and JSON-LD into the application shell', 
   }, { origin: 'https://ozelifkoja.ru', categoryName: 'Одежная кожа' })
 
   assert.match(html, /<title>Vegetale &lt;Visky&gt; №814535079882 — OZELIF<\/title>/)
-  assert.match(html, /<meta name="description" content="Кожа для &amp; аксессуаров Материал: Овчина, Цвет: Коричневый\. №814535079882\." \/>/)
+  assert.match(html, /<meta name="description" content="Vegetale &lt;Visky&gt; — одежная кожа в каталоге OZELIF\. Материал: Овчина\. Цвет: Коричневый\. Цена: 431 ₽ \/ фут²\." \/>/)
   assert.match(html, /<link rel="canonical" href="https:\/\/ozelifkoja\.ru\/odejnayakozha\/tproduct\/814535079882-vegetale-visky" \/>/)
   assert.match(html, /"@type":"Product"/)
   assert.match(html, /"price":"431"/)
@@ -76,7 +76,7 @@ test('renders escaped product metadata and JSON-LD into the application shell', 
   assert.equal((html.match(/<title>/g) ?? []).length, 1)
 })
 
-test('keeps metadata unique for products with the same public name', () => {
+test('does not disguise duplicate descriptions with a product number', () => {
   const first = getProductSeoMetadata({
     id: '378521427732',
     name: 'Jeans Effect',
@@ -91,7 +91,8 @@ test('keeps metadata unique for products with the same public name', () => {
   }, { categoryName: 'Одежная кожа' })
 
   assert.notEqual(first.title, second.title)
-  assert.notEqual(first.description, second.description)
-  assert.match(first.description, /Материал: Овчина, Цвет: Синий, Толщина: 0\.8-0\.9\./)
+  assert.equal(first.description, second.description)
+  assert.match(first.description, /Материал: Овчина\. Цвет: Синий\. Толщина: 0\.8-0\.9\./)
+  assert.doesNotMatch(first.description, /№\d+/)
   assert.ok(first.description.length <= 160)
 })

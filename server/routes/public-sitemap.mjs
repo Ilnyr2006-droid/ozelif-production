@@ -53,7 +53,17 @@ export function createPublicSitemapRouter({ query, siteUrl }) {
         product.category_slug === landing.categorySlug
         && matchesCatalogSeoLandingProduct(product, landing)
       )))
-      .map(landing => landing.path)
+      .map(landing => {
+        const updatedAt = products
+          .filter(product => (
+            product.category_slug === landing.categorySlug
+            && matchesCatalogSeoLandingProduct(product, landing)
+          ))
+          .map(product => product.updated_at)
+          .filter(Boolean)
+          .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0]
+        return { path: landing.path, updatedAt }
+      })
 
     response
       .setHeader('Cache-Control', 'public, max-age=300')

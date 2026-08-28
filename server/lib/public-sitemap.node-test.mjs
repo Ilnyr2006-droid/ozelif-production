@@ -43,3 +43,12 @@ test('omits published empty categories from the dynamic sitemap', async () => {
 test('includes the sale page in the base sitemap paths', () => {
   assert.ok(BASE_STATIC_PATHS.includes('/sale'))
 })
+
+test('renders a factual lastmod for dated static paths', () => {
+  const xml = renderSitemapXml({
+    siteUrl: 'https://ozelifkoja.ru/',
+    staticPaths: [{ path: '/sale', updatedAt: '2026-08-26T10:00:00Z' }],
+  })
+
+  assert.match(xml, /<loc>https:\/\/ozelifkoja\.ru\/sale<\/loc><lastmod>2026-08-26<\/lastmod>/)
+})
