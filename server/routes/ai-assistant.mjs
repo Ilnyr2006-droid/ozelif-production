@@ -25,6 +25,15 @@ import {
 import {
   formatChatOrderHistoryContext,
 } from '../lib/chat-order.mjs'
+import {
+  routeAssistantRequest,
+} from '../lib/ai-request-routing.mjs'
+import {
+  mergeOpenAiUsage,
+  responseIncompleteReason,
+  retryOutputTokenLimit,
+  shouldRetryIncompleteResponse,
+} from '../lib/ai-response-runtime.mjs'
 
 const WINDOW_MS = 10 * 60 * 1000
 const MAX_REQUESTS_PER_WINDOW = 24
@@ -125,6 +134,63 @@ async function requestOpenAiResponse({
     throw new Error(
       body?.error?.message
         ?? `OpenAI Responses API HTTP ${response.status}`,
+    )
+  }
+
+  return body
+}
+
+async function requestOpenAiResponseWithRetry({
+  apiKey,
+  controller,
+  payload,
+  usageParts,
+}) {
+  let body = await requestOpenAiResponse({
+    apiKey,
+    controller,
+    payload,
+  })
+
+  if (body?.usage) {
+    usageParts.push(body.usage)
+  }
+
+  if (!shouldRetryIncompleteResponse(body)) {
+    return body
+  }
+
+  const reason =
+    responseIncompleteReason(body)
+
+  console.warn(
+    '[ai-assistant] retry incomplete OpenAI response:',
+    reason,
+  )
+
+  const retryPayload = {
+    ...payload,
+    max_output_tokens:
+      retryOutputTokenLimit(
+        payload.max_output_tokens,
+      ),
+  }
+
+  body = await requestOpenAiResponse({
+    apiKey,
+    controller,
+    payload: retryPayload,
+  })
+
+  if (body?.usage) {
+    usageParts.push(body.usage)
+  }
+
+  if (shouldRetryIncompleteResponse(body)) {
+    throw new Error(
+      `OpenAI response incomplete after retry: ${
+        responseIncompleteReason(body)
+      }`,
     )
   }
 
@@ -260,12 +326,23 @@ async function createAssistantReply({
       },
     ]
 
+    const usageParts = []
+
     const firstPayload = {
       model,
       store: false,
       instructions,
       input,
-      max_output_tokens: 520,
+      reasoning: {
+        effort: 'low',
+      },
+      text: {
+        verbosity: 'low',
+      },
+      max_output_tokens:
+        allowOrderDraftUpdate
+          ? 760
+          : 620,
       ...(
         allowProfileCapture
         || allowOrderDraftUpdate
@@ -285,10 +362,11 @@ async function createAssistantReply({
       ),
     }
 
-    let body = await requestOpenAiResponse({
+    let body = await requestOpenAiResponseWithRetry({
       apiKey,
       controller,
       payload: firstPayload,
+      usageParts,
     })
 
     let profileUpdate = null
@@ -316,42 +394,94 @@ async function createAssistantReply({
       ...orderExtracted.functionOutputs,
     ]
 
+    let finalPayload = firstPayload
+
     if (functionOutputs.length) {
-      body = await requestOpenAiResponse({
+      finalPayload = {
+        model,
+        store: false,
+        instructions,
+        input: [
+          ...input,
+          ...(Array.isArray(body?.output)
+            ? body.output
+            : []),
+          ...functionOutputs,
+        ],
+        tools: [
+          ...(allowProfileCapture
+            ? [CUSTOMER_PROFILE_TOOL]
+            : []),
+          ...(allowOrderDraftUpdate
+            ? [ORDER_DRAFT_TOOL]
+            : []),
+        ],
+        tool_choice: 'none',
+        parallel_tool_calls: false,
+        reasoning: {
+          effort: 'low',
+        },
+        text: {
+          verbosity: 'low',
+        },
+        max_output_tokens: 760,
+      }
+
+      body = await requestOpenAiResponseWithRetry({
         apiKey,
         controller,
-        payload: {
-          model,
-          store: false,
-          instructions,
-          input: [
-            ...input,
-            ...(Array.isArray(body?.output)
-              ? body.output
-              : []),
-            ...functionOutputs,
-          ],
-          tools: [
-            ...(allowProfileCapture
-              ? [CUSTOMER_PROFILE_TOOL]
-              : []),
-            ...(allowOrderDraftUpdate
-              ? [ORDER_DRAFT_TOOL]
-              : []),
-          ],
-          tool_choice: 'none',
-          parallel_tool_calls: false,
-          max_output_tokens: 520,
-        },
+        payload: finalPayload,
+        usageParts,
       })
     }
 
-    const text = removeProductNavigationPromises(
+    let text = removeProductNavigationPromises(
       extractResponseText(body),
     )
 
     if (!text) {
-      throw new Error('OpenAI returned empty output')
+      console.warn(
+        '[ai-assistant] retry completed OpenAI response with empty text',
+      )
+
+      const emptyRetryPayload = {
+        ...finalPayload,
+        tool_choice:
+          functionOutputs.length
+            ? 'none'
+            : (
+                Array.isArray(finalPayload.tools)
+                && finalPayload.tools.length
+                  ? 'none'
+                  : finalPayload.tool_choice
+              ),
+        max_output_tokens:
+          retryOutputTokenLimit(
+            finalPayload.max_output_tokens,
+            960,
+          ),
+      }
+
+      body = await requestOpenAiResponseWithRetry({
+        apiKey,
+        controller,
+        payload: emptyRetryPayload,
+        usageParts,
+      })
+
+      text = removeProductNavigationPromises(
+        extractResponseText(body),
+      )
+    }
+
+    if (!text) {
+      throw new Error(
+        `OpenAI returned empty output; status=${
+          body?.status ?? 'unknown'
+        }; incomplete=${
+          responseIncompleteReason(body) ?? 'none'
+        }`,
+      )
     }
 
     return {
@@ -360,7 +490,7 @@ async function createAssistantReply({
       orderDraftUpdate,
       model: body?.model ?? model,
       responseId: body?.id ?? null,
-      usage: body?.usage ?? null,
+      usage: mergeOpenAiUsage(usageParts),
     }
   } finally {
     clearTimeout(timeout)
@@ -417,11 +547,37 @@ export function createAiAssistantRouter() {
       return
     }
 
-    // Intent is deliberately left to the model. Every request receives live
-    // catalog context so it can decide itself whether product data is relevant.
-    const retrieval = await findLiveProductCandidates(message, { limit: 3 })
+    /*
+     * This lightweight route controls only prompt context and whether catalog
+     * retrieval is needed. The model still decides the wording and sales
+     * response. Non-product turns must not pay the catalog-search/token cost.
+     */
+    const requestRoute =
+      routeAssistantRequest(message)
+
+    const retrieval =
+      requestRoute.needsProducts
+        ? await findLiveProductCandidates(
+            message,
+            { limit: 3 },
+          )
+        : {
+            products: [],
+            semantic: {
+              available: false,
+              matches: [],
+            },
+            lexical: {
+              count: 0,
+            },
+            constraints: null,
+            clarificationQuestion: null,
+          }
+
     const products = retrieval.products
-    const actions = productActions(products)
+    const actions = requestRoute.needsProducts
+      ? productActions(products)
+      : []
 
     try {
       const generated = await createAssistantReply({
@@ -430,8 +586,10 @@ export function createAiAssistantRouter() {
           : [{ role: 'user', content: message }],
         pathname,
         products,
-        needsProducts: true,
-        intentType: null,
+        needsProducts:
+          requestRoute.needsProducts,
+        intentType:
+          requestRoute.intent,
         clarificationQuestion:
           retrieval.clarificationQuestion ?? null,
         allowProfileCapture,
@@ -463,7 +621,10 @@ export function createAiAssistantRouter() {
           model: generated.model,
           responseId: generated.responseId,
           usage: generated.usage,
-          intent: null,
+          intent:
+            requestRoute.intent,
+          catalogSearch:
+            requestRoute.needsProducts,
           semanticMatches: retrieval.semantic.matches.length,
           lexicalMatches: retrieval.lexical.count,
           constraints: retrieval.constraints ?? null,
@@ -477,15 +638,17 @@ export function createAiAssistantRouter() {
         error instanceof Error ? error.message : error,
       )
 
-      const fallbackReply = sanitizeSalesReply(
-        sanitizeUnverifiedStockClaims(
-          deterministicCatalogReply(
-            products,
-            retrieval.clarificationQuestion ?? null,
-          ),
-          products,
-        ),
-      )
+      const fallbackReply = requestRoute.needsProducts
+        ? sanitizeSalesReply(
+            sanitizeUnverifiedStockClaims(
+              deterministicCatalogReply(
+                products,
+                retrieval.clarificationQuestion ?? null,
+              ),
+              products,
+            ),
+          )
+        : 'Сейчас не удалось получить ответ консультанта. Попробуйте отправить сообщение ещё раз.'
 
       response.setHeader('Cache-Control', 'no-store')
       response.json({
@@ -496,7 +659,10 @@ export function createAiAssistantRouter() {
         products: products.slice(0, 3),
         meta: {
           source: 'deterministic_live_catalog_fallback',
-          intent: null,
+          intent:
+            requestRoute.intent,
+          catalogSearch:
+            requestRoute.needsProducts,
           semanticMatches: retrieval.semantic.matches.length,
           lexicalMatches: retrieval.lexical.count,
           constraints: retrieval.constraints ?? null,

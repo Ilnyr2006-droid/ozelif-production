@@ -3,6 +3,7 @@ import test from 'node:test'
 
 import {
   findSalesQualityViolations,
+  normalizeAssistantPlainText,
   sanitizeSalesReply,
 } from './ai-sales-quality.mjs'
 
@@ -59,8 +60,9 @@ test('puts numbered recommendations on separate lines', () => {
       + '3. **Soft Black** — 437 ₽.',
   )
 
-  assert.match(reply, /\n2\. \*\*Andas/u)
-  assert.match(reply, /\n3\. \*\*Soft/u)
+  assert.match(reply, /\n2\. Andas/u)
+  assert.match(reply, /\n3\. Soft/u)
+  assert.doesNotMatch(reply, /\*\*/u)
 })
 
 test('removes generic product-interest closing', () => {
@@ -70,7 +72,7 @@ test('removes generic product-interest closing', () => {
       + 'дайте знать, и я помогу с дальнейшими шагами.',
   )
 
-  assert.equal(reply, '1. **Vip Black** — 393 ₽.')
+  assert.equal(reply, '1. Vip Black — 393 ₽.')
 })
 
 test('puts two-digit numbered steps on a new line', () => {
@@ -92,4 +94,24 @@ test('softens standalone ideal-for wording', () => {
   assert.doesNotMatch(reply, /идеальн/iu)
   assert.match(reply, /подходит для одежды и аксессуаров/u)
   assert.equal(findSalesQualityViolations(reply).length, 0)
+})
+
+test('normalizes markdown formatting to plain text for web chat', () => {
+  assert.equal(
+    normalizeAssistantPlainText(
+      '**Napato Black**\n- Цена: 437 ₽\n`фут²`',
+    ),
+    'Napato Black\n• Цена: 437 ₽\nфут²',
+  )
+})
+
+test('sanitizeSalesReply does not expose markdown bold markers', () => {
+  const result = sanitizeSalesReply(
+    '**Napato Black** подходит по опубликованным характеристикам.',
+  )
+
+  assert.equal(
+    result,
+    'Napato Black подходит по опубликованным характеристикам.',
+  )
 })

@@ -133,3 +133,55 @@ test('section map is explicit', () => {
     null,
   )
 })
+
+test('routes an unnumbered admin business prompt by heading names', () => {
+  const unnumbered = `
+# Подтверждённая информация о компании
+Компания OZELIF.
+
+# Контакты и реквизиты
+Москва.
+
+# Доставка и оплата
+СДЭК.
+
+# Оптовые условия
+От одной пачки.
+
+# Швейное производство OZELIF
+10 изделий одной модели.
+
+# Категории и профессиональная консультация
+Одежная кожа.
+
+# Экспертная логика подбора кожи
+Толщина и назначение.
+
+# Единицы площади и расчёты
+Фут² и дм².
+
+# Алгоритм продажи
+Уточнить задачу.
+  `.trim()
+
+  const general = routeBusinessPrompt(
+    unnumbered,
+    'general',
+  )
+  const product = routeBusinessPrompt(
+    unnumbered,
+    'product',
+  )
+
+  assert.equal(general.mode, 'routed')
+  assert.deepEqual(general.sectionNumbers, [5, 6])
+  assert.doesNotMatch(general.content, /СДЭК/u)
+
+  assert.equal(product.mode, 'routed')
+  assert.deepEqual(
+    product.sectionNumbers,
+    [5, 10, 11, 12, 13],
+  )
+  assert.match(product.content, /Экспертная логика/u)
+  assert.doesNotMatch(product.content, /Оптовые условия/u)
+})

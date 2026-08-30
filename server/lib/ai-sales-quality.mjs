@@ -99,6 +99,18 @@ function stripGenericClosing(value) {
   return text
 }
 
+export function normalizeAssistantPlainText(value) {
+  return String(value ?? '')
+    .replace(/```[\w-]*\n?([\s\S]*?)```/gu, '$1')
+    .replace(/`([^`\n]+)`/gu, '$1')
+    .replace(/\*\*([^*\n]+)\*\*/gu, '$1')
+    .replace(/__([^_\n]+)__/gu, '$1')
+    .replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/gu, '$1')
+    .replace(/(?<!_)_([^_\n]+)_(?!_)/gu, '$1')
+    .replace(/^#{1,6}\s+/gmu, '')
+    .replace(/^\s*[-*+]\s+/gmu, '• ')
+}
+
 function normalizeNumberedRecommendations(value) {
   return String(value ?? '')
     .replace(
@@ -136,8 +148,10 @@ export function sanitizeSalesReply(value) {
   if (!original) return ''
 
   const sanitized = stripGenericClosing(
-    normalizeNumberedRecommendations(
-      replaceOverclaims(original),
+    normalizeAssistantPlainText(
+      normalizeNumberedRecommendations(
+        replaceOverclaims(original),
+      ),
     ),
   )
     .replace(/[ \t]+\n/g, '\n')
