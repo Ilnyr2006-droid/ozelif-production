@@ -29,7 +29,9 @@
     "test:ai-prompt-management": "node --test lib/ai-prompt-management.node-test.mjs",
     "test:live-chat": "node --test lib/live-chat-utils.node-test.mjs routes/live-chat.node-test.mjs",
     "test:dashboard-chat-metrics": "node --test lib/dashboard-chat-metrics.node-test.mjs",
-    "test:traffic-analytics": "node --test lib/traffic-analytics.node-test.mjs"
+    "test:traffic-analytics": "node --test lib/traffic-analytics.node-test.mjs",
+    "eval:ai": "node scripts/ai-live-eval.mjs",
+    "eval:ai:dry": "node scripts/ai-live-eval.mjs --dry-run"
   },
   "dependencies": {
     "dotenv": "^17.4.2",

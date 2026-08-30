@@ -34,6 +34,11 @@ import {
   retryOutputTokenLimit,
   shouldRetryIncompleteResponse,
 } from '../lib/ai-response-runtime.mjs'
+import { query } from '../lib/db.mjs'
+import {
+  publishedPromptIdentity,
+  recordAiRuntimeEvent,
+} from '../lib/ai-runtime-monitoring.mjs'
 
 const WINDOW_MS = 10 * 60 * 1000
 const MAX_REQUESTS_PER_WINDOW = 24
@@ -145,6 +150,7 @@ async function requestOpenAiResponseWithRetry({
   controller,
   payload,
   usageParts,
+  runtime,
 }) {
   let body = await requestOpenAiResponse({
     apiKey,
@@ -162,6 +168,8 @@ async function requestOpenAiResponseWithRetry({
 
   const reason =
     responseIncompleteReason(body)
+
+  runtime.incompleteRetries += 1
 
   console.warn(
     '[ai-assistant] retry incomplete OpenAI response:',
@@ -327,6 +335,10 @@ async function createAssistantReply({
     ]
 
     const usageParts = []
+    const runtime = {
+      incompleteRetries: 0,
+      emptyRetries: 0,
+    }
 
     const firstPayload = {
       model,
@@ -367,6 +379,7 @@ async function createAssistantReply({
       controller,
       payload: firstPayload,
       usageParts,
+      runtime,
     })
 
     let profileUpdate = null
@@ -440,6 +453,8 @@ async function createAssistantReply({
     )
 
     if (!text) {
+      runtime.emptyRetries += 1
+
       console.warn(
         '[ai-assistant] retry completed OpenAI response with empty text',
       )
@@ -502,6 +517,7 @@ export function createAiAssistantRouter() {
   router.use(rateLimit)
 
   router.post('/', asyncRoute(async (request, response) => {
+    const startedAt = performance.now()
     const messages = cleanAssistantMessages(request.body?.messages)
     const message = latestUserText(
       messages,
@@ -516,6 +532,23 @@ export function createAiAssistantRouter() {
     const allowProfileCapture = (
       request.get('X-Ozelif-Live-Chat') === '1'
     )
+
+    const conversationId = String(
+      request.body?.conversationId ?? '',
+    ).trim() || null
+
+    const channel = (
+      request.get('X-Ozelif-Eval') === '1'
+        ? 'eval'
+        : String(
+            request.body?.channel
+            ?? (
+              request.body?.path === 'telegram'
+                ? 'telegram'
+                : 'web'
+            ),
+          )
+    ).slice(0, 40)
 
     const currentProfile = {
       hasName: Boolean(
@@ -554,6 +587,9 @@ export function createAiAssistantRouter() {
      */
     const requestRoute =
       routeAssistantRequest(message)
+
+    const promptIdentity =
+      await publishedPromptIdentity(query)
 
     const retrieval =
       requestRoute.needsProducts
@@ -606,6 +642,48 @@ export function createAiAssistantRouter() {
         ),
       )
 
+      const latencyMs =
+        Math.round(
+          performance.now() - startedAt,
+        )
+
+      await recordAiRuntimeEvent(
+        query,
+        {
+          conversationId,
+          channel,
+          model:
+            generated.model,
+          prompt:
+            promptIdentity,
+          responseId:
+            generated.responseId,
+          intent:
+            requestRoute.intent,
+          catalogSearch:
+            requestRoute.needsProducts,
+          latencyMs,
+          usage:
+            generated.usage,
+          fallback:
+            false,
+          emptyRetryCount:
+            generated.runtime
+              ?.emptyRetries ?? 0,
+          incompleteRetryCount:
+            generated.runtime
+              ?.incompleteRetries ?? 0,
+          recommendationCount:
+            products.slice(0, 3).length,
+          metadata: {
+            source:
+              retrieval.semantic.available
+                ? 'product_index+postgresql'
+                : 'postgresql_fallback',
+          },
+        },
+      )
+
       response.setHeader('Cache-Control', 'no-store')
       response.json({
         reply,
@@ -619,8 +697,17 @@ export function createAiAssistantRouter() {
             ? 'product_index+postgresql'
             : 'postgresql_fallback',
           model: generated.model,
+          promptVersion:
+            promptIdentity.version,
           responseId: generated.responseId,
           usage: generated.usage,
+          latencyMs,
+          emptyRetryCount:
+            generated.runtime
+              ?.emptyRetries ?? 0,
+          incompleteRetryCount:
+            generated.runtime
+              ?.incompleteRetries ?? 0,
           intent:
             requestRoute.intent,
           catalogSearch:
@@ -636,6 +723,44 @@ export function createAiAssistantRouter() {
       console.error(
         '[ai-assistant]',
         error instanceof Error ? error.message : error,
+      )
+
+      const latencyMs =
+        Math.round(
+          performance.now() - startedAt,
+        )
+
+      await recordAiRuntimeEvent(
+        query,
+        {
+          conversationId,
+          channel,
+          model:
+            process.env.OPENAI_ASSISTANT_MODEL
+            ?? process.env.OPENAI_MODEL
+            ?? null,
+          prompt:
+            promptIdentity,
+          intent:
+            requestRoute.intent,
+          catalogSearch:
+            requestRoute.needsProducts,
+          latencyMs,
+          usage:
+            null,
+          fallback:
+            true,
+          recommendationCount:
+            products.slice(0, 3).length,
+          errorText:
+            error instanceof Error
+              ? error.message
+              : String(error),
+          metadata: {
+            source:
+              'deterministic_live_catalog_fallback',
+          },
+        },
       )
 
       const fallbackReply = requestRoute.needsProducts
@@ -659,6 +784,14 @@ export function createAiAssistantRouter() {
         products: products.slice(0, 3),
         meta: {
           source: 'deterministic_live_catalog_fallback',
+          model:
+            process.env.OPENAI_ASSISTANT_MODEL
+            ?? process.env.OPENAI_MODEL
+            ?? null,
+          promptVersion:
+            promptIdentity.version,
+          latencyMs,
+          fallback: true,
           intent:
             requestRoute.intent,
           catalogSearch:

@@ -35,6 +35,7 @@ import { createYandexReviewsService } from './lib/yandex-reviews.mjs'
 import { createOrdersRouter } from './routes/orders.mjs'
 import { createAdminCrmRouter } from './routes/admin-crm.mjs'
 import { createAdminNativeAnalyticsRouter } from './routes/admin-native-analytics.mjs'
+import { createAdminAiMonitoringRouter } from './routes/admin-ai-monitoring.mjs'
 import { createAdminMetabaseRouter } from './routes/admin-metabase.mjs'
 import { createTelegramRouter } from './routes/telegram.mjs'
 import { createWholesaleLeadsRouter } from './routes/wholesale-leads.mjs'
@@ -268,6 +269,7 @@ app.use(
 app.use('/api/orders', createOrdersRouter())
 app.use('/api/admin/crm', createAdminCrmRouter())
 app.use('/api/admin/native-analytics', createAdminNativeAnalyticsRouter())
+app.use('/api/admin/ai-monitoring', createAdminAiMonitoringRouter())
 app.use('/api/admin/metabase', createAdminMetabaseRouter())
 app.use('/api/telegram', createTelegramRouter())
 // Nginx sends only product detail URLs here. Product metadata is therefore

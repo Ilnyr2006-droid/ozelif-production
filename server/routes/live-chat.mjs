@@ -409,6 +409,7 @@ async function callAssistant(
   requestIp,
   orderDraft,
   orderHistory,
+  conversationId,
 ) {
   const port = Number(process.env.PORT ?? 8093)
 
@@ -437,6 +438,12 @@ async function callAssistant(
   payload.orderHistory = Array.isArray(orderHistory)
     ? orderHistory
     : []
+  payload.conversationId =
+    conversationId ?? null
+  payload.channel =
+    pathname === 'telegram'
+      ? 'telegram'
+      : 'web'
 
   const response = await fetch(
     `http://127.0.0.1:${port}/api/assistant`,
@@ -1230,6 +1237,7 @@ export function createLiveChatRouter() {
             clientIp(request),
             currentOrderDraft,
             orderHistory,
+            conversation.id,
           )
 
           const profileUpdate = normalizeCustomerProfileUpdate(

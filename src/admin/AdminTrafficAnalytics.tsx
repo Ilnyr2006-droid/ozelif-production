@@ -8,10 +8,14 @@ import {
 import {
   VisitorTrafficAnalytics,
 } from './VisitorTrafficAnalytics'
+import {
+  AdminAiMonitoring,
+} from './AdminAiMonitoring'
 
 type AnalyticsTab =
   | 'traffic'
   | 'sales'
+  | 'ai'
 
 export function AdminTrafficAnalytics() {
   const [activeTab, setActiveTab] =
@@ -78,6 +82,26 @@ export function AdminTrafficAnalytics() {
               Заказы, выручка и клиенты
             </small>
           </button>
+
+          <button
+            type="button"
+            className={
+              activeTab === 'ai'
+                ? 'admin-analytics-tab is-active'
+                : 'admin-analytics-tab'
+            }
+            onClick={() =>
+              setActiveTab('ai')
+            }
+          >
+            <span>
+              AI
+            </span>
+
+            <small>
+              Luna, токены и eval
+            </small>
+          </button>
         </nav>
       </header>
 
@@ -129,6 +153,15 @@ export function AdminTrafficAnalytics() {
             </header>
 
             <NativeSalesAnalytics />
+          </section>
+        )}
+
+        {activeTab === 'ai' && (
+          <section
+            aria-label="Мониторинг AI"
+            className="admin-analytics-panel"
+          >
+            <AdminAiMonitoring />
           </section>
         )}
       </div>

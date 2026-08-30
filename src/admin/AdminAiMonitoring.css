@@ -1,0 +1,165 @@
+.ai-monitor {
+  display: grid;
+  gap: 20px;
+}
+
+.ai-monitor-head,
+.ai-monitor-panel > header,
+.ai-monitor-eval > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.ai-monitor-head p {
+  margin: 0 0 6px;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  font-size: 12px;
+  font-weight: 800;
+  color: #b3522b;
+}
+
+.ai-monitor-head h3,
+.ai-monitor-panel h4 {
+  margin: 0;
+}
+
+.ai-monitor-head span,
+.ai-monitor-panel header span {
+  color: #786f68;
+  font-size: 13px;
+}
+
+.ai-monitor-period {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ai-monitor-period button {
+  border: 1px solid #ddd0c3;
+  background: #fffaf5;
+  border-radius: 999px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.ai-monitor-period button.is-active {
+  background: #251d18;
+  color: #fff;
+  border-color: #251d18;
+}
+
+.ai-monitor-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ai-monitor-card,
+.ai-monitor-panel {
+  border: 1px solid #e1d5ca;
+  border-radius: 18px;
+  background: #fffdfb;
+  padding: 18px;
+}
+
+.ai-monitor-card {
+  display: grid;
+  gap: 7px;
+}
+
+.ai-monitor-card > span,
+.ai-monitor-card > small {
+  color: #786f68;
+}
+
+.ai-monitor-card > strong {
+  font-size: 25px;
+}
+
+.ai-monitor-columns {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.ai-monitor-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.ai-monitor-funnel-row,
+.ai-monitor-model {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding-top: 11px;
+  border-top: 1px solid #eee5dc;
+}
+
+.ai-monitor-model {
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ai-monitor-eval-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.ai-monitor-eval-summary strong {
+  font-size: 30px;
+}
+
+.ai-monitor-failures details {
+  border-top: 1px solid #eee5dc;
+  padding: 10px 0;
+}
+
+.ai-monitor-failures pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  font-size: 13px;
+}
+
+.ai-monitor-state {
+  padding: 28px;
+}
+
+.ai-monitor-state.is-error {
+  color: #b3261e;
+}
+
+@media (max-width: 900px) {
+  .ai-monitor-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .ai-monitor-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .ai-monitor-head {
+    flex-direction: column;
+  }
+
+  .ai-monitor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-monitor-funnel-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+}
