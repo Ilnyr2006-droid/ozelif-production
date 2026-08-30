@@ -39,10 +39,11 @@ import {
   publishedPromptIdentity,
   recordAiRuntimeEvent,
 } from '../lib/ai-runtime-monitoring.mjs'
-
-const WINDOW_MS = 10 * 60 * 1000
-const MAX_REQUESTS_PER_WINDOW = 24
-const requestsByAddress = new Map()
+import {
+  buildAiRateLimitPlan,
+  enforceAiRateLimit,
+  requestAiRateLimitIp,
+} from '../lib/ai-rate-limit.mjs'
 
 function asyncRoute(handler) {
   return (request, response, next) => {
@@ -50,36 +51,52 @@ function asyncRoute(handler) {
   }
 }
 
-function clientAddress(request) {
-  return String(
-    request.headers['x-forwarded-for']
-      ?? request.socket?.remoteAddress
-      ?? 'unknown',
-  )
-    .split(',')[0]
-    .trim()
-}
+async function rateLimit(
+  request,
+  response,
+  next,
+) {
+  const ip =
+    requestAiRateLimitIp(
+      request,
+    )
 
-function rateLimit(request, response, next) {
-  const now = Date.now()
-  const address = clientAddress(request)
-  const existing = requestsByAddress.get(address)
-
-  if (!existing || now - existing.startedAt >= WINDOW_MS) {
-    requestsByAddress.set(address, {
-      startedAt: now,
-      count: 1,
+  const plan =
+    buildAiRateLimitPlan({
+      conversationId:
+        request.body?.conversationId,
+      ip,
+      evalRequest:
+        request.get(
+          'X-Ozelif-Eval',
+        ) === '1',
     })
-    next()
-    return
-  }
 
-  existing.count += 1
+  const result =
+    await enforceAiRateLimit(
+      query,
+      plan,
+    )
 
-  if (existing.count > MAX_REQUESTS_PER_WINDOW) {
+  if (!result.allowed) {
+    response.setHeader(
+      'Retry-After',
+      String(
+        result.retryAfterSeconds,
+      ),
+    )
+
     response.status(429).json({
-      error: 'Слишком много сообщений. Попробуйте ещё раз через несколько минут.',
+      error:
+        'Слишком много сообщений. Попробуйте ещё раз через несколько минут.',
+      rateLimit: {
+        blockedBy:
+          result.blockedBy,
+        retryAfterSeconds:
+          result.retryAfterSeconds,
+      },
     })
+
     return
   }
 
@@ -514,7 +531,9 @@ async function createAssistantReply({
 
 export function createAiAssistantRouter() {
   const router = express.Router()
-  router.use(rateLimit)
+  router.use(
+    asyncRoute(rateLimit),
+  )
 
   router.post('/', asyncRoute(async (request, response) => {
     const startedAt = performance.now()

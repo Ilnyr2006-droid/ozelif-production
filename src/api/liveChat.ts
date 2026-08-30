@@ -33,6 +33,48 @@ export function getStoredLiveChatReference() {
   }
 }
 
-export async function ensureLiveChatSession(): Promise<Session> { const result = await json<{ conversationId: string; token: string; conversation: LiveConversation }>('/api/live-chat/session', { method: 'POST', body: JSON.stringify({ conversationId: localStorage.getItem(ID_KEY), token: localStorage.getItem(TOKEN_KEY), visitorId: visitorId(), path: window.location.pathname }) }); localStorage.setItem(ID_KEY, result.conversationId); localStorage.setItem(TOKEN_KEY, result.token); return result }
+export async function ensureLiveChatSession(): Promise<Session> {
+  const conversationId =
+    localStorage.getItem(ID_KEY)
+
+  const token =
+    localStorage.getItem(TOKEN_KEY)
+
+  const result =
+    await json<{
+      conversationId: string
+      token: string
+      conversation: LiveConversation
+    }>(
+      '/api/live-chat/session',
+      {
+        method: 'POST',
+        ...(token
+          ? {
+              headers:
+                headers(token),
+            }
+          : {}),
+        body: JSON.stringify({
+          conversationId,
+          visitorId: visitorId(),
+          path:
+            window.location.pathname,
+        }),
+      },
+    )
+
+  localStorage.setItem(
+    ID_KEY,
+    result.conversationId,
+  )
+
+  localStorage.setItem(
+    TOKEN_KEY,
+    result.token,
+  )
+
+  return result
+}
 export async function pollLiveChat(session: Session, after = 0) { return json<{ conversation: LiveConversation; messages: LiveChatMessage[] }>(`/api/live-chat/conversations/${encodeURIComponent(session.conversationId)}/messages?after=${after}`, { headers: headers(session.token) }) }
 export async function sendLiveChatMessage(session: Session, content: string, assistantRequest?: unknown, clientMessageId = createClientId()) { return json<{ conversation: LiveConversation; userMessage: LiveChatMessage; assistant: { reply?: string; actions?: Array<{ label: string; href: string }>; message?: LiveChatMessage } | null; assistantError?: string | null; duplicate?: boolean }>(`/api/live-chat/conversations/${encodeURIComponent(session.conversationId)}/messages`, { method: 'POST', headers: headers(session.token), body: JSON.stringify({ content, path: window.location.pathname, assistantRequest, clientMessageId }) }) }
