@@ -5,6 +5,7 @@ import {
   formatAmbiguousQuantityReply,
   formatChatOrderHistoryContext,
   formatChatOrderDraftReply,
+  implicitFulfillmentChoice,
   loadChatOrderHistory,
   orderDraftMissingFields,
   parseChatCartCommand,
@@ -589,3 +590,104 @@ test('model can explicitly mark a quantity message ambiguous', () => {
   assert.equal(validation.ambiguous, true)
   assert.equal(validation.update.operations.length, 0)
 })
+
+
+test(
+  'delivery pricing question does not mutate an empty order draft',
+  () => {
+    assert.equal(
+      implicitFulfillmentChoice(
+        'Сколько стоит доставка СДЭК в Казань?',
+        {
+          status: 'collecting',
+          items: [],
+          deliveryMethod: null,
+        },
+      ),
+      null,
+    )
+  },
+)
+
+test(
+  'delivery pricing question does not mutate an existing order',
+  () => {
+    assert.equal(
+      implicitFulfillmentChoice(
+        'Сколько стоит доставка СДЭК в Казань?',
+        {
+          ...readyDraft,
+          deliveryMethod: null,
+        },
+      ),
+      null,
+    )
+  },
+)
+
+test(
+  'short delivery answer selects courier for an active order',
+  () => {
+    assert.equal(
+      implicitFulfillmentChoice(
+        'доставка',
+        {
+          ...readyDraft,
+          deliveryMethod: null,
+        },
+      ),
+      'courier',
+    )
+
+    assert.equal(
+      implicitFulfillmentChoice(
+        'хочу доставку',
+        {
+          ...readyDraft,
+          deliveryMethod: null,
+        },
+      ),
+      'courier',
+    )
+  },
+)
+
+test(
+  'short pickup answer selects pickup for an active order',
+  () => {
+    assert.equal(
+      implicitFulfillmentChoice(
+        'самовывоз',
+        {
+          ...readyDraft,
+          deliveryMethod: null,
+        },
+      ),
+      'pickup',
+    )
+  },
+)
+
+test(
+  'general delivery information does not change fulfillment',
+  () => {
+    for (const message of [
+      'Какие у вас условия доставки?',
+      'Есть ли доставка в Казань?',
+      'Как осуществляется доставка?',
+      'Срок доставки в Казань какой?',
+    ]) {
+      assert.equal(
+        implicitFulfillmentChoice(
+          message,
+          {
+            ...readyDraft,
+            deliveryMethod: null,
+          },
+        ),
+        null,
+        message,
+      )
+    }
+  },
+)

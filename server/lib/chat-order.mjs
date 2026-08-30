@@ -1393,6 +1393,63 @@ export function parseChatCartCommand(value, draft) {
   return null
 }
 
+export function implicitFulfillmentChoice(
+  value,
+  draft,
+) {
+  const items =
+    Array.isArray(draft?.items)
+      ? draft.items
+      : []
+
+  /*
+   * Never let general delivery information mutate an empty order draft.
+   * Fulfillment selection is meaningful only after at least one product
+   * exists in the order.
+   */
+  if (
+    !items.length
+    || draft?.status === 'created'
+  ) {
+    return null
+  }
+
+  const text = String(value ?? '')
+    .trim()
+    .toLocaleLowerCase('ru')
+    .replace(/ё/gu, 'е')
+    .replace(/\s+/gu, ' ')
+
+  if (!text) return null
+
+  /*
+   * Questions about delivery price, terms or timing are informational.
+   * They must reach the assistant instead of changing order fulfillment.
+   */
+  if (
+    /(?:сколько|стоим\p{L}*|цен\p{L}*|тариф\p{L}*|срок\p{L}*|когда|как\s+(?:работает|осуществляется|происходит)|можно\s+ли|есть\s+ли|услов\p{L}*|бесплатн\p{L}*|почем|почём)/iu
+      .test(text)
+  ) {
+    return null
+  }
+
+  if (
+    /^(?:самовывоз|самовывозом|заберу\s+сам|хочу\s+самовывоз|выбираю\s+самовывоз|давайте\s+самовывоз)[.!?]*$/iu
+      .test(text)
+  ) {
+    return 'pickup'
+  }
+
+  if (
+    /^(?:доставка|доставкой|курьер|курьером|хочу\s+доставку|выбираю\s+доставку|давайте\s+доставку)[.!?]*$/iu
+      .test(text)
+  ) {
+    return 'courier'
+  }
+
+  return null
+}
+
 export async function applyImplicitChatOrderSignals(
   conversationId,
   content,
@@ -1402,18 +1459,11 @@ export async function applyImplicitChatOrderSignals(
     return null
   }
 
-  const fulfillmentText = String(content ?? '')
-    .trim()
-    .toLocaleLowerCase('ru')
-    .replace(/ё/g, 'е')
-
-  const implicitDeliveryMethod = (
-    /самовывоз/iu.test(fulfillmentText)
-      ? 'pickup'
-      : /доставк/iu.test(fulfillmentText)
-        ? 'courier'
-        : null
-  )
+  const implicitDeliveryMethod =
+    implicitFulfillmentChoice(
+      content,
+      draft,
+    )
 
   if (
     implicitDeliveryMethod
