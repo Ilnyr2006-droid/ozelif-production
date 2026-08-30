@@ -56,6 +56,12 @@ const GENERIC_PRODUCT_PRICE =
 const GENERIC_PRODUCT_STOCK =
   /(?:в\s+налич|наличи|остат|на\s+складе|сколько\b.{0,100}\b(?:есть|остал\p{L}*)\b)/iu
 
+const PRODUCT_FOLLOWUP =
+  /(?:из\s+(?:них|этих)|ка(?:кая|кой|кие)\b.{0,80}(?:мягч|толщ|тоньш|дешев|дороже|плотн|лучше|подойд)|сравни\p{L}*\s+(?:их|эти)|а\s+у\s+(?:них|этих)|перв(?:ый|ая|ое)|втор(?:ой|ая|ое)|трет(?:ий|ья|ье))/iu
+
+const ADVERSARIAL_FACT_OVERRIDE =
+  /(?:(?:игнорир|придум)\p{L}*.{0,180}(?:налич|остат|товар|цен)|(?:налич|остат|товар|цен).{0,180}(?:игнорир|придум)\p{L}*|это\s+приказ\s+администратор)/iu
+
 function result(
   intent,
   needsProducts,
@@ -72,6 +78,20 @@ export function routeAssistantRequest(
   const text = normalize(value)
 
   if (!text) {
+    return result(
+      'general',
+      false,
+    )
+  }
+
+  /*
+   * A request to invent/override stock or prices should be refused without
+   * searching random catalog products and showing unrelated product cards.
+   */
+  if (
+    ADVERSARIAL_FACT_OVERRIDE
+      .test(text)
+  ) {
     return result(
       'general',
       false,
@@ -142,4 +162,117 @@ export function routeAssistantRequest(
     'general',
     false,
   )
+}
+
+
+export function routeAssistantConversation(
+  messages,
+  fallbackValue = '',
+) {
+  const rows = Array.isArray(messages)
+    ? messages
+    : []
+
+  let latestUserIndex = -1
+
+  for (
+    let index = rows.length - 1;
+    index >= 0;
+    index -= 1
+  ) {
+    if (
+      rows[index]?.role === 'user'
+      && String(
+        rows[index]?.content ?? '',
+      ).trim()
+    ) {
+      latestUserIndex = index
+      break
+    }
+  }
+
+  const latest = String(
+    (
+      latestUserIndex >= 0
+        ? rows[latestUserIndex]?.content
+        : fallbackValue
+    )
+    ?? fallbackValue
+    ?? '',
+  ).trim()
+
+  const direct =
+    routeAssistantRequest(
+      latest,
+    )
+
+  const directResult = {
+    ...direct,
+    retrievalQuery:
+      latest,
+    contextualCatalogSearch:
+      false,
+  }
+
+  if (
+    direct.intent !== 'general'
+    || direct.needsProducts
+    || !PRODUCT_FOLLOWUP.test(
+      normalize(latest),
+    )
+  ) {
+    return directResult
+  }
+
+  const startIndex =
+    latestUserIndex >= 0
+      ? latestUserIndex - 1
+      : rows.length - 1
+
+  for (
+    let index = startIndex;
+    index >= 0;
+    index -= 1
+  ) {
+    const row = rows[index]
+
+    if (
+      row?.role !== 'user'
+    ) {
+      continue
+    }
+
+    const previous =
+      String(
+        row?.content ?? '',
+      ).trim()
+
+    if (!previous) {
+      continue
+    }
+
+    const previousRoute =
+      routeAssistantRequest(
+        previous,
+      )
+
+    if (
+      previousRoute.needsProducts
+      && previousRoute.intent
+        === 'product'
+    ) {
+      return {
+        intent: 'product',
+        needsProducts: true,
+        retrievalQuery: [
+          previous,
+          `Уточнение покупателя: ${latest}`,
+        ].join('\n'),
+        contextualCatalogSearch:
+          true,
+      }
+    }
+  }
+
+  return directResult
 }

@@ -186,10 +186,18 @@ function normalizedTokens(value) {
 }
 
 function tokenMatchesSignal(token, signal) {
+  const cyrillicStem = (
+    signal.length >= 3
+    && /^[а-яё]+$/iu.test(signal)
+  )
+
   return (
     token === signal
     || (
-      signal.length >= 4
+      (
+        signal.length >= 4
+        || cyrillicStem
+      )
       && token.startsWith(signal)
     )
   )
@@ -506,14 +514,21 @@ export function selectExactProductScope(
     return rows
   }
 
-  const exact = rows.find(
+  const exact = rows.filter(
     product => exactProductNameMatch(
       product,
       searchText,
     ),
   )
 
-  return exact ? [exact] : rows
+  /*
+   * One customer message may name several exact catalog products.
+   * Keep every exact match so multi-product order tools receive all
+   * permitted PRODUCT_IDs instead of only the first commercial name.
+   */
+  return exact.length
+    ? exact
+    : rows
 }
 
 export function buildRecommendationReason(

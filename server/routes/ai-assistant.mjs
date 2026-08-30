@@ -26,7 +26,7 @@ import {
   formatChatOrderHistoryContext,
 } from '../lib/chat-order.mjs'
 import {
-  routeAssistantRequest,
+  routeAssistantConversation,
 } from '../lib/ai-request-routing.mjs'
 import {
   mergeOpenAiUsage,
@@ -279,6 +279,13 @@ async function createAssistantReply({
       `Телефон уже сохранён: ${currentProfile.hasPhone ? 'да' : 'нет'}.`,
       'Если покупатель явно сообщил своё имя и/или свой телефон, '
         + 'вызови capture_customer_profile.',
+      'LIVE-CHAT CAPABILITY: если capture_customer_profile успешно принял телефон, '
+        + 'не говори, что передать запрос менеджеру из этого чата невозможно. '
+        + 'В рабочем live-chat backend сохраняет контакт и помечает этот диалог '
+        + 'для менеджера. Можно сказать, что контакт принят и менеджер увидит '
+        + 'запрос в этом чате; не обещай время ответа.',
+      'ТОЧНОСТЬ НАЗВАНИЙ: названия товаров копируй дословно из блока '
+        + 'ПРОВЕРЕННЫЕ ТОВАРЫ, без смешивания кириллицы и латиницы.',
       'Не вызывай инструмент для размера одежды, цены, количества, '
         + 'артикула, номера заказа, названия товара или контакта '
         + 'другого человека.',
@@ -462,6 +469,7 @@ async function createAssistantReply({
         controller,
         payload: finalPayload,
         usageParts,
+        runtime,
       })
     }
 
@@ -499,6 +507,7 @@ async function createAssistantReply({
         controller,
         payload: emptyRetryPayload,
         usageParts,
+        runtime,
       })
 
       text = removeProductNavigationPromises(
@@ -523,6 +532,7 @@ async function createAssistantReply({
       model: body?.model ?? model,
       responseId: body?.id ?? null,
       usage: mergeOpenAiUsage(usageParts),
+      runtime,
     }
   } finally {
     clearTimeout(timeout)
@@ -605,7 +615,14 @@ export function createAiAssistantRouter() {
      * response. Non-product turns must not pay the catalog-search/token cost.
      */
     const requestRoute =
-      routeAssistantRequest(message)
+      routeAssistantConversation(
+        messages,
+        message,
+      )
+
+    const retrievalQuery =
+      requestRoute.retrievalQuery
+      || message
 
     const promptIdentity =
       await publishedPromptIdentity(query)
@@ -613,7 +630,7 @@ export function createAiAssistantRouter() {
     const retrieval =
       requestRoute.needsProducts
         ? await findLiveProductCandidates(
-            message,
+            retrievalQuery,
             { limit: 3 },
           )
         : {
@@ -699,6 +716,11 @@ export function createAiAssistantRouter() {
               retrieval.semantic.available
                 ? 'product_index+postgresql'
                 : 'postgresql_fallback',
+            contextualCatalogSearch:
+              Boolean(
+                requestRoute
+                  .contextualCatalogSearch,
+              ),
           },
         },
       )
@@ -731,6 +753,11 @@ export function createAiAssistantRouter() {
             requestRoute.intent,
           catalogSearch:
             requestRoute.needsProducts,
+          contextualCatalogSearch:
+            Boolean(
+              requestRoute
+                .contextualCatalogSearch,
+            ),
           semanticMatches: retrieval.semantic.matches.length,
           lexicalMatches: retrieval.lexical.count,
           constraints: retrieval.constraints ?? null,
@@ -815,6 +842,11 @@ export function createAiAssistantRouter() {
             requestRoute.intent,
           catalogSearch:
             requestRoute.needsProducts,
+          contextualCatalogSearch:
+            Boolean(
+              requestRoute
+                .contextualCatalogSearch,
+            ),
           semanticMatches: retrieval.semantic.matches.length,
           lexicalMatches: retrieval.lexical.count,
           constraints: retrieval.constraints ?? null,

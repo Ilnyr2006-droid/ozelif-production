@@ -115,3 +115,27 @@ test('sanitizeSalesReply does not expose markdown bold markers', () => {
     'Napato Black подходит по опубликованным характеристикам.',
   )
 })
+
+test(
+  'turns inline hyphen list items into readable bullet lines',
+  () => {
+    assert.equal(
+      normalizeAssistantPlainText(
+        'Доступны:\n• Самовывоз. - Курьерская доставка. - СДЭК.',
+      ),
+      'Доступны:\n• Самовывоз.\n• Курьерская доставка.\n• СДЭК.',
+    )
+  },
+)
+
+test(
+  'keeps a street number on the same line after a comma',
+  () => {
+    assert.equal(
+      normalizeAssistantPlainText(
+        'Доставка: Казань, улица Дорожная,\n51.',
+      ),
+      'Доставка: Казань, улица Дорожная, 51.',
+    )
+  },
+)

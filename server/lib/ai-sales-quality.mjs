@@ -109,6 +109,14 @@ export function normalizeAssistantPlainText(value) {
     .replace(/(?<!_)_([^_\n]+)_(?!_)/gu, '$1')
     .replace(/^#{1,6}\s+/gmu, '')
     .replace(/^\s*[-*+]\s+/gmu, '• ')
+    .replace(
+      /([.;!?])\s+-\s+(?=[\p{L}\p{N}])/gu,
+      '$1\n• ',
+    )
+    .replace(
+      /,\s*\n+\s*(?=\d{1,5}(?:\D|$))/gu,
+      ', ',
+    )
 }
 
 function normalizeNumberedRecommendations(value) {

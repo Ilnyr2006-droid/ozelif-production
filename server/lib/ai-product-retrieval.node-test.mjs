@@ -347,3 +347,98 @@ test('exact product scope keeps alternatives when explicitly requested', () => {
     ['Amazon Black', 'Vip Black', 'Soft Black'],
   )
 })
+
+test(
+  'detects inflected Russian three-letter color stems',
+  () => {
+    assert.equal(
+      inferExplicitColor(
+        'Покажи серую кожу для одежды',
+      ),
+      'grey',
+    )
+
+    assert.equal(
+      inferExplicitColor(
+        'Нужна синяя кожа',
+      ),
+      'blue',
+    )
+  },
+)
+
+test(
+  'grey constraint removes black products for an inflected Russian query',
+  () => {
+    const result =
+      applyExplicitProductConstraints(
+        [
+          {
+            id: 'grey',
+            name:
+              'Eskiltme Bizon Grey',
+            attributes: {
+              Цвет:
+                'Серый',
+              Толщина:
+                '0,8 мм',
+            },
+          },
+          {
+            id: 'black',
+            name:
+              'Vip Black',
+            attributes: {
+              Цвет:
+                'Черный',
+              Толщина:
+                '0,8 мм',
+            },
+          },
+        ],
+        'Покажи серую кожу 0,8 мм для одежды',
+      )
+
+    assert.deepEqual(
+      result.products.map(
+        product => product.name,
+      ),
+      [
+        'Eskiltme Bizon Grey',
+      ],
+    )
+  },
+)
+
+test(
+  'exact product scope keeps every exact product named in one order request',
+  () => {
+    const products = [
+      {
+        id: 'napato',
+        name: 'Napato Black',
+      },
+      {
+        id: 'amazon',
+        name: 'Amazon Black',
+      },
+      {
+        id: 'vip',
+        name: 'Vip Black',
+      },
+    ]
+
+    assert.deepEqual(
+      selectExactProductScope(
+        products,
+        'Добавь Napato Black и Amazon Black в заказ',
+      ).map(
+        item => item.name,
+      ),
+      [
+        'Napato Black',
+        'Amazon Black',
+      ],
+    )
+  },
+)
