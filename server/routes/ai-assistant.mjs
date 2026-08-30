@@ -224,11 +224,11 @@ async function requestOpenAiResponseWithRetry({
 
 async function createAssistantReply({
   messages,
+  latestMessage,
   pathname,
   products,
   needsProducts = false,
   intentType = null,
-  clarificationQuestion = null,
   allowProfileCapture = false,
   currentProfile = {},
   allowOrderDraftUpdate = false,
@@ -324,6 +324,23 @@ async function createAssistantReply({
               'ИСТОРИЯ ДИАЛОГА:',
               conversationText(messages),
               '',
+              'ПОСЛЕДНЕЕ СООБЩЕНИЕ ПОКУПАТЕЛЯ — ДОСЛОВНО:',
+              String(
+                latestMessage
+                ?? latestUserText(
+                  messages,
+                  '',
+                )
+                ?? '',
+              ),
+              '',
+              'ПРАВИЛО КОНТЕКСТА:',
+              'Последнее сообщение покупателя и история диалога — источник '
+                + 'его намерения и уже сообщённых условий. Не спрашивай '
+                + 'повторно то, что покупатель уже написал. Если информации '
+                + 'действительно недостаточно для полезного ответа, сам задай '
+                + 'один наиболее полезный уточняющий вопрос.',
+              '',
               needsProducts
                 ? 'ПРОВЕРЕННЫЕ ТОВАРЫ:'
                 : 'КОНТЕКСТ ТОВАРОВ:',
@@ -342,16 +359,8 @@ async function createAssistantReply({
                 orderHistory,
               ),
               '',
-              'УТОЧНЯЮЩИЙ ВОПРОС:',
-              clarificationQuestion
-                ? (
-                    clarificationQuestion
-                    + ' Задай именно этот один вопрос в конце ответа '
-                    + 'и не добавляй второй уточняющий вопрос.'
-                  )
-                : 'Не требуется.',
-              '',
-              'Ответь на последнее сообщение покупателя.',
+              'Ответь на последнее сообщение покупателя, учитывая весь '
+                + 'предыдущий диалог и только проверенные данные backend.',
             ].join('\n'),
           },
         ],
@@ -656,14 +665,13 @@ export function createAiAssistantRouter() {
         messages: messages.length
           ? messages
           : [{ role: 'user', content: message }],
+        latestMessage: message,
         pathname,
         products,
         needsProducts:
           requestRoute.needsProducts,
         intentType:
           requestRoute.intent,
-        clarificationQuestion:
-          retrieval.clarificationQuestion ?? null,
         allowProfileCapture,
         currentProfile,
         allowOrderDraftUpdate: allowProfileCapture,
@@ -761,8 +769,7 @@ export function createAiAssistantRouter() {
           semanticMatches: retrieval.semantic.matches.length,
           lexicalMatches: retrieval.lexical.count,
           constraints: retrieval.constraints ?? null,
-          clarificationQuestion:
-            retrieval.clarificationQuestion ?? null,
+          clarificationQuestion: null,
         },
       })
     } catch (error) {
@@ -814,7 +821,6 @@ export function createAiAssistantRouter() {
             sanitizeUnverifiedStockClaims(
               deterministicCatalogReply(
                 products,
-                retrieval.clarificationQuestion ?? null,
               ),
               products,
             ),
@@ -850,8 +856,7 @@ export function createAiAssistantRouter() {
           semanticMatches: retrieval.semantic.matches.length,
           lexicalMatches: retrieval.lexical.count,
           constraints: retrieval.constraints ?? null,
-          clarificationQuestion:
-            retrieval.clarificationQuestion ?? null,
+          clarificationQuestion: null,
         },
       })
     }

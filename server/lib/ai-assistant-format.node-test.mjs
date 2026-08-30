@@ -210,3 +210,56 @@ test('product actions include product id for click attribution', () => {
   assert.equal(actions[0].productId, product.id)
   assert.equal(actions[0].reason, 'чёрный цвет')
 })
+
+test(
+  'deterministic catalog fallback does not invent a missing customer field',
+  () => {
+    const reply =
+      deterministicCatalogReply(
+        [],
+      )
+
+    assert.doesNotMatch(
+      reply,
+      /что вы планируете изготовить/iu,
+    )
+
+    assert.doesNotMatch(
+      reply,
+      /уточните.{0,80}(?:назначение|цвет|толщин|бюджет)/iu,
+    )
+  },
+)
+
+test(
+  'deterministic product fallback does not force another clarification',
+  () => {
+    const reply =
+      deterministicCatalogReply(
+        [
+          {
+            name:
+              'Catalog Product',
+            variants: [
+              {
+                priceRub:
+                  100,
+                unit:
+                  'шт.',
+              },
+            ],
+          },
+        ],
+      )
+
+    assert.doesNotMatch(
+      reply,
+      /уточните назначение|что вы планируете изготовить/iu,
+    )
+
+    assert.match(
+      reply,
+      /могу сравнить/iu,
+    )
+  },
+)

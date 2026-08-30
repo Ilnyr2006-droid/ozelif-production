@@ -1112,15 +1112,15 @@ export async function findLiveProductCandidates(
     Math.min(limit, 3),
   )
 
-  const clarificationQuestion =
-    buildProductClarificationQuestion(
-      searchText,
-      products,
-    )
-
+  /*
+   * Live AI behavior must not infer which customer detail is "missing".
+   * Luna receives the customer's own words and decides whether a follow-up
+   * is actually necessary. Deterministic backend stays responsible only for
+   * verified catalog retrieval, constraints, ranking and IDs.
+   */
   return {
     products,
-    clarificationQuestion,
+    clarificationQuestion: null,
     constraints: {
       categorySlug: categorySlug || null,
       ...constrained.constraints,
