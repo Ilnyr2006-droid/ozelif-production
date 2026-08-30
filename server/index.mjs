@@ -29,6 +29,7 @@ import { createPublicSitemapRouter } from './routes/public-sitemap.mjs'
 import { normalizeCatalogSlug } from './lib/catalog-slug.mjs'
 import { createDashboardChatMetricsRepository } from './lib/dashboard-chat-metrics.mjs'
 import { createTrafficAnalyticsRepository } from './lib/traffic-analytics.mjs'
+import { isAnalyticsBotUserAgent } from './lib/analytics-bot-filter.mjs'
 import { validateCatalogImage } from './lib/upload-image-validation.mjs'
 import { createYandexReviewsRouter } from './routes/yandex-reviews.mjs'
 import { createYandexReviewsService } from './lib/yandex-reviews.mjs'
@@ -133,10 +134,39 @@ app.get('/api/admin/session', wrap(async (req, res) => {
 app.get('/api/admin/dashboard', requirePermission('dashboard:read'), wrap(async (_req, res) => {
   const [baseMetrics, chatMetrics] = await Promise.all([
     query(`SELECT
-    (SELECT count(*)::int FROM visitor_sessions WHERE last_seen_at >= current_date) visitors_today,
-    (SELECT count(*)::int FROM analytics_events WHERE event_name='page_view' AND created_at >= current_date) page_views_today,
-    (SELECT count(*)::int FROM analytics_events WHERE event_name='product_view' AND created_at >= current_date) product_views_today,
-    (SELECT count(*)::int FROM analytics_events WHERE event_name='add_to_cart' AND created_at >= current_date) add_to_cart_today,
+    (
+      SELECT count(*)::int
+      FROM visitor_sessions
+      WHERE last_seen_at >= current_date
+        AND NOT analytics_is_bot_user_agent(user_agent)
+    ) visitors_today,
+    (
+      SELECT count(*)::int
+      FROM analytics_events event
+      JOIN visitor_sessions session
+        ON session.id = event.session_id
+      WHERE event.event_name='page_view'
+        AND event.created_at >= current_date
+        AND NOT analytics_is_bot_user_agent(session.user_agent)
+    ) page_views_today,
+    (
+      SELECT count(*)::int
+      FROM analytics_events event
+      JOIN visitor_sessions session
+        ON session.id = event.session_id
+      WHERE event.event_name='product_view'
+        AND event.created_at >= current_date
+        AND NOT analytics_is_bot_user_agent(session.user_agent)
+    ) product_views_today,
+    (
+      SELECT count(*)::int
+      FROM analytics_events event
+      JOIN visitor_sessions session
+        ON session.id = event.session_id
+      WHERE event.event_name='add_to_cart'
+        AND event.created_at >= current_date
+        AND NOT analytics_is_bot_user_agent(session.user_agent)
+    ) add_to_cart_today,
     (SELECT count(*)::int FROM categories) categories_count,
     (SELECT count(*)::int FROM products) products_count,
     (SELECT count(*)::int FROM products WHERE primary_image IS NULL OR primary_image='') products_without_image,
@@ -204,6 +234,18 @@ app.post('/api/admin/uploads', requirePermission('catalog:upload'), upload.singl
 })
 app.get('/api/admin/chats', requirePermission('chat:read'), wrap(async (_req, res) => res.json({ items: (await query('SELECT * FROM chat_sessions ORDER BY last_message_at DESC LIMIT 200')).rows })))
 app.post('/api/analytics/events', wrap(async (req, res) => {
+  const userAgent = String(
+    req.headers['user-agent'] ?? '',
+  ).slice(0, 500)
+
+  if (isAnalyticsBotUserAgent(userAgent)) {
+    /*
+     * Deliberately answer 204 so crawlers receive no special signal and
+     * cannot pollute visitor_sessions / analytics_events.
+     */
+    return res.status(204).end()
+  }
+
   const sessionId = String(req.body?.sessionId ?? '').slice(0,120)
   const eventName = String(req.body?.eventName ?? '').slice(0,80)
   const pathValue = String(req.body?.path ?? '').slice(0,500)
@@ -221,7 +263,7 @@ app.post('/api/analytics/events', wrap(async (req, res) => {
         return []
       }),
   )
-  await query(`INSERT INTO visitor_sessions (id,first_path,last_path,referrer,user_agent) VALUES ($1,$2,$2,$3,$4) ON CONFLICT (id) DO UPDATE SET last_seen_at=now(),last_path=excluded.last_path`, [sessionId,pathValue || null,String(req.body?.referrer ?? '').slice(0,500) || null,String(req.headers['user-agent'] ?? '').slice(0,500) || null])
+  await query(`INSERT INTO visitor_sessions (id,first_path,last_path,referrer,user_agent) VALUES ($1,$2,$2,$3,$4) ON CONFLICT (id) DO UPDATE SET last_seen_at=now(),last_path=excluded.last_path`, [sessionId,pathValue || null,String(req.body?.referrer ?? '').slice(0,500) || null,userAgent || null])
   if (eventName !== 'heartbeat') {
     await query(
       `INSERT INTO analytics_events

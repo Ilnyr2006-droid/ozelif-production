@@ -24,12 +24,20 @@ export function createTrafficAnalyticsRepository({
               SELECT count(*)::int
               FROM visitor_sessions
               WHERE last_seen_at >= now() - interval '90 seconds'
+                AND NOT analytics_is_bot_user_agent(
+                  user_agent
+                )
             ) AS online_now,
 
             (
               SELECT count(DISTINCT session_id)::int
               FROM analytics_events
+              JOIN visitor_sessions analytics_session
+                ON analytics_session.id = analytics_events.session_id
               WHERE event_name = 'page_view'
+                AND NOT analytics_is_bot_user_agent(
+                  analytics_session.user_agent
+                )
                 AND (created_at AT TIME ZONE $1)::date
                   = (now() AT TIME ZONE $1)::date
             ) AS visitors_today,
@@ -37,7 +45,12 @@ export function createTrafficAnalyticsRepository({
             (
               SELECT count(*)::int
               FROM analytics_events
+              JOIN visitor_sessions analytics_session
+                ON analytics_session.id = analytics_events.session_id
               WHERE event_name = 'page_view'
+                AND NOT analytics_is_bot_user_agent(
+                  analytics_session.user_agent
+                )
                 AND (created_at AT TIME ZONE $1)::date
                   = (now() AT TIME ZONE $1)::date
             ) AS page_views_today,
@@ -45,14 +58,24 @@ export function createTrafficAnalyticsRepository({
             (
               SELECT count(DISTINCT session_id)::int
               FROM analytics_events
+              JOIN visitor_sessions analytics_session
+                ON analytics_session.id = analytics_events.session_id
               WHERE event_name = 'page_view'
+                AND NOT analytics_is_bot_user_agent(
+                  analytics_session.user_agent
+                )
                 AND created_at >= now() - interval '7 days'
             ) AS visitors_7d,
 
             (
               SELECT count(*)::int
               FROM analytics_events
+              JOIN visitor_sessions analytics_session
+                ON analytics_session.id = analytics_events.session_id
               WHERE event_name = 'page_view'
+                AND NOT analytics_is_bot_user_agent(
+                  analytics_session.user_agent
+                )
                 AND created_at >= now() - interval '7 days'
             ) AS page_views_7d
         `,
@@ -73,7 +96,12 @@ export function createTrafficAnalyticsRepository({
               session_id,
               (created_at AT TIME ZONE $1)::date AS day
             FROM analytics_events
+            JOIN visitor_sessions analytics_session
+              ON analytics_session.id = analytics_events.session_id
             WHERE event_name = 'page_view'
+              AND NOT analytics_is_bot_user_agent(
+                analytics_session.user_agent
+              )
               AND created_at >= now() - interval '8 days'
           )
           SELECT
@@ -107,6 +135,14 @@ export function createTrafficAnalyticsRepository({
             ON analytics_events.event_name = stages.event_name
            AND (analytics_events.created_at AT TIME ZONE $1)::date
              = (now() AT TIME ZONE $1)::date
+           AND EXISTS (
+             SELECT 1
+             FROM visitor_sessions analytics_session
+             WHERE analytics_session.id = analytics_events.session_id
+               AND NOT analytics_is_bot_user_agent(
+                 analytics_session.user_agent
+               )
+           )
           GROUP BY stages.event_name, stages.position, stages.label
           ORDER BY stages.position
         `,
@@ -128,7 +164,12 @@ export function createTrafficAnalyticsRepository({
                 WHERE event_name = 'add_to_cart'
               )::int AS cart_adds
             FROM analytics_events
+            JOIN visitor_sessions analytics_session
+              ON analytics_session.id = analytics_events.session_id
             WHERE event_name IN ('product_view', 'add_to_cart')
+              AND NOT analytics_is_bot_user_agent(
+                analytics_session.user_agent
+              )
               AND created_at >= now() - interval '30 days'
               AND entity_id IS NOT NULL
             GROUP BY entity_id
@@ -179,9 +220,14 @@ export function createTrafficAnalyticsRepository({
             count(*)::int AS views,
             count(DISTINCT analytics_events.session_id)::int AS viewers
           FROM analytics_events
+          JOIN visitor_sessions analytics_session
+            ON analytics_session.id = analytics_events.session_id
           LEFT JOIN categories
             ON categories.slug = analytics_events.metadata->>'category'
           WHERE analytics_events.event_name = 'product_view'
+            AND NOT analytics_is_bot_user_agent(
+              analytics_session.user_agent
+            )
             AND analytics_events.created_at >= now() - interval '30 days'
             AND analytics_events.metadata->>'category' IS NOT NULL
           GROUP BY
@@ -201,7 +247,12 @@ export function createTrafficAnalyticsRepository({
             count(*)::int AS uses,
             count(DISTINCT session_id)::int AS users
           FROM analytics_events
+          JOIN visitor_sessions analytics_session
+            ON analytics_session.id = analytics_events.session_id
           WHERE event_name = 'catalog_filter'
+            AND NOT analytics_is_bot_user_agent(
+              analytics_session.user_agent
+            )
             AND created_at >= now() - interval '30 days'
             AND metadata->>'filter' IS NOT NULL
             AND metadata->>'value' IS NOT NULL
@@ -222,7 +273,12 @@ export function createTrafficAnalyticsRepository({
             count(*)::int AS searches,
             count(DISTINCT session_id)::int AS users
           FROM analytics_events
+          JOIN visitor_sessions analytics_session
+            ON analytics_session.id = analytics_events.session_id
           WHERE event_name = 'search_no_results'
+            AND NOT analytics_is_bot_user_agent(
+              analytics_session.user_agent
+            )
             AND created_at >= now() - interval '30 days'
             AND metadata->>'query' IS NOT NULL
           GROUP BY metadata->>'category', metadata->>'query'
@@ -238,7 +294,12 @@ export function createTrafficAnalyticsRepository({
             count(*)::int AS clicks,
             count(DISTINCT session_id)::int AS users
           FROM analytics_events
+          JOIN visitor_sessions analytics_session
+            ON analytics_session.id = analytics_events.session_id
           WHERE event_name = 'contact_click'
+            AND NOT analytics_is_bot_user_agent(
+              analytics_session.user_agent
+            )
             AND created_at >= now() - interval '30 days'
             AND metadata->>'channel' IS NOT NULL
           GROUP BY metadata->>'channel'
