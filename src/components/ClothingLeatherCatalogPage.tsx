@@ -1,3 +1,4 @@
+import { viewProduct } from '../analytics/metrika'
 import { CatalogSeoSubcategoryLinks } from './CatalogSeoSubcategoryLinks'
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { ArrowUpRight, ChevronDown, Search, SlidersHorizontal, X } from 'lucide-react'
@@ -217,11 +218,11 @@ export function ClothingLeatherCatalogPage() {
 }
 
 export function ClothingLeatherProductPage() {
-  const match = window.location.pathname.match(/^\/odejnayakozha\/tproduct\/(\d+)-/)
+  const match = window.location.pathname.match(/^\/odejnayakozha\/tproduct\/(\d+|[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12})-/i)
   const identifier = match?.[1] ?? ''
   const { data: product, isLoading, error, retry } = usePublicCatalogProduct('odejnayakozha', identifier)
   const { data: relatedCatalog } = usePublicCatalog('odejnayakozha')
-  const [selectedId, setSelectedId] = useState('')
+  const [selectedId, setSelectedId] = useState(() => new URLSearchParams(window.location.search).get('variant') ?? '')
   const { addItem, hasItem } = useCart()
   useReveal()
   const selected = product?.variants.find(variant => variant.id === selectedId) ?? product?.variants[0] ?? null
@@ -230,6 +231,7 @@ export function ClothingLeatherProductPage() {
   }, [product])
   useEffect(() => {
     if (!product) return
+    viewProduct(product, new URLSearchParams(window.location.search).get('variant') ?? undefined)
     void trackEvent('product_view', { entityType: 'product', entityId: product.id, metadata: { category: 'odejnayakozha' } })
   }, [product])
   useEffect(() => {

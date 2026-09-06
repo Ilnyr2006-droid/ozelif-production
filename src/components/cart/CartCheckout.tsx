@@ -1,8 +1,11 @@
+import { getAttribution } from '../../analytics/attribution'
+import { beginCheckout, goal } from '../../analytics/metrika'
 /* eslint-disable react-refresh/only-export-components */
 
 import {
   FormEvent,
   useMemo,
+  useEffect,
   useRef,
   useState,
 } from 'react'
@@ -254,6 +257,9 @@ export function CartCheckout({
     cartSignature: string
   } | null>(null)
 
+  const checkoutTracked = useRef(false)
+  useEffect(() => { if (!checkoutTracked.current && items.length) { checkoutTracked.current = true; beginCheckout(items) } }, [items])
+
   const minimumDate = useMemo(
     localToday,
     [],
@@ -345,6 +351,7 @@ export function CartCheckout({
             Accept: 'application/json',
           },
           body: JSON.stringify({
+            attribution: await getAttribution(),
             name,
             phone: contact,
             email,
@@ -397,6 +404,7 @@ export function CartCheckout({
         throw new Error('Сервер не вернул номер сохранённой заявки')
       }
 
+      goal('order_submitted')
       void trackEvent('checkout_success', {
         entityType: 'cart',
         metadata: {
@@ -446,6 +454,7 @@ export function CartCheckout({
         setCopied(true)
       }
 
+      goal('click_telegram')
       window.open(
         telegram,
         '_blank',

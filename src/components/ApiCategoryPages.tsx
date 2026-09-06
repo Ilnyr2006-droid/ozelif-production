@@ -1,3 +1,4 @@
+import { viewProduct } from '../analytics/metrika'
 import { CatalogSeoSubcategoryLinks } from './CatalogSeoSubcategoryLinks'
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, ArrowUpRight, ChevronDown, Search } from 'lucide-react'
@@ -197,11 +198,12 @@ function ApiProductPage({ config }: { config: CategoryConfig }) {
   const escapedSlug = config.slug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const match = window.location.pathname.match(new RegExp(`^/${escapedSlug}/tproduct/(\\d+|[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12})-`, 'i'))
   const { data: product, isLoading, error, retry } = usePublicCatalogProduct(config.slug, match?.[1] ?? '')
-  const [selectedId, setSelectedId] = useState('')
+  const [selectedId, setSelectedId] = useState(() => new URLSearchParams(window.location.search).get('variant') ?? '')
   const { addItem, hasItem } = useCart()
   useEffect(() => { if (product?.variants[0]) setSelectedId(current => product.variants.some(variant => variant.id === current) ? current : product.variants[0].id) }, [product])
   useEffect(() => {
     if (!product) return
+    viewProduct(product, new URLSearchParams(window.location.search).get('variant') ?? undefined)
     void trackEvent('product_view', {
       entityType: 'product',
       entityId: product.id,

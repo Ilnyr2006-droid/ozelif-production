@@ -1,3 +1,4 @@
+import { publicPageHeaders } from '../lib/public-page-headers.mjs'
 import express from 'express'
 import fs from 'node:fs/promises'
 import path from 'node:path'
@@ -66,6 +67,7 @@ async function listAllProducts(repository, categorySlug) {
 export function createPublicCategorySeoRouter({ repository, frontendRoot }) {
   if (!repository?.listProducts) throw new Error('A public catalog repository is required')
   const router = express.Router()
+  router.use(publicPageHeaders)
 
   router.get('/:categorySlug/:landingSlug', asyncRoute(async (request, response, next) => {
     if (

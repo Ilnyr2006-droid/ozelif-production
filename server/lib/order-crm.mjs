@@ -1,3 +1,4 @@
+import { enqueuePaidPurchase } from './ad-attribution.mjs'
 import crypto from 'node:crypto'
 import { transaction } from './db.mjs'
 import { normalizePhone } from './phone.mjs'
@@ -152,6 +153,7 @@ export async function changeOrderStatus(orderId, input, adminId, query) {
     await client.query(`INSERT INTO order_status_history (order_id, old_status, new_status, comment, changed_by_admin_id, source) VALUES ($1,$2,$3,$4,$5,'admin')`, [orderId, order.status, nextStatus, clean(input?.comment,1000), adminId ?? null])
     const links = await client.query(`SELECT telegram_chat_id::text FROM telegram_customer_links WHERE customer_id=$1 AND revoked_at IS NULL`, [order.customer_id])
     for (const link of links.rows) await client.query(`INSERT INTO notification_outbox (event_type,aggregate_type,aggregate_id,channel,recipient,payload) VALUES ($1,'order',$2,'telegram',$3,$4) ON CONFLICT DO NOTHING`, [`order.${nextStatus}`, orderId, link.telegram_chat_id, JSON.stringify({ publicNumber: order.public_number, status: nextStatus, statusLabel: ORDER_STATUS_LABELS[nextStatus], deliveryCompany: updated.rows[0].delivery_company, trackingNumber: updated.rows[0].tracking_number })])
+    await enqueuePaidPurchase(client, updated.rows[0])
     return updated.rows[0]
   })
 }

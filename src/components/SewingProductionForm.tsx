@@ -1,3 +1,5 @@
+import { getAttribution } from '../analytics/attribution'
+import { goal } from '../analytics/metrika'
 import {
   type FormEvent,
   useState,
@@ -93,6 +95,7 @@ export function SewingProductionForm() {
               'application/json',
           },
           body: JSON.stringify({
+            attribution: await getAttribution(),
             name,
             phone,
             productType: String(
@@ -120,7 +123,7 @@ export function SewingProductionForm() {
       if (
         !response.ok
         || !body
-        || !('ok' in body)
+        || !('ok' in body) || body.ok !== true
       ) {
         throw new Error(
           body
@@ -133,6 +136,7 @@ export function SewingProductionForm() {
 
       form.reset()
       setStatus('success')
+      goal('production_lead')
     } catch (error) {
       setSubmitError(
         error instanceof Error

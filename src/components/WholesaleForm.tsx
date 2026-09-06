@@ -1,3 +1,5 @@
+import { getAttribution } from '../analytics/attribution'
+import { goal } from '../analytics/metrika'
 import { FormEvent, useState } from 'react'
 import { Check } from 'lucide-react'
 import { external } from '../data'
@@ -80,7 +82,7 @@ export function WholesaleForm() {
           Accept: 'application/json',
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...payload, attribution: await getAttribution() }),
       })
 
       const body = (await response.json().catch(() => null)) as
@@ -88,7 +90,7 @@ export function WholesaleForm() {
         | { error?: string }
         | null
 
-      if (!response.ok || !body || !('ok' in body)) {
+      if (!response.ok || !body || !('ok' in body) || body.ok !== true) {
         throw new Error(
           body && 'error' in body && body.error
             ? body.error
@@ -98,6 +100,7 @@ export function WholesaleForm() {
 
       form.reset()
       setStatus('success')
+      goal('wholesale_lead')
     } catch (error) {
       setSubmitError(
         error instanceof Error

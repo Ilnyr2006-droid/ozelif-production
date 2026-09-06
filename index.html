@@ -19,57 +19,10 @@
     <meta property="og:image" content="https://ozelifkoja.ru/images/hero-leather-wide.jpg" />
     <meta name="twitter:card" content="summary_large_image" />
     <!-- Yandex.Metrika counter -->
-    <script>
-      ;(function (m, e, t, r, i, k, a) {
-        m[i] = m[i] || function () { (m[i].a = m[i].a || []).push(arguments) }
-        m[i].l = 1 * new Date()
-        for (let j = 0; j < document.scripts.length; j += 1) {
-          if (document.scripts[j].src === r) return
-        }
-        k = e.createElement(t)
-        a = e.getElementsByTagName(t)[0]
-        k.async = 1
-        k.src = r
-        a.parentNode.insertBefore(k, a)
-      })(window, document, 'script', 'https://mc.yandex.ru/metrika/tag.js?id=112275551', 'ym')
-
-      ym(112275551, 'init', {
-        defer: true,
-        clickmap: true,
-        ecommerce: 'dataLayer',
-        accurateTrackBounce: true,
-        trackLinks: true,
-      })
-
-      ;(() => {
-        let previousUrl = ''
-        const sendPageView = () => {
-          const currentUrl = window.location.href
-          if (currentUrl === previousUrl) return
-          const referer = previousUrl || document.referrer
-          previousUrl = currentUrl
-          ym(112275551, 'hit', currentUrl, { title: document.title, referer })
-        }
-        const wrapHistoryMethod = (method) => {
-          const original = history[method]
-          history[method] = function (...args) {
-            const result = original.apply(this, args)
-            queueMicrotask(sendPageView)
-            return result
-          }
-        }
-        wrapHistoryMethod('pushState')
-        wrapHistoryMethod('replaceState')
-        window.addEventListener('popstate', sendPageView)
-        sendPageView()
-      })()
-    </script>
+    <script defer src="/ozelif-metrika.js"></script>
     <!-- /Yandex.Metrika counter -->
   </head>
   <body>
-    <!-- Yandex.Metrika noscript -->
-    <noscript><div><img src="https://mc.yandex.ru/watch/112275551" style="position:absolute; left:-9999px" alt="" /></div></noscript>
-    <!-- /Yandex.Metrika noscript -->
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

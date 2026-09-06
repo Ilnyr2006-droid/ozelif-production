@@ -1,3 +1,4 @@
+import { saveAttribution } from '../lib/ad-attribution.mjs'
 import express from 'express'
 import crypto from 'node:crypto'
 import { query } from '../lib/db.mjs'
@@ -73,6 +74,8 @@ export function createOrdersRouter() {
       telegramEnabled: Boolean(env.telegramBotToken),
       telegramUsername: env.telegramBotUsername,
     })
+
+    await saveAttribution(query, 'order', result.order.id, request.body?.attribution)
 
     await linkCheckoutConversation(
       request.body,

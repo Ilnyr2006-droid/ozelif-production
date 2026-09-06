@@ -1,3 +1,4 @@
+import { saveAttribution } from '../lib/ad-attribution.mjs'
 import { Router } from 'express'
 import { query } from '../lib/db.mjs'
 import { normalizePhone } from '../lib/phone.mjs'
@@ -119,6 +120,8 @@ export function createWholesaleLeadsRouter() {
           text(request.body?.pagePath, 500),
         ],
       )
+
+      await saveAttribution(query, 'wholesale', result.rows[0].id, request.body?.attribution)
 
       await safeEnqueueAdminNotification(
         query,

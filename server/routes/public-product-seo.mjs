@@ -1,3 +1,4 @@
+import { publicPageHeaders } from '../lib/public-page-headers.mjs'
 import express from 'express'
 import fs from 'node:fs/promises'
 import path from 'node:path'
@@ -34,6 +35,7 @@ function asyncRoute(handler) {
 export function createPublicProductSeoRouter({ repository, frontendRoot }) {
   if (!repository?.getProductByRoute) throw new Error('A public catalog repository is required')
   const router = express.Router()
+  router.use(publicPageHeaders)
   const indexPath = path.join(frontendRoot, 'index.html')
 
   router.get('/:categorySlug/tproduct/:routeIdentifier', asyncRoute(async (request, response) => {

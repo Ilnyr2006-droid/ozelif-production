@@ -1,6 +1,7 @@
 import { createLiveChatRouter } from './routes/live-chat.mjs'
 import { createAdminLiveChatsRouter } from './routes/admin-live-chats.mjs'
 import { createAdminAiPromptRouter } from './routes/admin-ai-prompt.mjs'
+import { createDirectFeedRouter } from './routes/direct-feed.mjs'
 import express from 'express'
 import helmet from 'helmet'
 import multer from 'multer'
@@ -293,6 +294,7 @@ app.use('/api/admin/v5', createAdminV5Router())
 app.use('/api/admin/ai-prompt', createAdminAiPromptRouter())
 app.use('/api/public/products', createPublicProductRouter())
 app.use('/api/public/catalog/v1', createPublicCatalogRouter({ repository: publicCatalogRepository }))
+app.use(createDirectFeedRouter({ query, siteUrl: env.siteUrl }))
 app.use(createPublicSitemapRouter({ query, siteUrl: env.siteUrl }))
 
 

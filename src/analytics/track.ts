@@ -1,3 +1,5 @@
+import { captureAttribution } from './attribution'
+import { goal } from './metrika'
 const VISITOR_SESSION_KEY = 'ozelif-visitor-session-v1'
 const HEARTBEAT_INTERVAL_MS = 30_000
 
@@ -167,6 +169,7 @@ function startInteractionTracking() {
       link.textContent ?? '',
     )
     if (!channel) return
+    if (channel !== 'route') goal(`click_${channel}`)
 
     void trackEvent('contact_click', {
       entityType: 'contact',
@@ -204,6 +207,7 @@ export function startPresenceTracking() {
 }
 
 export function trackPageView(path: string) {
+  captureAttribution()
   if (!isPublicPath(path)) return Promise.resolve()
 
   startPresenceTracking()
