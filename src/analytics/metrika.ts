@@ -2,7 +2,7 @@ import type { CartItem } from '../cart/cartTypes'
 import type { PublicCatalogProduct } from '../api/publicCatalog'
 
 export const METRIKA_ID = 112275551
-export type Goal = 'product_view' | 'add_to_cart' | 'begin_checkout' | 'purchase' | 'order_submitted' | 'click_phone' | 'click_whatsapp' | 'click_telegram' | 'wholesale_lead' | 'production_lead'
+export type Goal = 'product_view' | 'add_to_cart' | 'begin_checkout' | 'purchase' | 'order_created' | 'click_phone' | 'click_whatsapp' | 'click_telegram' | 'wholesale_lead' | 'production_lead'
 type Product = { id: string; name: string; category: string; price?: number; quantity: number }
 type AnalyticsWindow = Window & { ym?: (...args: unknown[]) => void; dataLayer?: unknown[] }
 const browser = () => window as AnalyticsWindow

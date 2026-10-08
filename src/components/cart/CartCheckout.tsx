@@ -404,7 +404,9 @@ export function CartCheckout({
         throw new Error('Сервер не вернул номер сохранённой заявки')
       }
 
-      goal('order_submitted')
+      // This is the Metrika goal configured for a successfully saved order request.
+      // It runs only after the API has returned a public order number.
+      goal('order_created')
       void trackEvent('checkout_success', {
         entityType: 'cart',
         metadata: {
