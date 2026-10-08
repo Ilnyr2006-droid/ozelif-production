@@ -126,6 +126,93 @@ describe('LiveSupportWidget', () => {
     })
   })
 
+  it('restores a saved session with the token header', async () => {
+    window.localStorage.setItem(
+      'ozelif_live_chat_id',
+      'conversation-saved',
+    )
+    window.localStorage.setItem(
+      'ozelif_live_chat_token',
+      'saved-token',
+    )
+
+    const fetchMock = vi.fn(async (
+      input: RequestInfo | URL,
+      init?: RequestInit,
+    ) => {
+      const url = String(input)
+      const method = init?.method ?? 'GET'
+
+      if (url === '/api/live-chat/session' && method === 'POST') {
+        const body = JSON.parse(String(init?.body ?? '{}'))
+        const headers = init?.headers as Record<string, string>
+
+        expect(body).toMatchObject({
+          conversationId: 'conversation-saved',
+        })
+        expect(body).not.toHaveProperty('token')
+        expect(headers['X-Ozelif-Live-Chat-Token']).toBe(
+          'saved-token',
+        )
+
+        return mockResponse({
+          conversation: {
+            id: 'conversation-saved',
+            status: 'open',
+            aiEnabled: true,
+          },
+          conversationId: 'conversation-saved',
+          token: 'saved-token',
+        })
+      }
+
+      if (
+        url
+          === '/api/live-chat/conversations/conversation-saved/messages?after=0'
+        && method === 'GET'
+      ) {
+        const headers = init?.headers as Record<string, string>
+
+        expect(headers['X-Ozelif-Live-Chat-Token']).toBe(
+          'saved-token',
+        )
+
+        return mockResponse({
+          conversation: {
+            id: 'conversation-saved',
+            status: 'open',
+            aiEnabled: true,
+          },
+          messages: [],
+        })
+      }
+
+      throw new Error(`Unexpected request: ${method} ${url}`)
+    })
+
+    vi.stubGlobal('fetch', fetchMock)
+    render(<LiveSupportWidget />)
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Открыть чат' }),
+    )
+
+    await waitFor(() => {
+      const sessionCalls = fetchMock.mock.calls.filter(
+        ([input]) => String(input) === '/api/live-chat/session',
+      )
+      const pollCalls = fetchMock.mock.calls.filter(
+        ([input]) => String(input).includes(
+          '/conversation-saved/messages?after=0',
+        ),
+      )
+
+      expect(sessionCalls).toHaveLength(1)
+      expect(pollCalls.length).toBeGreaterThanOrEqual(1)
+      expect(fetchMock.mock.calls.length).toBeLessThan(10)
+    })
+  })
+
   it('saves the visitor message and renders the AI reply', async () => {
     const fetchMock = vi.fn(async (
       input: RequestInfo | URL,
@@ -471,9 +558,8 @@ describe('LiveSupportWidget', () => {
       }
 
       if (
-        url.startsWith(
-          '/api/live-chat/conversations/conversation-order-profile/profile?',
-        )
+        url
+          === '/api/live-chat/conversations/conversation-order-profile/profile'
         && method === 'POST'
       ) {
         return mockResponse({
@@ -559,7 +645,7 @@ describe('LiveSupportWidget', () => {
     const profileCall = fetchMock.mock.calls.find(
       ([input, init]) => (
         String(input).includes(
-          '/conversation-order-profile/profile?',
+          '/conversation-order-profile/profile',
         )
         && (init as RequestInit | undefined)?.method
           === 'POST'

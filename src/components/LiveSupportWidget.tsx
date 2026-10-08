@@ -39,6 +39,22 @@ type Conversation = {
   managerRequestedAt?: string | null
 }
 
+function sameConversation(
+  left: Conversation | null,
+  right: Conversation,
+) {
+  return Boolean(
+    left
+    && left.id === right.id
+    && left.status === right.status
+    && left.aiEnabled === right.aiEnabled
+    && left.visitorName === right.visitorName
+    && left.visitorPhone === right.visitorPhone
+    && left.customerId === right.customerId
+    && left.managerRequestedAt === right.managerRequestedAt
+  )
+}
+
 type Conversion = {
   type: 'contact' | 'handoff'
   title?: string
@@ -136,9 +152,15 @@ export function LiveSupportWidget() {
       token: string
     }>('/api/live-chat/session', {
       method: 'POST',
+      ...(savedToken
+        ? {
+            headers: {
+              'X-Ozelif-Live-Chat-Token': savedToken,
+            },
+          }
+        : {}),
       body: JSON.stringify({
         conversationId: savedId,
-        token: savedToken,
         visitorId: visitorId(),
         path: window.location.pathname,
       }),
@@ -146,7 +168,11 @@ export function LiveSupportWidget() {
 
     localStorage.setItem(STORAGE_ID, result.conversationId)
     localStorage.setItem(STORAGE_TOKEN, result.token)
-    setConversation(result.conversation)
+    setConversation(previous => (
+      sameConversation(previous, result.conversation)
+        ? previous
+        : result.conversation
+    ))
     setToken(result.token)
 
     return {
@@ -166,11 +192,19 @@ export function LiveSupportWidget() {
       messages: LiveMessage[]
     }>(
       `/api/live-chat/conversations/${current.id}/messages`
-      + `?token=${encodeURIComponent(currentToken)}`
-      + `&after=${lastId}`,
+      + `?after=${lastId}`,
+      {
+        headers: {
+          'X-Ozelif-Live-Chat-Token': currentToken,
+        },
+      },
     )
 
-    setConversation(result.conversation)
+    setConversation(previous => (
+      sameConversation(previous, result.conversation)
+        ? previous
+        : result.conversation
+    ))
     mergeMessages(result.messages)
   }, [conversation, ensureSession, lastId, mergeMessages, token])
 
@@ -220,8 +254,10 @@ export function LiveSupportWidget() {
         `/api/live-chat/conversations/${session.conversation.id}/messages`,
         {
           method: 'POST',
+          headers: {
+            'X-Ozelif-Live-Chat-Token': session.token,
+          },
           body: JSON.stringify({
-            token: session.token,
             content,
             path: window.location.pathname,
           }),
@@ -281,10 +317,12 @@ export function LiveSupportWidget() {
         }
         orderFlow?: OrderFlow | null
       }>(
-        `/api/live-chat/conversations/${session.conversation.id}/profile`
-        + `?token=${encodeURIComponent(session.token)}`,
+        `/api/live-chat/conversations/${session.conversation.id}/profile`,
         {
           method: 'POST',
+          headers: {
+            'X-Ozelif-Live-Chat-Token': session.token,
+          },
           body: JSON.stringify({
             name: contactName.trim() || null,
             phone,
@@ -521,14 +559,25 @@ export function LiveSupportWidget() {
         </section>
       ) : null}
 
-      <button
-        className="live-support-launcher"
-        type="button"
-        onClick={() => setOpen(value => !value)}
-        aria-label="Открыть чат"
-      >
-        <span>Чат</span>
-      </button>
+      <div className="live-support-launchers">
+        <button
+          className="live-support-launcher"
+          type="button"
+          onClick={() => setOpen(value => !value)}
+          aria-label="Открыть чат"
+        >
+          <span>Чат</span>
+        </button>
+        <a
+          className="live-support-telegram"
+          href="https://t.me/ozelif_sales_bot"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Открыть Telegram-бота OZELIF"
+        >
+          Telegram
+        </a>
+      </div>
     </div>
   )
 }

@@ -549,16 +549,30 @@ export function AiAssistantWidget() {
         </section>
       )}
 
-      {!isOpen && <button
-        ref={triggerRef}
-        className="ai-assistant-trigger ai-assistant-trigger--right-center"
-        type="button"
-        onClick={openChat}
-        aria-label="Открыть чат с AI-ассистентом"
-        aria-expanded="false"
-      >
-        <Bot size={24} />
-      </button>}
+      {!isOpen && (
+        <div className="ai-assistant-actions">
+          <button
+            ref={triggerRef}
+            className="ai-assistant-trigger ai-assistant-trigger--right-center"
+            type="button"
+            onClick={openChat}
+            aria-label="Открыть чат с AI-ассистентом"
+            aria-expanded="false"
+          >
+            <Bot size={24} />
+          </button>
+          <a
+            className="ai-assistant-telegram"
+            href="https://t.me/ozelif_sales_bot"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Открыть Telegram-бота OZELIF"
+          >
+            <Send size={17} aria-hidden="true" />
+            <span>Telegram</span>
+          </a>
+        </div>
+      )}
     </aside>
   )
 }

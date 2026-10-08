@@ -86,14 +86,17 @@ async function ensureSession(): Promise<LiveChatSession> {
   if (sessionPromise) return sessionPromise
 
   sessionPromise = (async () => {
+    const savedToken = window.localStorage.getItem(CHAT_TOKEN_KEY)
     const response = await nativeFetch('/api/live-chat/session', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(savedToken
+          ? { 'X-Ozelif-Live-Chat-Token': savedToken }
+          : {}),
       },
       body: JSON.stringify({
         conversationId: window.localStorage.getItem(CHAT_ID_KEY),
-        token: window.localStorage.getItem(CHAT_TOKEN_KEY),
         visitorId: visitorId(),
         path: window.location.pathname,
       }),
@@ -400,9 +403,9 @@ async function handleAssistantRequest(
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-Ozelif-Live-Chat-Token': session.token,
         },
         body: JSON.stringify({
-          token: session.token,
           content,
           path: requestPath(body),
           assistantRequest: body,
@@ -441,9 +444,13 @@ async function pollManagerMessages() {
     const response = await nativeFetch(
       `/api/live-chat/conversations/`
       + `${session.conversationId}/messages`
-      + `?token=${encodeURIComponent(session.token)}`
-      + `&after=${after}`,
-      { cache: 'no-store' },
+      + `?after=${after}`,
+      {
+        cache: 'no-store',
+        headers: {
+          'X-Ozelif-Live-Chat-Token': session.token,
+        },
+      },
     )
 
     const body = await parseJson(response)

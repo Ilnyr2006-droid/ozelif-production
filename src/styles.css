@@ -1340,9 +1340,6 @@ footer{border-radius:var(--radius-xl) var(--radius-xl) 0 0;padding-top:64px}
 }
 
 .ai-assistant-trigger {
-  position: fixed;
-  top: 50%;
-  right: 20px;
   display: grid;
   width: 62px;
   height: 62px;
@@ -1353,14 +1350,51 @@ footer{border-radius:var(--radius-xl) var(--radius-xl) 0 0;padding-top:64px}
   color: var(--white);
   box-shadow: 0 14px 34px rgba(41, 20, 12, .3);
   pointer-events: auto;
-  transform: translateY(-50%);
   transition: transform .25s var(--ease), box-shadow .25s var(--ease), background .25s var(--ease);
+  animation: aiAssistantPulse 1.7s ease-in-out infinite;
+}
+
+.ai-assistant-actions {
+  position: fixed;
+  top: 50%;
+  right: 20px;
+  display: grid;
+  justify-items: end;
+  gap: 10px;
+  pointer-events: auto;
+  transform: translateY(-50%);
+}
+
+.ai-assistant-telegram {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(255, 250, 242, .42);
+  border-radius: 999px;
+  padding: 0 14px;
+  background: #229ed9;
+  color: var(--white);
+  box-shadow: 0 12px 28px rgba(34, 158, 217, .32);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  animation: aiAssistantPulse 1.7s ease-in-out .3s infinite;
+}
+
+.ai-assistant-telegram:hover { background: #168ac2; }
+
+.ai-assistant-trigger:focus-visible,
+.ai-assistant-telegram:focus-visible {
+  outline: 3px solid #f2c24f;
+  outline-offset: 3px;
 }
 
 .ai-assistant-trigger:hover {
   background: #8c3d20;
   box-shadow: 0 18px 42px rgba(41, 20, 12, .38);
-  transform: translateY(calc(-50% - 2px)) scale(1.04);
+  transform: translateY(-2px) scale(1.04);
 }
 
 .ai-assistant-dialog {
@@ -1610,9 +1644,11 @@ footer{border-radius:var(--radius-xl) var(--radius-xl) 0 0;padding-top:64px}
 .ai-assistant-dialog.has-custom-position { animation-name: aiAssistantInCustom; }
 @keyframes aiAssistantInCustom { to { opacity: 1; transform: none; } }
 @keyframes aiAssistantDot { to { opacity: .34; transform: translateY(-2px); } }
+@keyframes aiAssistantPulse { 0%,100% { opacity: 1; } 50% { opacity: .7; } }
 
 @media (max-width: 720px) {
-  .ai-assistant-trigger { top: auto; right: 16px; bottom: 16px; width: 58px; height: 58px; transform: none; }
+  .ai-assistant-actions { top: auto; right: 16px; bottom: 16px; transform: none; }
+  .ai-assistant-trigger { width: 58px; height: 58px; }
   .ai-assistant-trigger:hover { transform: translateY(-2px) scale(1.04); }
   .ai-assistant-dialog {
     position: fixed;
@@ -1634,7 +1670,8 @@ footer{border-radius:var(--radius-xl) var(--radius-xl) 0 0;padding-top:64px}
 @media (prefers-reduced-motion: reduce) {
   .ai-assistant-dialog,
   .ai-assistant-typing span { animation: none; }
-  .ai-assistant-trigger { transition: none; }
+  .ai-assistant-trigger,
+  .ai-assistant-telegram { animation: none; transition: none; }
 }
 
 /* Cart: a material request drawer, not a conventional storefront basket. */
