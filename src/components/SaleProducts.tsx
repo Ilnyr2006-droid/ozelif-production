@@ -29,7 +29,13 @@ function productUrl(product: PublicCatalogProduct) {
 function SaleCard({ product, priority = false }: { product: PublicCatalogProduct; priority?: boolean }) {
   const display = getProductPriceDisplay(product)
   const unit = normalizeUnit(display.unit)
-  const oldPrice = product.variants.find(variant => variant.oldPriceRub && variant.priceRub && variant.oldPriceRub > variant.priceRub)?.oldPriceRub ?? null
+  const oldPrice = product.variants.find(variant =>
+    variant.priceRub === display.price
+    && variant.unit === display.unit
+    && variant.priceRub !== null
+    && variant.oldPriceRub !== null
+    && variant.oldPriceRub > variant.priceRub,
+  )?.oldPriceRub ?? null
   const image = product.image ? responsiveProductImage(product.image.url, 'card') : null
   return <article className="sale-card reveal is-visible"><a href={productUrl(product)}><div className="sale-card-media">{product.image && image ? <img src={image.src} srcSet={image.srcSet} sizes={image.sizes} alt={product.image.alt ?? product.title} width={900} height={900} loading={priority ? 'eager' : 'lazy'} decoding="async"/> : <div className="sale-card-fallback">OZELIF</div>}<span>{product.category?.name ?? 'Каталог'}</span></div><div className="sale-card-body"><h3>{product.title}</h3><div className="sale-card-prices"><strong>{display.price === null ? 'Цена по запросу' : `${display.kind === 'from' ? 'от ' : ''}${rubFormatter.format(display.price)}${unit ? ` / ${unit}` : ''}`}</strong>{oldPrice && display.price && oldPrice > display.price && <del>{rubFormatter.format(oldPrice)}</del>}</div></div></a></article>
 }

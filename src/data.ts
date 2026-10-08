@@ -1,6 +1,6 @@
 export const SITE = 'https://ozelifkoja.ru'
 export const telegram = 'https://t.me/ozelifleather'
-export const whatsapp = 'https://api.whatsapp.com/send/?phone=79033707854&type=phone_number&app_absent=0'
+export const whatsapp = 'https://api.whatsapp.com/send/?phone=79608818725&type=phone_number&app_absent=0'
 
 // Эти разделы уже реализованы в текущем приложении. Не отправляем посетителя
 // на старый сайт, даже когда ссылка строится из общего списка категорий.
@@ -17,8 +17,7 @@ export const categories = [
 
 export const contacts = [
   { name: 'Элхан', role: 'Руководитель', phone: '+7 (985) 280-84-84', href: 'tel:+79852808484', note: 'Сотрудничество, жалобы и предложения' },
-  { name: 'Рауль', role: 'Менеджер', phone: '+7 (960) 881-87-25', href: 'tel:+79608818725', note: 'Оформление заказа и другие вопросы' },
-  { name: 'Эмилия', role: 'Менеджер', phone: '+7 (903) 370-78-54', href: 'tel:+79033707854', note: 'Консультация по материалам' },
+  { name: 'Рауль', role: 'Менеджер', phone: '+7 (960) 881-87-25', href: 'tel:+79608818725', note: 'Оформление заказов, ассортимент, наличие и доставка' },
 ]
 
 export const external = (path: string) => path.startsWith('http') || path.startsWith('#') || localRoutes.has(path) ? path : `${SITE}${path}`

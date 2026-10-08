@@ -7,6 +7,7 @@ export const BASE_STATIC_PATHS = Object.freeze([
   '/contacts',
   '/sale',
   '/new',
+  '/kai/schedule-4110',
 ])
 
 function escapeXml(value) {

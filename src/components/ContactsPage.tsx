@@ -15,23 +15,11 @@ const team = [
   {
     name: 'Рауль',
     role: 'Менеджер',
-    description: 'По оформлению заказа и другим вопросам',
+    description: 'Оформление заказов, консультации по ассортименту, наличию и доставке',
     phone: '+7 960 881-87-25',
     href: 'tel:+79608818725',
     socials: [
       { label: 'WhatsApp', href: 'https://api.whatsapp.com/send/?app_absent=0&phone=79608818725&text=&type=phone_number' },
-      { label: 'Telegram', href: 'https://t.me/ozelifleather' },
-      { label: 'MAX', href: 'https://max.ru/join/mOjqqa5jy4M69QdlhrUgug2wQc77xXw4sSJHkQycDQE' },
-    ],
-  },
-  {
-    name: 'Эмилия',
-    role: 'Менеджер',
-    description: 'Консультации по ассортименту, наличию и доставке',
-    phone: '+7 903 370-78-54',
-    href: 'tel:+79033707854',
-    socials: [
-      { label: 'WhatsApp', href: 'https://api.whatsapp.com/send/?app_absent=0&phone=79033707854&text=&type=phone_number' },
       { label: 'Telegram', href: 'https://t.me/ozelifleather' },
       { label: 'MAX', href: 'https://max.ru/join/mOjqqa5jy4M69QdlhrUgug2wQc77xXw4sSJHkQycDQE' },
     ],
@@ -90,7 +78,7 @@ export function ContactsPage() {
                 <Phone size={23} strokeWidth={1.5} />
                 <div>
                   <p className="kicker">Телефон</p>
-                  <a href="tel:+79033707854">+7 903 370-78-54</a>
+                  <a href="tel:+79608818725">+7 960 881-87-25</a>
                   <span>Звонки и консультации по ассортименту</span>
                 </div>
               </article>

@@ -54,7 +54,7 @@ export function AboutPage() {
     return () => observer.disconnect()
   }, [])
 
-  const schema = { '@context': 'https://schema.org', '@type': 'AboutPage', name: 'О компании OZELIF', url: 'https://ozelifkoja.ru/kozhaozelif', about: { '@type': 'Organization', name: 'OZELIF', telephone: '+7-903-370-78-54', address: { '@type': 'PostalAddress', addressLocality: 'Москва', streetAddress: 'Краснобогатырская улица, 24', addressCountry: 'RU' } } }
+  const schema = { '@context': 'https://schema.org', '@type': 'AboutPage', name: 'О компании OZELIF', url: 'https://ozelifkoja.ru/kozhaozelif', about: { '@type': 'Organization', name: 'OZELIF', telephone: '+7-960-881-87-25', address: { '@type': 'PostalAddress', addressLocality: 'Москва', streetAddress: 'Краснобогатырская улица, 24', addressCountry: 'RU' } } }
 
   return <><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}/><Header active="about"/><main className="about-main">
     <section className="about-hero" id="top">

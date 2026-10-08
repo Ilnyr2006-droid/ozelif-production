@@ -272,6 +272,7 @@ export function createPublicCatalogRepository({ query = databaseQuery } = {}) {
           AND c.is_published = true
           AND (
             (p.base_price IS NOT NULL AND p.old_price > p.base_price)
+            OR p.attributes @> '{"saleWithoutOldPrice": true}'::jsonb
             OR EXISTS (
               SELECT 1
               FROM product_variants discount_variant
@@ -281,7 +282,7 @@ export function createPublicCatalogRepository({ query = databaseQuery } = {}) {
                 AND discount_variant.old_price > discount_variant.price
             )
           )
-        ORDER BY p.updated_at DESC, p.id DESC
+        ORDER BY p.created_at ASC, p.updated_at DESC, p.id DESC
       `)
       return result.rows
         .map(row => normalizePublicProductPricing(parseJson(row.item, null)))

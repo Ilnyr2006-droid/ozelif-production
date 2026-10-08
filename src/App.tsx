@@ -5,6 +5,18 @@ import { Header } from './components/Header'
 import { Hero } from './components/Hero'
 import { Catalog } from './components/Catalog'
 import { Footer } from './components/Footer'
+import {
+  GenericCatalogFromApi,
+  GenericProductFromApi,
+  HardwareCatalogFromApi,
+  HardwareProductFromApi,
+  ShearlingCatalogFromApi,
+  ShearlingProductFromApi,
+  ShoeLeatherCatalogFromApi,
+  ShoeLeatherProductFromApi,
+  SuedeCatalogFromApi,
+  SuedeProductFromApi,
+} from './components/ApiCategoryPages'
 import { CartProvider } from './cart/CartProvider'
 import { SITE } from './data'
 import { useAppPathname } from './hooks/useAppPathname'
@@ -16,16 +28,6 @@ const SewingProductionPage = lazy(async () => ({ default: (await import('./compo
 const ClothingLeatherCatalogPage = lazy(async () => ({ default: (await import('./components/ClothingLeatherCatalogPage')).ClothingLeatherCatalogPage }))
 const CatalogSeoLandingPage = lazy(async () => ({ default: (await import('./components/CatalogSeoLandingPage')).CatalogSeoLandingPage }))
 const ClothingLeatherProductPage = lazy(async () => ({ default: (await import('./components/ClothingLeatherCatalogPage')).ClothingLeatherProductPage }))
-const ShearlingCatalogPage = lazy(async () => ({ default: (await import('./components/ShearlingCatalogPage')).ShearlingCatalogPage }))
-const ShearlingProductPage = lazy(async () => ({ default: (await import('./components/ShearlingCatalogPage')).ShearlingProductPage }))
-const SuedeCatalogPage = lazy(async () => ({ default: (await import('./components/SuedeCatalogPage')).SuedeCatalogPage }))
-const SuedeProductPage = lazy(async () => ({ default: (await import('./components/SuedeCatalogPage')).SuedeProductPage }))
-const ShoeLeatherCatalogPage = lazy(async () => ({ default: (await import('./components/ShoeLeatherCatalogPage')).ShoeLeatherCatalogPage }))
-const ShoeLeatherProductPage = lazy(async () => ({ default: (await import('./components/ShoeLeatherCatalogPage')).ShoeLeatherProductPage }))
-const HardwareCatalogPage = lazy(async () => ({ default: (await import('./components/HardwareCatalogPage')).HardwareCatalogPage }))
-const HardwareProductPage = lazy(async () => ({ default: (await import('./components/HardwareCatalogPage')).HardwareProductPage }))
-const GenericCatalogPage = lazy(async () => ({ default: (await import('./components/ApiCategoryPages')).GenericCatalogFromApi }))
-const GenericProductPage = lazy(async () => ({ default: (await import('./components/ApiCategoryPages')).GenericProductFromApi }))
 const SaleProductsSection = lazy(async () => ({ default: (await import('./components/SaleProducts')).SaleProductsSection }))
 const SalePage = lazy(async () => ({ default: (await import('./components/SaleProducts')).SalePage }))
 const NewPage = lazy(async () => ({ default: (await import('./components/SaleProducts')).NewPage }))
@@ -331,22 +333,22 @@ function AppRoutes() {
   if (isSewingProductionPage) return <SewingProductionPage/>
   if (isClothingProductPage) return <ClothingLeatherProductPage/>
   if (isCatalogSeoLandingPage) return <CatalogSeoLandingPage pathname={pathname}/>
-  if (isShearlingProductPage) return <ShearlingProductPage/>
-if (isShearlingCatalogPage) return <ShearlingCatalogPage/>
-  if (isSuedeProductPage) return <SuedeProductPage/>
-  if (isSuedeCatalogPage) return <SuedeCatalogPage/>
-  if (isShoeLeatherProductPage) return <ShoeLeatherProductPage/>
-  if (isShoeLeatherCatalogPage) return <ShoeLeatherCatalogPage/>
-  if (isHardwareProductPage) return <HardwareProductPage/>
-  if (isHardwareCatalogPage) return <HardwareCatalogPage/>
+  if (isShearlingProductPage) return <ShearlingProductFromApi/>
+  if (isShearlingCatalogPage) return <ShearlingCatalogFromApi/>
+  if (isSuedeProductPage) return <SuedeProductFromApi/>
+  if (isSuedeCatalogPage) return <SuedeCatalogFromApi/>
+  if (isShoeLeatherProductPage) return <ShoeLeatherProductFromApi/>
+  if (isShoeLeatherCatalogPage) return <ShoeLeatherCatalogFromApi/>
+  if (isHardwareProductPage) return <HardwareProductFromApi/>
+  if (isHardwareCatalogPage) return <HardwareCatalogFromApi/>
   if (isSalePage) return <SalePage/>
   if (isNewPage) return <NewPage/>
   if (isDeliveryPage) return <DeliveryPaymentPage/>
   if (isContactsPage) return <ContactsPage/>
   if (isPrivacyPage) return <PrivacyPage/>
 if (isClothingCatalogPage) return <ClothingLeatherCatalogPage/>
-  if (genericProductMatch) return <GenericProductPage categorySlug={genericProductMatch[1]} />
-  if (genericCategoryMatch) return <GenericCatalogPage categorySlug={genericCategoryMatch[1]} />
+  if (genericProductMatch) return <GenericProductFromApi categorySlug={genericProductMatch[1]} />
+  if (genericCategoryMatch) return <GenericCatalogFromApi categorySlug={genericCategoryMatch[1]} />
   const schema = {
     '@context': 'https://schema.org',
     '@type': ['Organization', 'Store'],
@@ -355,7 +357,7 @@ if (isClothingCatalogPage) return <ClothingLeatherCatalogPage/>
     alternateName: ['Озелиф', 'OZELIF Кожа'],
     legalName: 'ИП Касумов Элхан Низамхан Оглы',
     url: SITE,
-    telephone: '+7-903-370-78-54',
+    telephone: '+7-960-881-87-25',
     address: {
       '@type': 'PostalAddress',
       addressLocality: 'Москва',

@@ -69,7 +69,7 @@ export function HomeMainTail() {
             </div>
             <div>
               <dt>Телефон</dt>
-              <dd><a href="tel:+79033707854">+7 903 370-78-54</a></dd>
+              <dd><a href="tel:+79608818725">+7 960 881-87-25</a></dd>
             </div>
             <div>
               <dt>Доставка</dt>

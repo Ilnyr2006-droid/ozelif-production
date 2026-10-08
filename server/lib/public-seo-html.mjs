@@ -9,7 +9,7 @@ export const PUBLIC_STORE_SCHEMA = Object.freeze({
   alternateName: ['Озелиф', 'OZELIF Кожа'],
   legalName: 'ИП Касумов Элхан Низамхан Оглы',
   url: `${PUBLIC_SITE_ORIGIN}/`,
-  telephone: '+7-903-370-78-54',
+  telephone: '+7-960-881-87-25',
   image: `${PUBLIC_SITE_ORIGIN}/images/hero-leather-wide.jpg`,
   logo: `${PUBLIC_SITE_ORIGIN}/favicon.svg`,
   address: {
