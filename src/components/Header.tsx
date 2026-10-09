@@ -302,6 +302,14 @@ export function Header({ active }: { active?: 'about' | 'wholesale' | 'productio
           </a>
         ))}
 
+        <a
+          className="btn btn--dark mobile-menu-cta"
+          href={catalogActive ? '#catalog-controls' : '/odejnayakozha#catalog-controls'}
+          onClick={() => setOpen(false)}
+        >
+          Подобрать материал
+        </a>
+
         <div className="mobile-social">
           <a href={whatsapp} target="_blank" rel="noreferrer">WhatsApp</a>
           <a href={telegram} target="_blank" rel="noreferrer">Telegram</a>

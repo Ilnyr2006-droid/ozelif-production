@@ -1831,14 +1831,12 @@ footer{border-radius:var(--radius-xl) var(--radius-xl) 0 0;padding-top:64px}
   }
 
   .mobile-menu {
-    position: absolute;
-    top: 68px;
-    right: 0;
-    bottom: auto;
-    left: 0;
+    position: fixed;
+    inset: 68px 0 0;
+    z-index: 29;
 
     box-sizing: border-box;
-    width: 100vw;
+    width: 100%;
     height: calc(100dvh - 68px);
     max-height: calc(100dvh - 68px);
 
@@ -1858,6 +1856,26 @@ footer{border-radius:var(--radius-xl) var(--radius-xl) 0 0;padding-top:64px}
   .mobile-menu.is-open {
     transform: translateX(0);
   }
+
+  .mobile-menu-cta {
+    width: 100%;
+    margin-top: 26px;
+    justify-content: center;
+  }
+
+  /* Keep the first shopping action ahead of supporting SEO copy on phones. */
+  .clothing-catalog-page {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .clothing-catalog-hero { order: 0; }
+  .clothing-catalog-layout { order: 1; }
+  .clothing-catalog-facts { order: 2; }
+  .catalog-seo-subcategories { order: 3; }
+  .clothing-catalog-commercial { order: 4; }
+  .clothing-catalog-faq { order: 5; }
+  .clothing-catalog-cta { order: 6; }
 
 
   /*
