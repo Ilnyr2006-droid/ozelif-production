@@ -29,6 +29,9 @@ const PRODUCTION =
 const CONTACTS =
   /(?:контакт|телефон|номер|адрес|шоурум|магазин|реквизит|инн|огрн|где\s+(?:вы|находит\p{L}*|располож\p{L}*)|как\s+(?:вас|с вами)\s+(?:найти|связаться)|(?:где|адрес)\b.{0,40}\bсклад|склад\b.{0,40}\b(?:где|адрес|находит\p{L}*|располож\p{L}*))/iu
 
+const WORKING_HOURS =
+  /(?:режим\s+работы|часы\s+работы|график\s+работы|во\s+сколько\s+(?:открыва|закрыва)|(?:вы\s+)?(?:сегодня|завтра|в\s+субботу|в\s+воскресенье)\s+(?:вы\s+)?работа\p{L}*|(?:работа\p{L}*|открыт\p{L}*)\s+(?:ли\s+)?(?:вы\s+)?(?:сегодня|завтра|в\s+субботу|в\s+воскресенье)|(?:работа\p{L}*|открыт\p{L}*)\s+по\s+выходным)/iu
+
 /*
  * Order/cart commands may contain the product name between the verb and
  * "заказ/корзина":
@@ -136,7 +139,7 @@ export function routeAssistantRequest(
     )
   }
 
-  if (CONTACTS.test(text)) {
+  if (WORKING_HOURS.test(text) || CONTACTS.test(text)) {
     return result(
       'contacts',
       false,

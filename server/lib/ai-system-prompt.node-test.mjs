@@ -8,6 +8,7 @@ process.env.ADMIN_SESSION_SECRET ??=
 
 const {
   buildOzelifAssistantInstructions,
+  getMoscowWorkingHoursContext,
   getOzelifAssistantPrompt,
   getProtectedAiPromptCore,
 } = await import('./ai-system-prompt.mjs')
@@ -19,11 +20,10 @@ test('contains the required company knowledge', () => {
     'Краснобогатырская улица, 24',
     '+7 (960) 881-87-25',
     '100% предоплата',
-    'от 10 изделий одной модели',
-    'Одежная кожа',
-    'Дублёночный материал',
-    'Галантерейная кожа',
-    'Никогда не заменяй живые данные догадкой',
+    '10 изделий одной модели',
+    'натуральной кожи OZELIF',
+    'дублёночный материал и фурнитуру',
+    'никогда не подменяй подтверждённые данные догадками',
   ]) {
     assert.ok(
       prompt.includes(phrase),
@@ -61,6 +61,21 @@ test('adds the current page to final instructions', async () => {
   )
   assert.match(
     instructions,
-    /AI-консультант и продавец/,
+    /AI-консультант магазина натуральной кожи OZELIF/,
   )
+})
+
+test('reports regular Moscow hours and Sunday closure from the supplied time', () => {
+  const sunday = getMoscowWorkingHoursContext(
+    new Date('2026-10-11T05:57:00Z'),
+  )
+  assert.match(sunday, /понедельник–пятница, 10:00–18:00/)
+  assert.match(sunday, /воскресенье, 11\.10\.2026, 08:57/)
+  assert.match(sunday, /Сегодня по обычному графику выходной/)
+
+  const monday = getMoscowWorkingHoursContext(
+    new Date('2026-10-12T08:00:00Z'),
+  )
+  assert.match(monday, /понедельник, 12\.10\.2026, 11:00/)
+  assert.match(monday, /Сейчас по обычному графику рабочее время/)
 })

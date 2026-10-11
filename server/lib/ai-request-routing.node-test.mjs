@@ -42,6 +42,22 @@ test('does not search catalog for contacts and delivery', () => {
   )
 })
 
+test('routes short working-hours questions to contacts without catalog search', () => {
+  for (const question of [
+    'Какой у вас режим работы?',
+    'Сегодня работает?',
+    'Работаете ли вы сегодня?',
+    'Вы сегодня работаете?',
+    'Во сколько открываетесь?',
+  ]) {
+    assert.deepEqual(
+      routeAssistantRequest(question),
+      { intent: 'contacts', needsProducts: false },
+      question,
+    )
+  }
+})
+
 test('does not search catalog for pure wholesale or production info', () => {
   assert.deepEqual(
     routeAssistantRequest('Какие у вас оптовые условия?'),
