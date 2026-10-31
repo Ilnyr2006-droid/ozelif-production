@@ -15,7 +15,7 @@ test('fallback business prompt remains available', () => {
   const prompt = getOzelifAssistantPrompt()
 
   assert.ok(prompt.includes('Краснобогатырская улица, 24'))
-  assert.ok(prompt.includes('от 10 изделий одной модели'))
+  assert.match(prompt, /Минимальный заказ\s*[—–-]\s*(?:от\s+)?10 изделий одной модели/)
 })
 
 test('protected core cannot be edited from the database', () => {

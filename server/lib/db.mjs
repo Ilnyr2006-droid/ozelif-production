@@ -8,6 +8,9 @@ export const pool = new Pool({
   max: 10,
 })
 
+// Idle pooled connections can fail independently of a query. Do not log connection details.
+pool.on('error', () => console.error('PostgreSQL idle connection lost'))
+
 export const query = (text, params = []) => pool.query(text, params)
 
 export async function transaction(callback) {

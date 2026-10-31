@@ -36,6 +36,7 @@ import { createYandexReviewsRouter } from './routes/yandex-reviews.mjs'
 import { createYandexReviewsService } from './lib/yandex-reviews.mjs'
 import { createOrdersRouter } from './routes/orders.mjs'
 import { createAdminCrmRouter } from './routes/admin-crm.mjs'
+import { createMarketingOrderEvidenceRouter } from './routes/marketing-order-evidence.mjs'
 import { createAdminNativeAnalyticsRouter } from './routes/admin-native-analytics.mjs'
 import { createAdminAiMonitoringRouter } from './routes/admin-ai-monitoring.mjs'
 import { createAdminMetabaseRouter } from './routes/admin-metabase.mjs'
@@ -312,6 +313,7 @@ app.use(
 )
 app.use('/api/orders', createOrdersRouter())
 app.use('/api/admin/crm', createAdminCrmRouter())
+app.use('/api/internal/direct', createMarketingOrderEvidenceRouter())
 app.use('/api/admin/native-analytics', createAdminNativeAnalyticsRouter())
 app.use('/api/admin/ai-monitoring', createAdminAiMonitoringRouter())
 app.use('/api/admin/metabase', createAdminMetabaseRouter())
