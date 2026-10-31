@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { reconcileMetrikaHitsExport } from './order-goal-reconciliation-logs.mjs';
+import { reconcileMetrikaHitsExport, reconcileIsolatedMetrikaTestExport } from './order-goal-reconciliation-logs.mjs';
 
 const ref = 'a'.repeat(32);
 const OTHER_REF = 'b'.repeat(32);
@@ -93,4 +93,43 @@ test('invalid opaque identifiers cannot be used for reconciliation', () => {
   assert.throws(() => reconcileMetrikaHitsExport({
     orderRef: 'real-order-number-123', manifest, rows: []
   }), /invalid_order_ref/);
+});
+
+
+test('isolated test counter + goal are accepted, but production IDs are never accepted as test scope',()=>{
+  const testCounterId='987654321', testGoalId='876543210';
+  const testManifest={
+    ...manifest, counterId:testCounterId
+  };
+  const hit1=hit('23',{
+    'ym:pv:counterID':Number(testCounterId),
+    'ym:pv:goalsID':[Number(testGoalId)]
+  });
+  const matches=reconcileIsolatedMetrikaTestExport({
+    orderRef:ref,manifest:testManifest,rows:[hit1],
+    testCounterId,testGoalId
+  });
+  assert.equal(matches.status,'event_observed');
+  assert.equal(matches.providerEventObserved,true);
+  assert.equal(matches.orderGoalVerified,false);
+
+  for(const scope of [
+    {testCounterId:'112275551',testGoalId},
+    {testCounterId,testGoalId:'609951402'},
+    {testCounterId:'0',testGoalId},
+  ]) {
+    assert.throws(()=>reconcileIsolatedMetrikaTestExport({
+      orderRef:ref,manifest:testManifest,rows:[hit1],
+      ...scope
+    }),/unsafe_isolated_test_scope/);
+  }
+});
+test('test counter event never matches the production-only parser',()=>{
+  const different=reconcileMetrikaHitsExport({
+    orderRef:ref,
+    manifest:{...manifest,counterId:'987654321'},
+    rows:[hit('12',{'ym:pv:counterID':987654321,'ym:pv:goalsID':[876543210]})]
+  });
+  assert.equal(different.status,'incomplete_export');
+  assert.equal(different.orderGoalVerified,false);
 });
