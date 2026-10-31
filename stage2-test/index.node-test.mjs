@@ -45,6 +45,8 @@ test('production and arbitrary hosts cannot initialize or send goals', () => {
 test('one browser click claims a random ref and queues exactly one goal', () => {
   const page=load('stage2-test.ozelifkoja.ru');
   assert.equal(page.tags.length,1);
+  assert.equal(page.elements.send.disabled,true);
+  page.tags[0].onload();
   assert.equal(page.elements.send.disabled,false);
   assert.match(page.tags[0].src,/^https:\/\/mc\.yandex\.ru\/metrika\/tag\.js\?id=113963518$/);
   page.elements.send.handlers.click();
@@ -62,15 +64,29 @@ test('one browser click claims a random ref and queues exactly one goal', () => 
 test('reload in same browser cannot queue a second goal', () => {
   const shared=new Map();
   const first=load('stage2-test.ozelifkoja.ru',shared);
+  first.tags[0].onload();
   first.elements.send.handlers.click();
   const second=load('stage2-test.ozelifkoja.ru',shared);
   assert.equal(second.elements.send.disabled,true);
   assert.equal(second.tags.length,0);
   assert.equal(second.window.ym,undefined);
 });
-test('browser tag download failure disables the send control', () => {
+test('both official CDN URLs must fail before script aborts without goal', () => {
   const page=load('stage2-test.ozelifkoja.ru');
+  assert.equal(page.elements.send.disabled,true);
   page.tags[0].onerror();
+  assert.equal(page.tags.length,2);
+  assert.match(page.tags[1].src,/^https:\/\/mc\.yandex\.com\/metrika\/tag\.js\?id=113963518$/);
+  assert.equal(page.elements.send.disabled,true);
+  page.tags[1].onerror();
   assert.equal(page.elements.send.disabled,true);
   assert.match(page.elements.status.textContent,/Не удалось загрузить/);
+});
+test('the official alternative CDN enables sending only after successful load',()=>{
+  const page=load('stage2-test.ozelifkoja.ru');
+  page.tags[0].onerror();
+  page.tags[1].onload();
+  assert.equal(page.elements.send.disabled,false);
+  page.elements.send.handlers.click();
+  assert.equal(page.window.ym.a.filter(entry=>entry[1]==='reachGoal').length,1);
 });
