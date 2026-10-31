@@ -39,11 +39,11 @@ function unavailable(status) {
 // manifest MUST originate from a trusted, complete Logs API importer. It cannot
 // be supplied by a browser, ChatGPT, or another untrusted caller. Even a complete
 // export is a snapshot: late Metrika data can arrive after reconciliation.
-export function reconcileMetrikaHitsExport({ orderRef, manifest, rows } = {}) {
+function reconcileHits({ orderRef, manifest, rows } = {}, { expectedCounterId, expectedGoalId }) {
   if (typeof orderRef !== 'string' || !ORDER_REF.test(orderRef)) throw Error('invalid_order_ref');
   if (!manifest || !Array.isArray(rows) || rows.length > 100000 ||
       manifest.source !== 'metrika_logs_api' || manifest.dataType !== 'hits' ||
-      String(manifest.counterId) !== COUNTER_ID ||
+      String(manifest.counterId) !== expectedCounterId ||
       !validDay(manifest.dateFrom) || !validDay(manifest.dateTo) ||
       !validDay(manifest.completeThroughDate) ||
       manifest.dateFrom > manifest.dateTo || manifest.completeThroughDate < manifest.dateTo ||
@@ -66,7 +66,7 @@ export function reconcileMetrikaHitsExport({ orderRef, manifest, rows } = {}) {
     const counter = row?.['ym:pv:counterID'];
     if (!watch || !visit || !validDay(date) ||
         date < manifest.dateFrom || date > manifest.dateTo ||
-        String(counter) !== COUNTER_ID || !Array.isArray(goals) ||
+        String(counter) !== expectedCounterId || !Array.isArray(goals) ||
         typeof row?.['ym:pv:params'] !== 'string') {
       malformed = true;
       continue;
@@ -89,7 +89,7 @@ export function reconcileMetrikaHitsExport({ orderRef, manifest, rows } = {}) {
     const fingerprint = JSON.stringify([
       visit, date, [...new Set(normalizedGoals)].sort(), ref
     ]);
-    const isMatch = normalizedGoals.includes(GOAL_ID) && ref === orderRef;
+    const isMatch = normalizedGoals.includes(expectedGoalId) && ref === orderRef;
     const previous = seen.get(watch);
     if (previous && previous.fingerprint !== fingerprint) conflicting = true;
     else if (!previous) seen.set(watch, { fingerprint, isMatch });
@@ -109,4 +109,26 @@ export function reconcileMetrikaHitsExport({ orderRef, manifest, rows } = {}) {
     paymentGatewayVerified: false,
     verifiedRoas: null
   };
+}
+
+
+// Production wrapper: the caller cannot choose the evidence counter or goal.
+export function reconcileMetrikaHitsExport(input) {
+  return reconcileHits(input, { expectedCounterId: COUNTER_ID, expectedGoalId: GOAL_ID });
+}
+
+// Test-only wrapper for a separate, operator-configured Metrika counter.
+// Never use this method for real orders or expose it through ChatGPT MCP.
+// Both IDs must differ from the production counter and goal.
+export function reconcileIsolatedMetrikaTestExport({
+  orderRef, manifest, rows, testCounterId, testGoalId
+} = {}) {
+  const counter = String(testCounterId ?? '');
+  const goal = String(testGoalId ?? '');
+  if (!/^[1-9]\d{5,15}$/.test(counter) || counter === COUNTER_ID ||
+      !/^[1-9]\d{4,15}$/.test(goal) || goal === GOAL_ID) {
+    throw Error('unsafe_isolated_test_scope');
+  }
+  return reconcileHits({orderRef, manifest, rows},
+    {expectedCounterId:counter, expectedGoalId:goal});
 }
