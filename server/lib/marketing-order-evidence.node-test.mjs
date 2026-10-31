@@ -12,6 +12,7 @@ test('CRM summary is aggregate-only, campaign-scoped and reads no customer PII',
  },{campaignId:'715543180',dateFrom:'2026-10-01',dateTo:'2026-10-14'});
  assert.equal(r.createdOrders,3);assert.equal(r.paidOrders,1);
  assert.equal(r.purchaseOutboxSent,1);assert.equal(r.goalEventMatched,false);
+ assert.equal(r.goalExists,null); assert.equal(r.goalActivityVerified,null); assert.equal(r.orderGoalVerified,false);
  assert(!JSON.stringify(r).includes('customer'));
 });
 test('date bounds reject invalid calendar dates and range above 92 days',()=>{

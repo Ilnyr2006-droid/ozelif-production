@@ -54,6 +54,7 @@ export async function readOrderEvidence(query, { campaignId, dateFrom, dateTo })
     campaignAttributionVerified: false, attributionEvidence: 'client_supplied_utm_campaign_unverified',
     dateTimezone: 'Europe/Moscow', createdOrders, cancelledOrders, attributedOrders: createdOrders,
     paidOrders, currentlyPaidOrders, everPaidOrders, nonRubPaidOrders, paidRevenueRub: Math.round(money * 100) / 100, purchaseOutboxSent,
+    goalExists: null, goalActivityVerified: null, orderGoalVerified: false,
     goalEventMatched: false, checkoutGoalVerified: false, purchasePaymentEvidence: 'crm_status_history_only',
     note: 'Campaign match uses an unverified visitor-supplied UTM value, not proof of a Direct campaign. paidOrders and paidRevenueRub include non-cancelled orders currently or previously marked paid in CRM; currentlyPaidOrders counts only the current paid status. CRM history is not proof of settlement. Revenue includes RUB only. Outbox sent does not prove report attribution or settlement.',
     sampled: false

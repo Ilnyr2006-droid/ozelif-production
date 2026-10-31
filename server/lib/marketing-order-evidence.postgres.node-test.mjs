@@ -44,6 +44,9 @@ test('PostgreSQL aggregation uses isolated fixtures and does not multiply orders
     assert.equal(actual.purchaseOutboxSent, 1);
     assert.equal(actual.campaignAttributionVerified, false);
     assert.equal(actual.goalEventMatched, false);
+    assert.equal(actual.goalExists, null);
+    assert.equal(actual.goalActivityVerified, null);
+    assert.equal(actual.orderGoalVerified, false);
     assert.equal(actual.checkoutGoalVerified, false);
     const empty = await readOrderEvidence(query, { ...params, campaignId: '777' });
     assert.equal(empty.createdOrders, 0);
