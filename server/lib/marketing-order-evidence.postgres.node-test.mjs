@@ -40,6 +40,7 @@ test('PostgreSQL aggregation uses isolated fixtures and does not multiply orders
     assert.equal(actual.currentlyPaidOrders, 2);
     assert.equal(actual.everPaidOrders, 3);
     assert.equal(actual.paidRevenueRub, 4000);
+    assert.equal(actual.nonRubPaidOrders, 1);
     assert.equal(actual.purchaseOutboxSent, 1);
     assert.equal(actual.campaignAttributionVerified, false);
     assert.equal(actual.goalEventMatched, false);
@@ -71,6 +72,7 @@ test('PostgreSQL aggregation uses isolated fixtures and does not multiply orders
       assert.equal(body.cancelledOrders, 1);
       assert.equal(body.paidOrders, 3);
       assert.equal(body.paidRevenueRub, 4000);
+      assert.equal(body.nonRubPaidOrders, 1);
       assert.equal(body.purchaseOutboxSent, 1);
       assert.equal(body.campaignAttributionVerified, false);
       assert.equal(body.goalEventMatched, false);

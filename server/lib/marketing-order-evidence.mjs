@@ -30,6 +30,7 @@ SELECT count(*)::integer AS created_orders,
   count(*) FILTER (WHERE status <> 'cancelled' AND (status='paid' OR ever_paid))::integer AS crm_paid_orders,
   count(*) FILTER (WHERE status='paid')::integer AS currently_paid_orders,
   count(*) FILTER (WHERE status <> 'cancelled' AND (status='paid' OR ever_paid))::integer AS ever_paid_orders,
+  count(*) FILTER (WHERE status <> 'cancelled' AND (status='paid' OR ever_paid) AND currency IS DISTINCT FROM 'RUB')::integer AS non_rub_paid_orders,
   coalesce(sum(total_amount) FILTER (WHERE status <> 'cancelled' AND (status='paid' OR ever_paid) AND currency='RUB'),0)::text AS crm_paid_revenue_rub,
   count(*) FILTER (WHERE purchase_sent)::integer AS purchase_outbox_sent
 FROM matched
@@ -45,13 +46,14 @@ export async function readOrderEvidence(query, { campaignId, dateFrom, dateTo })
   const createdOrders = num(row.created_orders), cancelledOrders = num(row.cancelled_orders);
   const paidOrders = num(row.crm_paid_orders), currentlyPaidOrders = num(row.currently_paid_orders), everPaidOrders = num(row.ever_paid_orders);
   const purchaseOutboxSent = num(row.purchase_outbox_sent);
-  if (paidOrders > createdOrders || currentlyPaidOrders > paidOrders || everPaidOrders > createdOrders || cancelledOrders > createdOrders || purchaseOutboxSent > createdOrders) throw Error('invalid_order_aggregate');
+  const nonRubPaidOrders = num(row.non_rub_paid_orders);
+  if (paidOrders > createdOrders || currentlyPaidOrders > paidOrders || everPaidOrders > createdOrders || cancelledOrders > createdOrders || purchaseOutboxSent > createdOrders || nonRubPaidOrders > paidOrders) throw Error('invalid_order_aggregate');
   return {
     schemaVersion: 1, source: 'ozelif_crm_aggregate', campaignId: args.campaignId, dateFrom: args.dateFrom, dateTo: args.dateTo,
     counterId: '112275551', goalId: '609951402', attributedBy: 'utm_campaign_exact',
     campaignAttributionVerified: false, attributionEvidence: 'client_supplied_utm_campaign_unverified',
     dateTimezone: 'Europe/Moscow', createdOrders, cancelledOrders, attributedOrders: createdOrders,
-    paidOrders, currentlyPaidOrders, everPaidOrders, paidRevenueRub: Math.round(money * 100) / 100, purchaseOutboxSent,
+    paidOrders, currentlyPaidOrders, everPaidOrders, nonRubPaidOrders, paidRevenueRub: Math.round(money * 100) / 100, purchaseOutboxSent,
     goalEventMatched: false, checkoutGoalVerified: false, purchasePaymentEvidence: 'crm_status_history_only',
     note: 'Campaign match uses an unverified visitor-supplied UTM value, not proof of a Direct campaign. paidOrders and paidRevenueRub include non-cancelled orders currently or previously marked paid in CRM; currentlyPaidOrders counts only the current paid status. CRM history is not proof of settlement. Revenue includes RUB only. Outbox sent does not prove report attribution or settlement.',
     sampled: false

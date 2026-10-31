@@ -8,7 +8,7 @@ test('CRM summary is aggregate-only, campaign-scoped and reads no customer PII',
  const r=await readOrderEvidence(async(sql,values)=>{
   assert.deepEqual(values,['2026-10-01','2026-10-14','715543180']);
   assert(!/customer_phone|customer_email|customer_name/i.test(sql));
-  return {rows:[{created_orders:'3',cancelled_orders:'1',ever_paid_orders:'2',crm_paid_orders:'1',currently_paid_orders:'1',crm_paid_revenue_rub:'1000.00',purchase_outbox_sent:'1'}]};
+  return {rows:[{created_orders:'3',cancelled_orders:'1',ever_paid_orders:'2',crm_paid_orders:'1',currently_paid_orders:'1',non_rub_paid_orders:0,crm_paid_revenue_rub:'1000.00',purchase_outbox_sent:'1'}]};
  },{campaignId:'715543180',dateFrom:'2026-10-01',dateTo:'2026-10-14'});
  assert.equal(r.createdOrders,3);assert.equal(r.paidOrders,1);
  assert.equal(r.purchaseOutboxSent,1);assert.equal(r.goalEventMatched,false);
@@ -27,7 +27,7 @@ test('endpoint is disabled by default, requires independent bearer token and sen
  const app=express();
  app.use('/disabled',createMarketingOrderEvidenceRouter({secret:null,queryFn:async()=>{databaseReads++}}));
  app.use('/api/internal/direct',createMarketingOrderEvidenceRouter({secret,queryFn:async()=>{
-  databaseReads++;return {rows:[{created_orders:2,cancelled_orders:0,ever_paid_orders:1,crm_paid_orders:1,currently_paid_orders:1,crm_paid_revenue_rub:'900.00',purchase_outbox_sent:0}]};
+  databaseReads++;return {rows:[{created_orders:2,cancelled_orders:0,ever_paid_orders:1,crm_paid_orders:1,currently_paid_orders:1,non_rub_paid_orders:0,crm_paid_revenue_rub:'900.00',purchase_outbox_sent:0}]};
  }}));
  const server=app.listen(0,'127.0.0.1');
  try{
@@ -61,7 +61,7 @@ test('SQL uses scoped parameters, no multiplying joins and explicit CRM semantic
   assert.doesNotMatch(MARKETING_ORDER_SUMMARY_SQL, /\b(INSERT|UPDATE|DELETE)\b/i);
 });
 test('empty period and unknown campaign return honest zeroes', async () => {
- const data = await readOrderEvidence(async () => ({rows:[{created_orders:0,cancelled_orders:0,crm_paid_orders:0,currently_paid_orders:0,ever_paid_orders:0,crm_paid_revenue_rub:0,purchase_outbox_sent:0}]}), {campaignId:'999999',dateFrom:'2026-10-01',dateTo:'2026-10-01'});
+ const data = await readOrderEvidence(async () => ({rows:[{created_orders:0,cancelled_orders:0,crm_paid_orders:0,currently_paid_orders:0,ever_paid_orders:0,non_rub_paid_orders:0,crm_paid_revenue_rub:0,purchase_outbox_sent:0}]}), {campaignId:'999999',dateFrom:'2026-10-01',dateTo:'2026-10-01'});
  assert.equal(data.createdOrders,0); assert.equal(data.paidRevenueRub,0);
  assert.equal(data.campaignAttributionVerified,false); assert.equal(data.checkoutGoalVerified,false);
  assert.equal(data.goalEventMatched,false); assert.equal(data.attributedOrders,0);
@@ -91,7 +91,7 @@ test('concurrency limit rejects extra request and releases slot after completion
  const app=express(); const secret='x'.repeat(48); let release, entered;
  const started=new Promise(resolve=>entered=resolve);
  const wait=new Promise(resolve=>release=resolve);
- const row={created_orders:0,cancelled_orders:0,crm_paid_orders:0,currently_paid_orders:0,ever_paid_orders:0,crm_paid_revenue_rub:0,purchase_outbox_sent:0};
+ const row={created_orders:0,cancelled_orders:0,crm_paid_orders:0,currently_paid_orders:0,ever_paid_orders:0,non_rub_paid_orders:0,crm_paid_revenue_rub:0,purchase_outbox_sent:0};
  app.use('/api/internal/direct',createMarketingOrderEvidenceRouter({secret,maxConcurrent:1,queryFn:async()=>{entered(); await wait; return {rows:[row]}}}));
  const server=app.listen(0,'127.0.0.1');
  try {
