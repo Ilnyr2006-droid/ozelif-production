@@ -41,13 +41,27 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f1f3f3;padding:12px}
  }catch(_){say('Хранилище недоступно. Отправка заблокирована.');return;}
  window.ym=window.ym||function(){(window.ym.a=window.ym.a||[]).push(arguments);};
  window.ym.l=Date.now();
- var tag=document.createElement('script');tag.async=true;
- tag.src='https://mc.yandex.ru/metrika/tag.js?id='+ID;
- tag.onerror=function(){btn.disabled=true;say('Не удалось загрузить tag.js. Цель не отправлена.');};
- document.head.appendChild(tag);
+ function loadTag(origin, fallback){
+   var tag=document.createElement('script');tag.async=true;
+   tag.src=origin+'/metrika/tag.js?id='+ID;
+   tag.onload=function(){
+     if(started)return;
+     btn.disabled=false;
+     say('Библиотека тестовой Метрики загружена. Можно отправить одно событие.');
+   };
+   tag.onerror=function(){
+     if(fallback){
+       say('Основной CDN недоступен, пробуем официальный альтернативный домен.');
+       loadTag('https://mc.yandex.com',false);
+       return;
+     }
+     btn.disabled=true;
+     say('Не удалось загрузить tag.js ни с основного, ни с альтернативного домена. Цель не отправлена.');
+   };
+   document.head.appendChild(tag);
+ }
  window.ym(ID,'init',{ssr:true,clickmap:false,trackLinks:false,accurateTrackBounce:false,webvisor:false,ecommerce:false});
- btn.disabled=false;
- say('Тестовый счётчик инициализирован. Можно отправить одно событие.');
+ loadTag('https://mc.yandex.ru',true);
  btn.addEventListener('click',function(){
    if(started)return;
    started=true;btn.disabled=true;
