@@ -1,66 +1,48 @@
-# Isolated stage-2 test counter: operator checklist
+# OZELIF Stage2 TEST — isolated Yandex Metrika integration
 
-**Never run this test with production Metrika counter 112275551 or on
-https://ozelifkoja.ru. Do not modify any live checkout, real order, production
-goal, Yandex Direct campaign, payment pipeline or stage-1 API.**
+**Prepared; not publicly deployed. Do not put this code on ozelifkoja.ru.**
 
-This directory contains only a standalone static HTTPS test page. It does not
-call the OZELIF server or create CRM orders. It makes exactly one **attempted**
-synthetic goal event per browser storage, not a confirmed delivery and not
-cryptographically guaranteed exactly-once across tabs. Repeat/collision tests
-must be run using isolated sessions and counted as potentially ambiguous.
+The dedicated Yandex Metrika counter **113963518** and exact-match event goal
+**677252576** (`ozelif_stage2_test_order_created`) are already created.
+The live store uses counter **112275551**, which MUST NOT be used for this test.
 
-## Operator steps (Yandex account)
+Only production-ready fixture in this directory is **`index.html`**.
+Its hostname check is pinned to `https://stage2-test.ozelifkoja.ru`.
+It does NOT use actual CRM checkout, payment or customer details.
+It sends at most one *attempted* synthetic goal per local browser profile,
+never asserts successful provider ingestion, and stores only a random 128-bit ref.
+This does not cryptographically guarantee exactly once across multiple tabs or devices.
 
-1. Set up an **independent HTTPS staging hostname** under your control. Do
-   not serve the fixture on the production webshop or copy the existing
-   production Metrika tag into its HTML. Add appropriate no-index protection.
-2. In https://metrika.yandex.ru choose **Добавить счётчик**. Name it
-   `OZELIF stage2 test ONLY`, supply the staging **hostname**, not
-   ozelifkoja.ru, and configure privacy defaults. Keep the counter separate
-   from the existing 112275551. Save its numeric **test counter ID**.
-3. On that test counter, choose **Цели → Добавить цель → Целевое событие**.
-   Use the exact identifier `ozelif_stage2_test_order_created` with condition
-   `совпадает`. Record the numeric ID of that TEST goal, not production
-   goal 609951402.
-4. Publish `isolated-goal-test.html` on the staging hostname over HTTPS.
-   The page refuses production hostnames and production counter 112275551.
-   Paste the test counter ID into the page, initialize, then click **Отправить
-   ОДНО тестовое событие** exactly once. Save the 32-character opaque ref
-   in a restricted local test note; it contains no customer data.
-5. Check the test counter goal activity only. To check **actual Logs API**
-   serialization, use the independent `metrika:read` token with explicit
-   access to the TEST counter and a date range including the test event.
-   Read the hits Logs API documentation and fetch exactly
-   `ym:pv:watchID,ym:pv:visitID,ym:pv:date,ym:pv:counterID,ym:pv:goalsID,ym:pv:params`.
-   Confirm *all* export parts are processed, downloaded and parsed. Keep
-   watch/visit IDs as **strings**, not JS Number. Redact raw rows, URL,
-   client ID, IP address, unrelated parameters and order ref before sharing.
-6. Validate whether the target goal ID and opaque ref occur in the **same**
-   hit record and determine the JSON shape of `ym:pv:params`.
-   Capture only the **redacted shape** of params (objects/arrays/keys/types),
-   per-field types, presence of IDs and counts. Do not assume JSON object
-   serialization from synthetic fixture code.
-7. Do not activate `order-goal-claim.mjs`, run migration 105, enable
-   checkout, or connect the new flow to the public site until the above
-   evidence and a transactional isolated-DB and browser retry test are
-   independently reviewed. Historical orders remain unmatched.
+## Test & deploy
 
-### How to decide
+- Run `node --test stage2-test/index.node-test.mjs`: **6/6 passed**.
+- Use an independently configured HTTPS static hosting project, serving
+  `stage2-test/index.html` at `/index.html`, and map only
+  `stage2-test.ozelifkoja.ru` to this service. DNS and HTTPS hosting
+  configuration are not available through the current ChatGPT tools.
+- Do not point this staging project at the existing OZELIF frontend or server,
+  don't deploy the branch to the live webshop, and don't touch campaign spend.
+- The page tries official `mc.yandex.ru` and `mc.yandex.com` Metrika tag
+  hosts, keeping the send button disabled until a script load succeeds.
+- A Mac Chrome isolation test reached the test page over HTTPS with an
+  in-browser hostname override. Both Metrika script hosts failed to load
+  with `ERR_CONNECTION_CLOSED`; **no test event was sent**.
 
-- Same goal + ref in the same actual hit: proceed with isolated checkout/DB
-  integration, but NOT a verified purchase/paid advertising claim.
-- Missing ref or separate rows / undocumented encoding: **STOP** and
-  redesign the correlation mechanism.
-- Logs unavailable/incomplete, duplicate watch IDs or late events:
-  mark unknown or conflict, never claim a verified match.
+## Logs API evidence
 
-References:
-- https://yandex.ru/support/metrica/ru/general/creating-counter
-- https://yandex.ru/support/metrica/ru/general/goal-js-event
-- https://yandex.ru/support/metrica/ru/objects/reachgoal
-- https://yandex.ru/dev/metrika/ru/logs/fields/hits
+An actual Logs API export #**62727158** on counter 113963518 for 2026-10-30
+was processed, with the requested six columns and zero rows. This confirms
+Logs API access only, not actual event ref matching. The counter was created
+on 2026-10-31. Events for 2026-10-31 require a later completed-day export.
 
-**What to return for next step:** test counter ID, test goal ID, staging
-hostname, and only sanitized schema information from the test export. Do NOT
-share Yandex OAuth tokens, browser cookies, visitor data or raw Logs API rows.
+After a future real event, download every part for the corresponding day and
+correlate the numeric goal ID and opaque ref in the **same event**. Never send
+raw visitor records, OAuth tokens, session parameters or PII to ChatGPT.
+Do not claim `orderGoalVerified=true`, verified CPA or verified ROAS from this
+probe. Follow **`DEPLOY_AND_LOGS.md`** for the complete isolated runbook.
+
+## Checkout integration gate
+
+The checkout claim module and SQL migration 105 elsewhere in this PR are
+**not wired to production**. Do not run the migration or deploy checkout
+changes before actual provider serialization and isolated PostgreSQL tests.
