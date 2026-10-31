@@ -10,8 +10,23 @@ function sameSecret(a, b) {
 }
 
 // The setting is scoped to a read-only transaction, never the shared pool.
-export async function readEvidenceInTransaction(dbPool, args) {
-  const client = await dbPool.connect();
+export async function readEvidenceInTransaction(dbPool, args, { connectionTimeoutMs = 3000 } = {}) {
+  // A waiting pool connection is not covered by PostgreSQL statement_timeout.
+  // If it arrives after our deadline, release it to avoid leaking a pool slot.
+  const pending = dbPool.connect();
+  let timer;
+  let client;
+  try {
+    client = await Promise.race([
+      pending,
+      new Promise((_, reject) => { timer = setTimeout(() => reject(Error('order_evidence_connection_timeout')), connectionTimeoutMs); })
+    ]);
+  } catch (error) {
+    pending.then(lateClient => lateClient.release()).catch(() => {});
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
   try {
     await client.query('BEGIN READ ONLY');
     await client.query("SET LOCAL statement_timeout = '3s'");

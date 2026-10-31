@@ -10,7 +10,27 @@ Deploy only an independently reviewed API release based on the active service Wo
 
 Schema-only PostgreSQL dump of the four production tables was restored in an isolated PostgreSQL 16, omitting only foreign keys to unavailable external customer/admin tables. Synthetic data: 100,000 orders and 100,000 attribution rows; EXPLAIN ANALYZE 26 ms, 60 requests with client concurrency 16 p95 514 ms, zero query errors on this host. An isolated ACCESS EXCLUSIVE lock yielded SQLSTATE 57014 after 3 seconds. Results are indicative, not a production capacity estimate; real cardinality, disk, traffic, locks and plans differ. Indexes in the restored schema include the attribution PK and history order index; no leading orders.created_at or UTM expression index was found. Assess production growth and need for a concurrent index via a separate migration plan, not an automatic deployment.
 
-Critical blocker: stopping isolated PostgreSQL after a request terminated the copied live API process via an unhandled pg pool idle-client error. This is inherited from the active release, not evidence that the new endpoint caused it. Stage 1 is NOT ready to deploy until the narrow pool-error recovery fix is independently reviewed and an isolated test proves the process survives a complete database outage, returns a safe error, then recovers after reconnect. Terminating one idle connection on the isolated patched release was survived and the next request returned 200; this does not prove the full outage case. The initial-stage startup with absent required DATABASE_URL failed closed. The isolated copy of the original index returned 404 for the added endpoint after rollback, but full service-manager and gateway rollback has not been validated.
+## Isolated outage and rollback, 2026-10-31
+
+An isolated Ubuntu 24.04 container ran real systemd, Nginx, Node 22.23.1 and a separate PostgreSQL 16 with synthetic data. Two complete PostgreSQL stop/start cycles on a fixed port returned 200 → 503 → 200 without restarting the API process; requests during the outage returned within milliseconds. A second test through Nginx and systemd returned 200 → 503 → 200 with the service remaining active; the next cycle hit the configured Nginx 429 rate limit during its outage, so it is not evidence of a second gateway-level 503. A bounded pool acquisition and late-client release were added, with a regression test. SQL remains limited by a 3-second statement timeout; this does not prove behavior for every network partition or a stalled transaction control statement.
+
+The systemd/Nginx cycle switched the copied active API source to the API-only release: health 200, unauthorized evidence 401, authorized evidence 200. Making the new entrypoint unavailable made systemd report failure; switching to the previous copy restored active service, health 200 and evidence 404. The three source files for checkout, public catalog and CRM were byte-identical across releases. This does not prove complete checkout, catalog or admin end-to-end behavior: the isolated database only contains analytics-related tables, and no production or test order was created. Production's actual systemd unit has an absolute ExecStart, while the isolated test uses a symlink; exact production switch/rollback commands therefore still require a tested unit override and verification. Do not apply the test switch commands to production.
+
+## Reproducible candidate source
+
+The generator `scripts/order-evidence/build-release.py` accepts a separately obtained, secret-free snapshot of the current active release and an absent output directory. It rejects symlinks, selected secret/backup names and mismatches in the reviewed baseline `server/index.mjs`, `server/lib/db.mjs`, and package lock. It overlays only `server/lib/db.mjs`, the two evidence modules and a minimal route registration. It records SHA-256 and file modes for every output file. It does not authenticate every input baseline file; independently compare a full source manifest against the active release, and re-identify the active service before approval. Never run `npm ci` in production as part of this preparation.
+
+Example on an isolated workstation, with a previously verified snapshot and dependencies installed from the same lockfile in a separate isolated directory:
+
+```sh
+python3 scripts/order-evidence/build-release.py --baseline /path/to/verified-active-snapshot --output /path/to/new-api-source
+python3 scripts/order-evidence/build-release.py --baseline /path/to/verified-active-snapshot --output /path/to/rebuilt-api-source
+cmp /path/to/new-api-source/SHA256SUMS.json /path/to/rebuilt-api-source/SHA256SUMS.json
+```
+
+The 2026-10-31 local candidate has 190 source files, no bundled frontend or node_modules, and manifest SHA-256 `f6f98f7b3ef8cfef6050cb2531d5f66357ce6e89e05fa43f2a905ca05723b48a`. Its separately created deterministic tar SHA-256 is `b97d63628634573f08e59d990cd55a4a7340242fb52482c8a490518486e749b5`. Local paths are temporary and must be re-created and verified for release. File-name exclusions are not a complete secrets scan. A dependency install from the lockfile succeeded in an isolated Node 22.23.1 Linux container; no production secrets were used.
+
+Remaining gates: review the full baseline manifest, test exact production-style absolute-path systemd override and rollback, verify realistic checkout/catalog/admin read-only behavior with an isolated representative schema, inspect all package contents for secrets, independently review the security boundary, and validate Nginx configuration and trusted-proxy assumptions. Status: NOT READY.
 
 ## Production procedure outline, subject to a separate approval
 

@@ -105,3 +105,13 @@ test('concurrency limit rejects extra request and releases slot after completion
   assert.equal((await fetch(url,opts)).status,200);
  } finally {release(); await new Promise(resolve=>server.close(resolve));}
 });
+
+
+test('pool wait times out and a late connection is released', async () => {
+ let resolve, releases = 0;
+ const dbPool = { connect: () => new Promise(r => { resolve = r; }) };
+ await assert.rejects(readEvidenceInTransaction(dbPool, {}, { connectionTimeoutMs: 10 }), /order_evidence_connection_timeout/);
+ resolve({ release: () => releases++ });
+ await new Promise(r => setImmediate(r));
+ assert.equal(releases, 1);
+});
