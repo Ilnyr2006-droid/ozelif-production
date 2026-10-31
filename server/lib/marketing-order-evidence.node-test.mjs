@@ -82,11 +82,11 @@ test('database errors are generic and invalid bearer tokens do not query', async
 
 
 test('transaction is read-only, has local statement timeout, and releases on error', async () => {
- const statements=[]; let released=0;
- const dbPool={connect:async()=>({query:async(sql)=>{statements.push(sql); if(sql.includes('WITH matched')) throw Error('timeout')},release:()=>released++})};
+ const statements=[]; let released;
+ const dbPool={connect:async()=>({query:async(sql)=>{statements.push(sql); if(sql.includes('WITH matched')) throw Error('timeout')},release:(destroy)=>{released=destroy}})};
  await assert.rejects(readEvidenceInTransaction(dbPool,{campaignId:'1',dateFrom:'2026-01-01',dateTo:'2026-01-01'}));
  assert.equal(statements[0],'BEGIN READ ONLY'); assert.match(statements[1],/SET LOCAL statement_timeout/);
- assert.equal(statements.at(-1),'ROLLBACK'); assert.equal(released,1);
+ assert.ok(statements.at(-1).includes('WITH matched')); assert.equal(released,true);
 });
 test('concurrency limit rejects extra request and releases slot after completion', async () => {
  const app=express(); const secret='x'.repeat(48); let release, entered;
@@ -104,14 +104,4 @@ test('concurrency limit rejects extra request and releases slot after completion
   release(); assert.equal((await first).status,200);
   assert.equal((await fetch(url,opts)).status,200);
  } finally {release(); await new Promise(resolve=>server.close(resolve));}
-});
-
-
-test('pool wait times out and a late connection is released', async () => {
- let resolve, releases = 0;
- const dbPool = { connect: () => new Promise(r => { resolve = r; }) };
- await assert.rejects(readEvidenceInTransaction(dbPool, {}, { connectionTimeoutMs: 10 }), /order_evidence_connection_timeout/);
- resolve({ release: () => releases++ });
- await new Promise(r => setImmediate(r));
- assert.equal(releases, 1);
 });

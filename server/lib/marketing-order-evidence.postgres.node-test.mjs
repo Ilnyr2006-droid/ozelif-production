@@ -57,7 +57,15 @@ test('PostgreSQL aggregation uses isolated fixtures and does not multiply orders
     process.env.DATABASE_URL = 'postgresql://127.0.0.1:1/unavailable';
     process.env.ADMIN_SESSION_SECRET = 'isolated-test-only';
     const { default: express } = await import('express');
-    const { createMarketingOrderEvidenceRouter } = await import('../routes/marketing-order-evidence.mjs');
+    const { createMarketingOrderEvidenceRouter, createOrderEvidencePool } = await import('../routes/marketing-order-evidence.mjs');
+    const boundedPool = createOrderEvidencePool({ connectionString: testUrl, max: 1, connectionTimeoutMillis: 100 });
+    const held = await boundedPool.connect();
+    try {
+      const attempts = await Promise.allSettled(Array.from({ length: 30 }, () => boundedPool.connect()));
+      assert.equal(attempts.filter(x => x.status === 'rejected').length, 30);
+      assert.equal(boundedPool.waitingCount, 0);
+      assert.equal(boundedPool.totalCount, 1);
+    } finally { held.release(); await boundedPool.end(); }
     const secret = 'endpoint-test-secret-with-adequate-length';
     const dbPool = { connect: async () => ({ query: (...args) => client.query(...args), release() {} }) };
     const app = express();

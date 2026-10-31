@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { createHash, timingSafeEqual } from 'node:crypto';
-import { pool } from '../lib/db.mjs';
+import pg from 'pg';
+import { env } from '../lib/env.mjs';
 import { readOrderEvidence, validateOrderEvidenceRange } from '../lib/marketing-order-evidence.mjs';
 
 function sameSecret(a, b) {
@@ -9,24 +10,18 @@ function sameSecret(a, b) {
   return timingSafeEqual(hash(a), hash(b));
 }
 
+// Dedicated capacity prevents this endpoint from queueing against the shared checkout pool.
+export function createOrderEvidencePool({ connectionString = env.databaseUrl, connectionTimeoutMillis = 1500, query_timeout = 4000, max = 2 } = {}) {
+  const evidencePool = new pg.Pool({ connectionString, connectionTimeoutMillis, query_timeout, max, allowExitOnIdle: true });
+  evidencePool.on('error', () => console.error('Order evidence idle connection lost'));
+  return evidencePool;
+}
+const pool = createOrderEvidencePool();
+
 // The setting is scoped to a read-only transaction, never the shared pool.
-export async function readEvidenceInTransaction(dbPool, args, { connectionTimeoutMs = 3000 } = {}) {
-  // A waiting pool connection is not covered by PostgreSQL statement_timeout.
-  // If it arrives after our deadline, release it to avoid leaking a pool slot.
-  const pending = dbPool.connect();
-  let timer;
-  let client;
-  try {
-    client = await Promise.race([
-      pending,
-      new Promise((_, reject) => { timer = setTimeout(() => reject(Error('order_evidence_connection_timeout')), connectionTimeoutMs); })
-    ]);
-  } catch (error) {
-    pending.then(lateClient => lateClient.release()).catch(() => {});
-    throw error;
-  } finally {
-    clearTimeout(timer);
-  }
+export async function readEvidenceInTransaction(dbPool, args) {
+  const client = await dbPool.connect();
+  let failed = false;
   try {
     await client.query('BEGIN READ ONLY');
     await client.query("SET LOCAL statement_timeout = '3s'");
@@ -34,10 +29,12 @@ export async function readEvidenceInTransaction(dbPool, args, { connectionTimeou
     await client.query('COMMIT');
     return result;
   } catch (error) {
-    try { await client.query('ROLLBACK'); } catch { /* retain the original failure */ }
+    failed = true;
+    // Destroying the connection rolls back the transaction. Do not wait for a
+    // second network round trip when PostgreSQL is unreachable or stalled.
     throw error;
   } finally {
-    client.release();
+    client.release(failed);
   }
 }
 
