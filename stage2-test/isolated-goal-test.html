@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>OZELIF — isolated Metrika goal test</title>
+<style>
+body{font:16px/1.5 system-ui,sans-serif;max-width:640px;margin:3rem auto;padding:0 1rem;color:#1a202c}
+label{display:block;margin:1rem 0}input{display:block;width:100%;max-width:400px;padding:.6rem;font:inherit}
+button{margin:.5rem .5rem .5rem 0;padding:.7rem 1.1rem;font:inherit}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f1f5f9;padding:1rem}
+.warn{border-left:4px solid #d97706;padding-left:1rem}
+</style>
+</head>
+<body>
+<h1>OZELIF — тест события заказа</h1>
+<p class="warn">Только для отдельного тестового HTTPS-домена и нового тестового счётчика Метрики.
+Эта страница не оформляет реальный заказ. Никогда не используйте рабочий счётчик <code>112275551</code>.</p>
+<label>Номер отдельного тестового счётчика
+<input id="counter" inputmode="numeric" pattern="[1-9][0-9]{5,15}" placeholder="Новый ID тестового счётчика" autocomplete="off"></label>
+<p>Тестовая цель — <code>ozelif_stage2_test_order_created</code> (тип «Целевое событие»).</p>
+<button id="init">Подключить тестовый счётчик</button>
+<button id="send" disabled>Отправить ОДНО тестовое событие</button>
+<pre id="status">Не инициализировано</pre>
+<script>
+(() => {
+  'use strict';
+  const PROD = '112275551';
+  const TARGET = 'ozelif_stage2_test_order_created';
+  const input = document.getElementById('counter');
+  const send = document.getElementById('send');
+  const status = document.getElementById('status');
+  let counter = null;
+  let claimed = false;
+  function report(text) { status.textContent = text; }
+  function validHost() {
+    const host = location.hostname.toLowerCase();
+    return location.protocol === 'https:' && host !== 'ozelifkoja.ru' &&
+      host !== 'www.ozelifkoja.ru';
+  }
+  if (!validHost()) {
+    report('ОТКАЗ: загрузите эту страницу по HTTPS на отдельном тестовом домене, не на OZELIF.');
+    document.getElementById('init').disabled = true;
+    return;
+  }
+  document.getElementById('init').onclick = () => {
+    if (counter !== null) return;
+    const id = input.value.trim();
+    if (!/^[1-9][0-9]{5,15}$/.test(id) || id === PROD) {
+      report('ОТКАЗ: укажите отдельный действительный тестовый счётчик, не рабочий.');
+      return;
+    }
+    // The official Yandex Metrika async tag pattern, restricted to this page.
+    window.ym = window.ym || function () {
+      (window.ym.a = window.ym.a || []).push(arguments);
+    };
+    window.ym.l = Date.now();
+    const tag = document.createElement('script');
+    tag.async = true;
+    tag.src = 'https://mc.yandex.ru/metrika/tag.js';
+    tag.onerror = () => { report('Не удалось загрузить tag.js; событие не отправлено.'); send.disabled = true; };
+    document.head.appendChild(tag);
+    window.ym(Number(id), 'init', {
+      clickmap: false, trackLinks: false, accurateTrackBounce: false,
+      webvisor: false, ecommerce: false
+    });
+    counter = id;
+    input.disabled = true;
+    document.getElementById('init').disabled = true;
+    const storageKey = 'ozelif-stage2-test-one-event:' + id;
+    // Deny if localStorage cannot safely prevent a repeat in this browser.
+    try { if (localStorage.getItem(storageKey)) { report('Тест уже инициирован в этом браузере. Новую цель не отправляем.'); return; } }
+    catch { report('Не удалось проверить localStorage. Отправка запрещена.'); return; }
+    send.disabled = false;
+    report('Счётчик '+id+' настроен на тестовой странице. Готов к однократной попытке.');
+  };
+  send.onclick = () => {
+    if (claimed || !counter || !validHost()) return;
+    const key = 'ozelif-stage2-test-one-event:' + counter;
+    const bytes = new Uint8Array(16);
+    try {
+      if (localStorage.getItem(key)) { report('Попытка уже была. Повтор запрещён.'); send.disabled = true; return; }
+      crypto.getRandomValues(bytes);
+      const ref = Array.from(bytes, x => x.toString(16).padStart(2, '0')).join('');
+      localStorage.setItem(key, JSON.stringify({ref, counter}));
+      claimed = true; send.disabled = true;
+      window.ym(Number(counter), 'reachGoal', TARGET, {ozelif_order_ref: ref});
+      report('Одна попытка отправки в тестовый счётчик '+counter+
+        '. Случайный ref: '+ref+
+        '\nЭто НЕ подтверждение доставки или наличия записи в Logs API.'+
+        '\nСохраните этот ref локально для сверки. Не отправляйте его в публичные чаты.');
+    } catch {
+      claimed = true; send.disabled = true;
+      report('Неопределённый результат: повтор НЕ выполняется. Изучите Logs API.');
+    }
+  };
+})();
+</script>
+</body>
+</html>
