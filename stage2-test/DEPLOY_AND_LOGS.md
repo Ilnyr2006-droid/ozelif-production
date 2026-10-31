@@ -13,17 +13,17 @@ created. **This branch is NOT deployed to production or to staging.**
 | Production counter (NEVER use) | 112275551 |
 
 The self-contained page is `stage2-test/index.html`; automated safety checks
-are `node --test stage2-test/index.node-test.mjs`. All five checks passed locally.
+are `node --test stage2-test/index.node-test.mjs`. All six checks passed locally (including alternate-CDN fallback and no-repeat checks).
 This fixture **does not create CRM orders** and does not demonstrate payment,
 campaign attribution or verified ROAS.
 
 ## Safe hosting setup
 
-Use a NEW isolated static hosting project (such as Vercel). Set:
+Use a NEW isolated HTTPS static hosting project under your control (no specific provider required). Set:
 - GitHub repository: `Ilnyr2006-droid/ozelif-production`
 - Branch: `feature/order-goal-reconciliation-stage2-20261031`
 - **Root Directory: `stage2-test`**, not the main website or API
-- No build command, static output is `stage2-test/index.html`
+- No build command; serve `stage2-test/index.html` as the site's `/index.html`
 - Production domain: **DO NOT USE** `ozelifkoja.ru`
 - Set custom hostname `stage2-test.ozelifkoja.ru`, create the DNS record
   provided by the hosting platform, and confirm working HTTPS.
@@ -40,9 +40,9 @@ session, so code being present in GitHub **does not mean the site is live**.
 1. Check HTTPS at `https://stage2-test.ozelifkoja.ru/` and that the
    visible counter is 113963518.
 2. Browser network must successfully load
-   `https://mc.yandex.ru/metrika/tag.js?id=113963518`. Do not send an event
-   if blocked; the page disables its button. Official supported alternative
-   when reachable: `https://mc.yandex.com/metrika/tag.js`.
+   `https://mc.yandex.ru/metrika/tag.js?id=113963518` OR the supported fallback
+   `https://mc.yandex.com/metrika/tag.js?id=113963518`. The page now disables
+   its send button until the tag script loads, and rejects events if both fail.
 3. Click the one-time send button once. A cryptographically random 128-bit
    `ozelif_order_ref` is stored in browser localStorage before the send;
    second clicks / page reloads cannot retry in the same browser session.
@@ -55,7 +55,9 @@ over a locally simulated HTTPS `stage2-test.ozelifkoja.ru` origin using a
 browser-only DNS override. **This is not public hosting.** That browser failed
 to fetch `mc.yandex.ru` (`ERR_CONNECTION_CLOSED`); direct TLS to
 both `mc.yandex.ru` and the official `mc.yandex.com` alternative also failed.
-**No real test goal was sent.** This is a network restriction on that Mac,
+**No real test goal was sent.** Both script downloads failed with
+`ERR_CONNECTION_CLOSED` on 2026-10-31; the browser correctly disabled the
+button and did not queue a goal. This is a network restriction on that Mac,
 not evidence of a Yandex API or goal configuration error.
 
 ## Logs API
