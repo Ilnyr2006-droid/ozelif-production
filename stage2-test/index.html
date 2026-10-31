@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ru"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>OZELIF Stage2 TEST — только тестовая Метрика</title>
+<style>
+body{font:16px/1.55 system-ui,Arial,sans-serif;max-width:660px;margin:5vh auto;padding:0 24px;background:#fbfaf7;color:#1c2529}
+small{color:#57636a}section{border:1px solid #c9d3d6;border-radius:12px;padding:22px;background:white}
+button{background:#1e4752;color:white;border:0;border-radius:7px;font:inherit;padding:12px 20px;cursor:pointer}
+button:disabled{opacity:.55;cursor:default}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f1f3f3;padding:12px}
+</style></head><body>
+<h1>OZELIF — изолированная проверка цели</h1>
+<section>
+<p><strong>Это не магазин и не оформление заказа.</strong> Страница отправляет только одно тестовое событие в отдельный счётчик Метрики.</p>
+<p>Счётчик: <strong>113963518</strong>. Цель: <code>ozelif_stage2_test_order_created</code> (ID 677252576).</p>
+<button id="send" disabled>Отправить одно тестовое событие</button>
+<pre id="status" role="status" aria-live="polite">Подготовка тестового счётчика…</pre>
+<small>Никаких персональных данных, товаров или платежей. Отправка не доказывает реальный заказ.</small>
+</section>
+<script>
+(function(){
+ 'use strict';
+ var HOST='stage2-test.ozelifkoja.ru';
+ var ID=113963518;
+ var GOAL='ozelif_stage2_test_order_created';
+ var KEY='ozelif:stage2-test:one-goal:113963518:677252576';
+ var btn=document.getElementById('send');
+ var status=document.getElementById('status');
+ var started=false;
+ function say(s){status.textContent=s;}
+ if(location.hostname.toLowerCase()!==HOST||location.protocol!=='https:'){
+   say('ЗАПРЕТ: эта страница работает только на HTTPS://'+HOST);
+   return;
+ }
+ try {
+   if(localStorage.getItem(KEY)){
+     say('В этом браузере тест уже инициирован. Повторная отправка заблокирована.');
+     return;
+   }
+ }catch(_){say('Хранилище недоступно. Отправка заблокирована.');return;}
+ window.ym=window.ym||function(){(window.ym.a=window.ym.a||[]).push(arguments);};
+ window.ym.l=Date.now();
+ function loadTag(origin, fallback){
+   var tag=document.createElement('script');tag.async=true;
+   tag.src=origin+'/metrika/tag.js?id='+ID;
+   tag.onload=function(){
+     if(started)return;
+     btn.disabled=false;
+     say('Библиотека тестовой Метрики загружена. Можно отправить одно событие.');
+   };
+   tag.onerror=function(){
+     if(fallback){
+       say('Основной CDN недоступен, пробуем официальный альтернативный домен.');
+       loadTag('https://mc.yandex.com',false);
+       return;
+     }
+     btn.disabled=true;
+     say('Не удалось загрузить tag.js ни с основного, ни с альтернативного домена. Цель не отправлена.');
+   };
+   document.head.appendChild(tag);
+ }
+ window.ym(ID,'init',{ssr:true,clickmap:false,trackLinks:false,accurateTrackBounce:false,webvisor:false,ecommerce:false});
+ loadTag('https://mc.yandex.ru',true);
+ btn.addEventListener('click',function(){
+   if(started)return;
+   started=true;btn.disabled=true;
+   try{
+     if(localStorage.getItem(KEY)){say('Повторная попытка заблокирована.');return;}
+     var a=new Uint8Array(16);crypto.getRandomValues(a);
+     var ref=Array.from(a,function(v){return v.toString(16).padStart(2,'0');}).join('');
+     // Claim BEFORE sending: never auto-retry on an uncertain network result.
+     localStorage.setItem(KEY,JSON.stringify({order_ref:ref,counter:ID,goal_id:677252576,attempted_at:new Date().toISOString()}));
+     say('Одна попытка инициирована. Ref: '+ref+'\nОтправка не подтверждает появление события в Logs API.');
+     window.ym(ID,'reachGoal',GOAL,{ozelif_order_ref:ref},function(){
+       say('Метрика вызвала callback отправки. Ref: '+ref+'\nЭто НЕ подтверждение реального заказа или наличия события в Logs API.');
+     });
+   }catch(_){say('Результат неизвестен. Повторная попытка отключена.');}
+ });
+})();
+</script></body></html>
