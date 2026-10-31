@@ -1,6 +1,6 @@
 # OZELIF Stage 2 — per-order Metrika correlation gate (NOT deployed)
 
-State on 2026-10-31: **isolated code and tests only**. The current production
+State on 2026-10-31: **isolated code, draft SQL migration, standalone test page and tests only**. The current production
 stage-1 API is read-only and must stay unchanged. No production order, goal
 configuration, checkout, campaign or Metrika counter has been changed.
 
@@ -31,8 +31,19 @@ event ID, order ref, raw parameters or customer data. It never sets
 `orderGoalVerified: true` or asserts attribution/settlement.
 
 `server/lib/order-goal-reconciliation-logs.node-test.mjs` covers the above
-with synthetic in-memory data. Tests have passed locally (8/8). These tests
-**do not** validate the actual Metrika serialization.
+with synthetic in-memory data, including a separate test-counter scope.
+`server/lib/order-goal-claim.mjs` prepares one-time random ref allocation
+inside a new-order transaction, while `server/sql/105_order_goal_correlations.sql`
+defines a draft storage table; neither is wired to checkout or applied.
+`stage2-test/isolated-goal-test.html` is a standalone test-only page that
+rejects production hostnames and counter 112275551. Its code may run only on
+an independent HTTPS test site with a separately created test counter.
+The setup checklist is `stage2-test/README.md`.
+
+**16/16 isolated tests passed** (10 export parser tests and 6 claim tests).
+The HTML JavaScript syntax check passed. These checks **do not** validate
+actual Metrika serialization, persistent PostgreSQL transactions or browser
+delivery. No real Metrika test counter has been created in this session.
 
 ## Why production activation is blocked
 
@@ -43,7 +54,7 @@ particular order-ref payload will appear in the **same hit row** in this
 account's Logs API export. Our existing `logrequests/evaluate` success for a
 production date range showed only that the requested fields were available.
 
-A genuinely separate **test counter**, a test goal and a test checkout are
+A genuinely separate **test counter**, a test goal and a test event are
 needed to inspect real export format, quoting/encoding, latency, incomplete
 processing and late-arriving data. Do not send artificial or replayed goals to
 the production counter. Do not create any real paid orders for the test.
